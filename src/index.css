@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #D3AE7A; /* A golden-like color for main actions */
+  --color-secondary: #F5F5F5; /* A light gray for backgrounds */
+  --color-accent: #E38B8B; /* A soft red for accents or alerts */
+  --color-text: #333333; /* Dark gray for text */
+  --color-background: #FFFFFF; /* White background */
+}
+
+body {
+  background-color: var(--color-secondary);
+  color: var(--color-text);
+  font-family: 'Inter', sans-serif;
+}
