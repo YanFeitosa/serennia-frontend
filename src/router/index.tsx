@@ -28,6 +28,17 @@ const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
+    path: '/totem',
+    element: <TotemLayout />,
+    children: [
+      { path: '', element: <Welcome />, index: true },
+      { path: 'servicos', element: <ServiceSelection /> },
+      { path: 'confirmacao', element: <Confirmation /> },
+      { path: 'cadastro', element: <Cadastro /> },
+      { path: 'login', element: <TotemLogin /> },
+    ],
+  },
+  {
     path: '/',
     element: <App />,
     children: [
@@ -51,17 +62,6 @@ const router = createBrowserRouter([
       { path: 'configuracoes', element: <Configuracoes /> },
       { path: 'auditoria', element: <Auditoria /> },
       { path: 'notificacoes', element: <Notificacoes /> },
-      {
-        path: 'totem',
-        element: <TotemLayout />,
-        children: [
-          { path: '', element: <Welcome /> },
-          { path: 'servicos', element: <ServiceSelection /> },
-          { path: 'confirmacao', element: <Confirmation /> },
-          { path: 'cadastro', element: <Cadastro /> },
-          { path: 'login', element: <TotemLogin /> },
-        ],
-      },
     ],
   },
 ]);

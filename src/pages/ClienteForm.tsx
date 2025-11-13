@@ -29,21 +29,21 @@ const ClienteForm = () => {
     <div className="space-y-4">
       <header>
         <h1 className="text-3xl font-bold text-text">Novo Cliente</h1>
-        <p className="text-gray-500">Preencha os dados para cadastrar um novo cliente.</p>
+        <p className="text-text-muted">Preencha os dados para cadastrar um novo cliente.</p>
       </header>
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded-xl shadow-md space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-6 rounded-xl shadow-md space-y-4 border border-border">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nome</label>
+          <label htmlFor="name" className="block text-sm font-medium text-text">Nome</label>
           <Input id="name" {...register('name')} />
           {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
         </div>
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Telefone</label>
+          <label htmlFor="phone" className="block text-sm font-medium text-text">Telefone</label>
           <Input id="phone" {...register('phone')} />
           {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
         </div>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+          <label htmlFor="email" className="block text-sm font-medium text-text">Email</label>
           <Input id="email" {...register('email')} />
           {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
         </div>

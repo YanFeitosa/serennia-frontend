@@ -14,22 +14,22 @@ const DailyView = ({ onEditAppointment }: DailyViewProps) => {
   const hours = Array.from({ length: 14 }, (_, i) => i + 8); // 8 AM to 9 PM
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-4">
+    <div className="bg-card rounded-xl shadow-md p-4 border border-border">
       <div className="flex">
         {/* Time Scale */}
         <div className="w-16 text-right pr-2">
           {hours.map(hour => (
             <div key={hour} className="h-24 flex items-start justify-end">
-              <span className="text-sm text-gray-500 -mt-3">{`${hour}:00`}</span>
+              <span className="text-sm text-text-muted -mt-3">{`${hour}:00`}</span>
             </div>
           ))}
         </div>
 
         {/* Agenda Grid */}
-        <div className="flex-1 grid grid-cols-3 gap-px bg-gray-200 border-l border-gray-200">
+        <div className="flex-1 grid grid-cols-3 gap-px bg-border border-l border-border">
           {mockCollaborators.filter(c => c.status === 'active').map(collab => (
             <div key={collab.id} className="relative bg-background">
-              <div className="text-center font-semibold py-2 border-b border-gray-200 bg-white sticky top-0 z-10">{collab.name}</div>
+              <div className="text-center font-semibold py-2 border-b border-border bg-card sticky top-0 z-10 text-text">{collab.name}</div>
               {mockAppointments
                 .filter(appt => appt.collaboratorId === collab.id)
                 .map(appt => {

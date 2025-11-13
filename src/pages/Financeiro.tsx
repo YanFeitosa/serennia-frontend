@@ -5,7 +5,7 @@ import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { mockOrders } from '../data/orders';
 import { Badge } from '../components/ui/Badge';
-import { DatePicker } from '../components/ui/DatePicker.tsx';
+import DatePickerPlain from '../components/ui/DatePickerPlain.tsx';
 import { Button } from '../components/ui/Button.tsx';
 
 const Financeiro = () => {
@@ -14,7 +14,11 @@ const Financeiro = () => {
     to: new Date(),
   });
 
+  // Filtrar apenas comandas pagas
   const filteredOrders = mockOrders.filter(order => {
+    // Primeiro filtro: apenas comandas pagas
+    if (order.status !== 'paid') return false;
+    
     const orderDate = new Date(order.createdAt);
     if (!dateRange || (!dateRange.from && !dateRange.to)) return true;
 
@@ -117,17 +121,17 @@ const Financeiro = () => {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-text">Financeiro</h1>
-          <p className="text-gray-500">Acompanhe a saúde financeira do seu negócio.</p>
+          <p className="text-text-muted">Acompanhe a saúde financeira do seu negócio.</p>
         </div>
         <div className="flex items-center space-x-2">
-          <DatePicker
+          <DatePickerPlain
             date={dateRange?.from}
-            setDate={(date) => setDateRange((prev) => ({ from: date, to: prev?.to }))}
+            setDate={(date: Date | undefined) => setDateRange((prev) => ({ from: date, to: prev?.to }))}
             placeholder="Data de Início"
           />
-          <DatePicker
+          <DatePickerPlain
             date={dateRange?.to}
-            setDate={(date) => setDateRange((prev) => ({ from: prev?.from, to: date }))}
+            setDate={(date: Date | undefined) => setDateRange((prev) => ({ from: prev?.from, to: date }))}
             placeholder="Data de Fim"
           />
           <Button variant="ghost" onClick={() => setDateRange({ from: undefined, to: undefined })}>Limpar Filtro</Button>
@@ -136,53 +140,53 @@ const Financeiro = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
+        <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
           <div className="p-3 bg-primary bg-opacity-20 rounded-full">
             <DollarSign className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Faturamento Total</p>
-            <p className="text-2xl font-bold">{totalFaturado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-sm text-text-muted">Faturamento Total</p>
+            <p className="text-2xl font-bold text-text">{totalFaturado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
+        <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
           <div className="p-3 bg-primary bg-opacity-20 rounded-full">
             <TrendingUp className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Lucro Estimado</p>
-            <p className="text-2xl font-bold">{(totalFaturado - totalComissao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-sm text-text-muted">Lucro Estimado</p>
+            <p className="text-2xl font-bold text-text">{(totalFaturado - totalComissao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-md flex items-center space-x-4">
+        <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
           <div className="p-3 bg-accent bg-opacity-20 rounded-full">
             <TrendingDown className="w-6 h-6 text-accent" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Comissões a Pagar</p>
-            <p className="text-2xl font-bold">{totalComissao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-sm text-text-muted">Comissões a Pagar</p>
+            <p className="text-2xl font-bold text-text">{totalComissao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
           </div>
         </div>
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-white rounded-xl shadow-md">
-        <h3 className="text-lg font-semibold p-4 border-b border-gray-200">Transações Recentes</h3>
+      <div className="bg-card rounded-xl shadow-md border border-border">
+        <h3 className="text-lg font-semibold text-text p-4 border-b border-border">Transações Recentes</h3>
         <table className="w-full text-left">
-          <thead className="border-b border-gray-200">
+          <thead className="border-b border-border">
             <tr>
-              <th className="p-4">Comanda</th>
-              <th className="p-4">Data</th>
-              <th className="p-4">Valor</th>
-              <th className="p-4">Status</th>
+              <th className="p-4 text-text">Comanda</th>
+              <th className="p-4 text-text">Data</th>
+              <th className="p-4 text-text">Valor</th>
+              <th className="p-4 text-text">Status</th>
             </tr>
           </thead>
           <tbody>
             {filteredOrders.slice(0, 5).map(order => (
-              <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="p-4 font-mono text-sm">#{order.id.slice(0, 6)}</td>
-                <td className="p-4">{new Date(order.createdAt).toLocaleString('pt-BR')}</td>
-                <td className="p-4">{order.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+              <tr key={order.id} className="border-b border-border hover:bg-background transition-colors">
+                <td className="p-4 font-mono text-sm text-text">#{order.id.slice(0, 6)}</td>
+                <td className="p-4 text-text">{new Date(order.createdAt).toLocaleString('pt-BR')}</td>
+                <td className="p-4 text-text">{order.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                 <td className="p-4"><Badge>{order.status}</Badge></td>
               </tr>
             ))}
@@ -190,8 +194,8 @@ const Financeiro = () => {
         </table>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <h3 className="font-bold mb-4">Faturamento</h3>
+      <div className="bg-card rounded-xl shadow-md p-6 border border-border">
+        <h3 className="font-bold text-text mb-4">Faturamento</h3>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />

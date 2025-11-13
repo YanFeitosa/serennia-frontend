@@ -31,6 +31,7 @@ export interface Collaborator {
   role: UserRole;
   status: 'active' | 'inactive';
   phone?: string;
+  email?: string;
   commissionRate: number; // Default commission rate
 }
 
@@ -80,7 +81,7 @@ export interface Order {
   total: number;
   discount: number;
   finalValue: number;
-  status: 'open' | 'closed' | 'pending_payment';
+  status: 'open' | 'closed' | 'paid';
   createdAt: string;
   closedAt?: string;
 }

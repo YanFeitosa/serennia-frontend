@@ -9,9 +9,9 @@ import { mockClients } from '../data/clients.ts';
 import { mockCollaborators } from '../data/collaborators.ts';
 import { mockServices } from '../data/services.ts';
 import { Button } from '../components/ui/Button.tsx';
-import { SearchableSelect } from '../components/ui/SearchableSelect.tsx';
-import { MultiSelect } from '../components/ui/MultiSelect.tsx';
-import { Input } from '../components/ui/Input.tsx';
+import SearchableSelectPlain from '../components/ui/SearchableSelectPlain.tsx';
+import MultiSelectPlain from '../components/ui/MultiSelectPlain.tsx';
+import DateTimePickerPlain from '../components/ui/DateTimePickerPlain.tsx';
 import { Textarea } from '../components/ui/Textarea.tsx';
 
 const toDateTimeLocal = (dateStr: string | Date): string => {
@@ -87,50 +87,54 @@ const AgendamentoForm = () => {
     <div className="space-y-4">
       <header>
         <h1 className="text-3xl font-bold text-text">{appointment ? 'Editar Agendamento' : 'Novo Agendamento'}</h1>
-        <p className="text-gray-500">{appointment ? 'Altere os detalhes do agendamento.' : 'Preencha os dados para criar um novo agendamento.'}</p>
+        <p className="text-text-muted">{appointment ? 'Altere os detalhes do agendamento.' : 'Preencha os dados para criar um novo agendamento.'}</p>
       </header>
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded-xl shadow-md space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-6 rounded-xl shadow-md space-y-4 border border-border">
         <div>
-          <label htmlFor="clientId" className="block text-sm font-medium text-gray-700">Cliente</label>
-          <SearchableSelect
+          <label htmlFor="clientId" className="block text-sm font-medium text-text">Cliente</label>
+          <SearchableSelectPlain
             options={mockClients.map(client => ({ value: client.id, label: client.name }))}
             value={watch('clientId')}
-            onChange={value => setValue('clientId', value)}
+            onChange={(value: string) => setValue('clientId', value)}
             placeholder="Selecione um cliente"
           />
           {errors.clientId && <p className="mt-1 text-sm text-red-600">{errors.clientId.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="collaboratorId" className="block text-sm font-medium text-gray-700">Profissional</label>
-          <SearchableSelect
+          <label htmlFor="collaboratorId" className="block text-sm font-medium text-text">Profissional</label>
+          <SearchableSelectPlain
             options={mockCollaborators.filter(c => c.status === 'active').map(collab => ({ value: collab.id, label: collab.name }))}
             value={watch('collaboratorId')}
-            onChange={value => setValue('collaboratorId', value)}
+            onChange={(value: string) => setValue('collaboratorId', value)}
             placeholder="Selecione um profissional"
           />
           {errors.collaboratorId && <p className="mt-1 text-sm text-red-600">{errors.collaboratorId.message}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Serviços</label>
-          <MultiSelect
+          <label className="block text-sm font-medium text-text">Serviços</label>
+          <MultiSelectPlain
             options={mockServices.map(service => ({ value: service.id, label: service.name }))}
             selected={watch('serviceIds') || []}
-            onChange={value => setValue('serviceIds', value)}
+            onChange={(value: string[]) => setValue('serviceIds', value)}
             placeholder="Selecione os serviços"
           />
           {errors.serviceIds && <p className="mt-1 text-sm text-red-600">{errors.serviceIds.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="start" className="block text-sm font-medium text-gray-700">Início</label>
-          <Input type="datetime-local" id="start" {...register('start')} />
+          <label htmlFor="start" className="block text-sm font-medium text-text">Horário</label>
+          <DateTimePickerPlain
+            id="start"
+            value={watch('start')}
+            onChange={(value: string) => setValue('start', value)}
+          />
           {errors.start && <p className="mt-1 text-sm text-red-600">{errors.start.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Observações</label>
+          <label htmlFor="notes" className="block text-sm font-medium text-text">Observações</label>
           <Textarea id="notes" {...register('notes')} rows={3} />
         </div>
 

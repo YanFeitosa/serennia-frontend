@@ -8,19 +8,47 @@ interface BadgeProps {
 }
 
 const Badge = ({ children, variant = 'default', className = '' }: BadgeProps) => {
-  const baseClasses = 'px-2.5 py-0.5 rounded-full text-xs font-semibold';
+  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors';
 
-  const variantClasses = {
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    info: 'bg-blue-100 text-blue-800',
-        destructive: 'bg-red-100 text-red-800',
-        secondary: 'bg-gray-200 text-text',
-    default: 'bg-gray-100 text-gray-800',
+  const variantStyles = {
+    success: { 
+      backgroundColor: 'color-mix(in srgb, var(--color-status-success) 10%, transparent)',
+      color: 'var(--color-status-success)',
+      borderColor: 'color-mix(in srgb, var(--color-status-success) 20%, transparent)'
+    },
+    warning: { 
+      backgroundColor: 'color-mix(in srgb, var(--color-status-warning) 10%, transparent)',
+      color: 'var(--color-status-warning)',
+      borderColor: 'color-mix(in srgb, var(--color-status-warning) 20%, transparent)'
+    },
+    info: { 
+      backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
+      color: 'var(--color-primary)',
+      borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)'
+    },
+    destructive: { 
+      backgroundColor: 'color-mix(in srgb, var(--color-status-error) 10%, transparent)',
+      color: 'var(--color-status-error)',
+      borderColor: 'color-mix(in srgb, var(--color-status-error) 20%, transparent)'
+    },
   };
 
+  const variantClasses = {
+    success: 'border',
+    warning: 'border',
+    info: 'border',
+    destructive: 'border',
+    secondary: 'bg-sidebar text-text border border-border',
+    default: 'bg-card text-text border border-border',
+  };
+
+  const hasCustomStyle = variant in variantStyles;
+
   return (
-    <span className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
+    <span 
+      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+      style={hasCustomStyle ? variantStyles[variant as keyof typeof variantStyles] : undefined}
+    >
       {children}
     </span>
   );

@@ -25,54 +25,54 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-secondary">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-md">
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-serenna">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-primary">Serenna</h1>
-          <p className="mt-2 text-text">Bem-vindo(a) de volta!</p>
+          <h1 className="text-4xl font-semibold text-primary">Serenna</h1>
+          <p className="mt-2 text-text-muted">Bem-vindo(a) de volta!</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="relative">
-            <Mail className="absolute w-5 h-5 text-gray-400 top-3 left-3" />
+            <Mail className="absolute w-5 h-5 text-text-muted top-3 left-3" />
             <input
               {...register('email')}
               type="email"
               placeholder="E-mail"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+              className="w-full pl-10 pr-3 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
             {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
           </div>
 
           <div className="relative">
-            <Lock className="absolute w-5 h-5 text-gray-400 top-3 left-3" />
+            <Lock className="absolute w-5 h-5 text-text-muted top-3 left-3" />
             <input
               {...register('password')}
               type="password"
               placeholder="Senha"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+              className="w-full pl-10 pr-3 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
             {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
           </div>
 
           <div className="text-sm text-right">
-            <a href="#" className="font-medium text-primary hover:text-accent">
+            <a href="#" className="font-medium text-primary hover:text-primary-dark transition-colors">
               Esqueceu a senha?
             </a>
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
             {isSubmitting ? 'Entrando...' : 'Entrar'}
           </Button>
 
           <div className="relative flex items-center justify-center my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
-            <div className="relative px-2 text-sm bg-white text-gray-500">Ou continue com</div>
+            <div className="relative px-2 text-sm bg-white text-text-muted">Ou continue com</div>
           </div>
 
-          <Button type="button" variant="secondary" className="w-full">
+          <Button type="button" variant="outline" className="w-full" size="lg">
             Entrar com Google
           </Button>
         </form>

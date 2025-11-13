@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import type { Appointment, Client, Service } from '../../types';
 import { Clock, User, Tag, Pencil } from 'lucide-react';
+import { Button } from '../ui/Button';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -19,29 +20,31 @@ const AppointmentCard = ({ appointment, client, services, onEdit }: AppointmentC
 
   return (
     <div 
-      className="p-3 rounded-lg shadow-sm text-sm text-gray-800 space-y-2 relative h-full"
+      className="p-3 rounded-lg shadow-sm text-sm text-text space-y-2 relative h-full"
       style={cardStyle}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {isHovered && (
-        <button 
+        <Button 
+          variant="ghost"
+          size="sm"
           onClick={() => onEdit(appointment)}
-          className="absolute top-1 right-1 p-1 bg-white/50 rounded-full hover:bg-white z-10"
+          className="absolute top-1 right-1 p-1 bg-card/80 rounded-full hover:bg-card z-10"
         >
-          <Pencil className="w-4 h-4 text-gray-700" />
-        </button>
+          <Pencil className="w-4 h-4 text-text" />
+        </Button>
       )}
       <div className="font-bold flex items-center space-x-2">
-        <User className="w-4 h-4 text-gray-600" />
+        <User className="w-4 h-4 text-text-muted" />
         <span>{client.name}</span>
       </div>
       <div className="flex items-center space-x-2">
-        <Tag className="w-4 h-4 text-gray-600" />
+        <Tag className="w-4 h-4 text-text-muted" />
         <span>{services.map(s => s.name).join(', ')}</span>
       </div>
       <div className="flex items-center space-x-2 text-xs">
-        <Clock className="w-4 h-4 text-gray-600" />
+        <Clock className="w-4 h-4 text-text-muted" />
         <span>{new Date(appointment.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(appointment.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
       </div>
     </div>

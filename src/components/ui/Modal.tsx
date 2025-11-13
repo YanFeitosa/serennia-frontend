@@ -2,6 +2,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from './Button';
 
 interface ModalProps {
   isOpen: boolean;
@@ -25,14 +26,14 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
-            className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative"
+            className="bg-card rounded-xl shadow-xl w-full max-w-lg p-6 relative border border-border"
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
           >
-            <header className="flex items-center justify-between pb-4 border-b border-gray-200">
+            <header className="flex items-center justify-between pb-4 border-b border-border">
               <h2 className="text-xl font-bold text-text">{title}</h2>
-              <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
+              <Button variant="ghost" onClick={onClose} className="p-1 rounded-full">
+                <X className="w-5 h-5 text-text-muted" />
+              </Button>
             </header>
             <div className="mt-4">{children}</div>
           </motion.div>

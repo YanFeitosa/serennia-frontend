@@ -1,8 +1,10 @@
 // src/pages/Clientes.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus, Phone, Calendar, Eye } from 'lucide-react';
 import { mockClients } from '../data/clients';
 import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
 
 const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,49 +12,74 @@ const Clientes = () => {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-text">Clientes</h1>
-          <p className="text-gray-500">Gerencie sua base de clientes.</p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Buscar por nome..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-lg w-64"
-            />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+      <header className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-text">Clientes</h1>
+            <p className="text-text-muted mt-1">Gerencie sua base de clientes</p>
           </div>
-          <Button className="font-semibold bg-secondary text-secondary border-2 border-primary font-bold py-4 px-4 rounded-lg w-40" onClick={() => navigate('/clientes/novo')}>+ Novo Cliente</Button>
+          <Button onClick={() => navigate('/clientes/novo')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Cliente
+          </Button>
+        </div>
+        <div className="relative max-w-md">
+          <input
+            type="text"
+            placeholder="Buscar por nome..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-border bg-card text-text rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
       </header>
 
-      <div className="bg-white rounded-xl shadow-md">
-        <table className="w-full text-left">
-          <thead className="border-b border-gray-200">
-            <tr>
-              <th className="p-4">Nome</th>
-              <th className="p-4">Telefone</th>
-              <th className="p-4">Última Visita</th>
-              <th className="p-4">Visitas</th>
-              <th className="p-4">Ações</th>
+      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-sidebar border-b border-border">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Nome</th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Telefone</th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Última Visita</th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Visitas</th>
+              <th className="px-6 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border">
             {mockClients
             .filter(client => client.name.toLowerCase().includes(searchTerm.toLowerCase()))
             .map(client => (
-              <tr key={client.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="p-4 font-semibold">{client.name}</td>
-                <td className="p-4">{client.phone}</td>
-                <td className="p-4">{client.lastVisit ? new Date(client.lastVisit).toLocaleDateString('pt-BR') : 'N/A'}</td>
-                <td className="p-4">{client.visitCount}</td>
-                <td className="p-4">
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/clientes/${client.id}`)}>Ver Perfil</Button>
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/agenda/novo?clientId=${client.id}`)}>Agendar</Button>
+              <tr key={client.id} className="hover:bg-sidebar transition-colors">
+                <td className="px-6 py-4">
+                  <div className="font-medium text-text">{client.name}</div>
+                  {client.email && <div className="text-sm text-text-muted">{client.email}</div>}
+                </td>
+                <td className="px-6 py-4 text-sm text-text-muted">
+                  <div className="flex items-center">
+                    <Phone className="w-4 h-4 mr-2 text-text-muted" />
+                    {client.phone}
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-sm text-text-muted">
+                  <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-2 text-text-muted" />
+                    {client.lastVisit ? new Date(client.lastVisit).toLocaleDateString('pt-BR') : 'Nunca'}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <Badge variant={client.visitCount > 5 ? 'success' : 'default'}>
+                    {client.visitCount} {client.visitCount === 1 ? 'visita' : 'visitas'}
+                  </Badge>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <div className="flex items-center justify-end space-x-2">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/clientes/${client.id}`)}>
+                      <Eye className="w-4 h-4 mr-1" />
+                      Ver Perfil
+                    </Button>
+                    <Button size="sm" onClick={() => navigate(`/agenda/novo?clientId=${client.id}`)}>Agendar</Button>
+                  </div>
                 </td>
               </tr>
             ))}

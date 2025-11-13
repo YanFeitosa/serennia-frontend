@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '../components/ui/Button.tsx';
 import { Input } from '../components/ui/Input.tsx';
-import { MultiSelect } from '../components/ui/MultiSelect.tsx';
+import MultiSelectPlain from '../components/ui/MultiSelectPlain.tsx';
 import { mockServices } from '../data/services.ts';
 
 const collaboratorSchema = z.object({
@@ -33,35 +33,35 @@ const ColaboradorForm = () => {
     <div className="space-y-4">
       <header>
         <h1 className="text-3xl font-bold text-text">Novo Colaborador</h1>
-        <p className="text-gray-500">Preencha os dados para cadastrar um novo colaborador.</p>
+        <p className="text-text-muted">Preencha os dados para cadastrar um novo colaborador.</p>
       </header>
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded-xl shadow-md space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-6 rounded-xl shadow-md space-y-4 border border-border">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nome</label>
+          <label htmlFor="name" className="block text-sm font-medium text-text">Nome</label>
           <Input id="name" {...register('name')} />
           {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
         </div>
         <div>
-          <label htmlFor="role" className="block text-sm font-medium text-gray-700">Cargo</label>
+          <label htmlFor="role" className="block text-sm font-medium text-text">Cargo</label>
           <Input id="role" {...register('role')} />
           {errors.role && <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>}
         </div>
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Telefone</label>
+          <label htmlFor="phone" className="block text-sm font-medium text-text">Telefone</label>
           <Input id="phone" {...register('phone')} />
           {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
         </div>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+          <label htmlFor="email" className="block text-sm font-medium text-text">Email</label>
           <Input id="email" {...register('email')} />
           {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Serviços</label>
-          <MultiSelect
+          <label className="block text-sm font-medium text-text">Serviços</label>
+          <MultiSelectPlain
             options={mockServices.map(service => ({ value: service.id, label: service.name }))}
             selected={watch('serviceIds') || []}
-            onChange={value => setValue('serviceIds', value)}
+            onChange={(value: string[]) => setValue('serviceIds', value)}
             placeholder="Selecione os serviços"
           />
           {errors.serviceIds && <p className="mt-1 text-sm text-red-600">{errors.serviceIds.message}</p>}

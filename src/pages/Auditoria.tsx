@@ -19,31 +19,31 @@ const Auditoria = () => {
     <div className="space-y-4">
       <header>
         <h1 className="text-3xl font-bold text-text">Log de Auditoria</h1>
-        <p className="text-gray-500">Rastreie todas as ações importantes no sistema.</p>
+        <p className="text-text-muted">Rastreie todas as ações importantes no sistema.</p>
       </header>
 
-      <div className="bg-white rounded-xl shadow-md">
+      <div className="bg-card rounded-xl shadow-md border border-border">
         <table className="w-full text-left">
-          <thead className="border-b border-gray-200">
+          <thead className="border-b border-border">
             <tr>
-              <th className="p-4">Usuário</th>
-              <th className="p-4">Ação</th>
-              <th className="p-4">Item</th>
-              <th className="p-4">Data</th>
-              <th className="p-4">Detalhes</th>
+              <th className="p-4 text-text">Usuário</th>
+              <th className="p-4 text-text">Ação</th>
+              <th className="p-4 text-text">Item</th>
+              <th className="p-4 text-text">Data</th>
+              <th className="p-4 text-text">Detalhes</th>
             </tr>
           </thead>
           <tbody>
             {mockAuditLogs.map(log => {
               const user = mockUsers.find(u => u.id === log.userId);
               return (
-                <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="p-4">{user?.name || 'Sistema'}</td>
+                <tr key={log.id} className="border-b border-border hover:bg-background transition-colors">
+                  <td className="p-4 text-text">{user?.name || 'Sistema'}</td>
                   <td className="p-4">
                     <Badge variant={getActionVariant(log.action)}>{log.action}</Badge>
                   </td>
-                  <td className="p-4 capitalize">{log.tableName.slice(0, -1)} #{log.recordId.slice(0, 6)}</td>
-                  <td className="p-4">{new Date(log.timestamp).toLocaleString('pt-BR')}</td>
+                  <td className="p-4 capitalize text-text">{log.tableName.slice(0, -1)} #{log.recordId.slice(0, 6)}</td>
+                  <td className="p-4 text-text">{new Date(log.timestamp).toLocaleString('pt-BR')}</td>
                   <td className="p-4"><AuditLogDetails log={log} /></td>
                 </tr>
               );

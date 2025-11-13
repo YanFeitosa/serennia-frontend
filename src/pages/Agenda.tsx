@@ -20,13 +20,13 @@ const Agenda = () => {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-text">Agenda</h1>
-          <p className="text-gray-500">Visualize e gerencie seus agendamentos.</p>
+          <p className="text-text-muted">Visualize e gerencie seus agendamentos.</p>
         </div>
         <div className="flex items-center space-x-2">
           <Button variant={view === 'daily' ? 'primary' : 'ghost'} onClick={() => setView('daily')}>Diária</Button>
           <Button variant={view === 'weekly' ? 'primary' : 'ghost'} onClick={() => setView('weekly')}>Semanal</Button>
           <Button variant={view === 'monthly' ? 'primary' : 'ghost'} onClick={() => setView('monthly')}>Mensal</Button>
-          <Button className="font-semibold bg-secondary text-secondary border-2 border-primary font-bold py-4 px-4 rounded-lg w-50" onClick={() => handleEditAppointment(null)}>+ Novo Agendamento</Button>
+          <Button onClick={() => handleEditAppointment(null)}>+ Novo Agendamento</Button>
         </div>
       </header>
 

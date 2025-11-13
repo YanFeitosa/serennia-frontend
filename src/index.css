@@ -1,15 +1,114 @@
 @import "tailwindcss";
 
+/* 🎨 IDENTIDADE VISUAL — Serenna UI System (ATUALIZADO) */
 :root {
-  --color-primary: #D3AE7A; /* A golden-like color for main actions */
-  --color-secondary: #F5F5F5; /* A light gray for backgrounds */
-  --color-accent: #E38B8B; /* A soft red for accents or alerts */
-  --color-text: #333333; /* Dark gray for text */
-  --color-background: #FFFFFF; /* White background */
+  --color-primary: #25445A;    /* Azul-acinzentado profundo (mais profissional) */
+  --color-secondary: #7AA7D8;  /* Azul suave / secundário */
+  --color-accent: #BFA2DB;     /* Lilás sóbrio */
+  --color-text: #0F1724;       /* Grafite escuro (um pouco mais contrastante) */
+  --color-background: #FFFFFF; /* Branco puro para fundo principal */
+
+  /* Gradações complementares */
+  --color-primary-light: #4A708A;
+  --color-primary-dark: #18333F;
+  --color-accent-light: #E9E2FF;
+  --color-text-muted: #6B7280;
+  --color-border: #E5E7EB;
+  --color-card: #FFFFFF;
+  --color-sidebar: #F7F9FB;    /* Leve variação para o light mode */
+
+  /* 🎯 Cores de Status (Comandas, etc.) */
+  --color-status-success: #22C55E;     /* Verde para "Paga" */
+  --color-status-warning: #F59E0B;     /* Amarelo para "Fechada" */
+  --color-status-info: #3B82F6;        /* Azul para "Aberta" */
+  --color-status-error: #EF4444;       /* Vermelho para erros */
+}
+
+/* 🌙 Dark Mode */
+.dark {
+  --color-primary: #4A708A;    /* Azul mais claro para contraste no dark */
+  --color-secondary: #0F1724;  /* Base escura para secundário em dark */
+  --color-accent: #BFA2DB;     /* Lilás mantido (contrasta bem) */
+  --color-text: #F8FAFC;       /* Texto claro */
+  --color-background: #0B1220; /* Fundo escuro neutro */
+
+  --color-primary-light: #7BA6C8;
+  --color-primary-dark: #25445A;
+  --color-accent-light: #B99FE0;
+  --color-text-muted: #9CA3AF;
+  --color-border: #263445;
+  --color-card: #0F1724;
+  --color-sidebar: #0F1724;
+
+  /* 🎯 Cores de Status (Dark Mode) */
+  --color-status-success: #4ADE80;     /* Verde mais claro */
+  --color-status-warning: #FBBf24;     /* Amarelo mais claro */
+  --color-status-info: #60A5FA;        /* Azul mais claro */
+  --color-status-error: #F87171;       /* Vermelho mais claro */
 }
 
 body {
-  background-color: var(--color-secondary);
+  background-color: var(--color-background);
   color: var(--color-text);
   font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* Transições suaves globais */
+* {
+  transition-duration: 100ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Botões com efeito hover scale leve */
+button:not(:disabled):hover {
+  transform: scale(1.02);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* Animação para dropdown - começa do trigger */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top;
+}
+
+/* 🔧 Classes auxiliares para forçar geração do Tailwind */
+.bg-primary { background-color: var(--color-primary) !important; }
+.bg-primary-light { background-color: var(--color-primary-light) !important; }
+.bg-primary-dark { background-color: var(--color-primary-dark) !important; }
+.bg-secondary { background-color: var(--color-secondary) !important; }
+.bg-accent { background-color: var(--color-accent) !important; }
+.bg-accent-light { background-color: var(--color-accent-light) !important; }
+.bg-card { background-color: var(--color-card) !important; }
+.bg-sidebar { background-color: var(--color-sidebar) !important; }
+.bg-background { background-color: var(--color-background) !important; }
+
+.text-primary { color: var(--color-primary) !important; }
+.text-primary-light { color: var(--color-primary-light) !important; }
+.text-primary-dark { color: var(--color-primary-dark) !important; }
+.text-secondary { color: var(--color-secondary) !important; }
+.text-accent { color: var(--color-accent) !important; }
+.text-accent-light { color: var(--color-accent-light) !important; }
+.text-text { color: var(--color-text) !important; }
+.text-text-muted { color: var(--color-text-muted) !important; }
+
+.border-primary { border-color: var(--color-primary) !important; }
+.border-secondary { border-color: var(--color-secondary) !important; }
+.border-accent { border-color: var(--color-accent) !important; }
+.border-border { border-color: var(--color-border) !important; }

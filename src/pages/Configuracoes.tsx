@@ -1,5 +1,6 @@
 // src/pages/Configuracoes.tsx
 import { useState } from 'react';
+import { Button } from '../components/ui/Button';
 
 const Configuracoes = () => {
   const [tab, setTab] = useState('geral');
@@ -12,9 +13,9 @@ const Configuracoes = () => {
       </header>
 
       <div className="flex space-x-8 border-b border-gray-200">
-        <button onClick={() => setTab('geral')} className={`py-4 px-1 font-medium text-sm ${tab === 'geral' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Geral</button>
-        <button onClick={() => setTab('mensagens')} className={`py-4 px-1 font-medium text-sm ${tab === 'mensagens' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Mensagens</button>
-        <button onClick={() => setTab('integracoes')} className={`py-4 px-1 font-medium text-sm ${tab === 'integracoes' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Integrações</button>
+        <Button variant="ghost" onClick={() => setTab('geral')} className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'geral' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Geral</Button>
+        <Button variant="ghost" onClick={() => setTab('mensagens')} className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'mensagens' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Mensagens</Button>
+        <Button variant="ghost" onClick={() => setTab('integracoes')} className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'integracoes' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}>Integrações</Button>
       </div>
 
       <div>
