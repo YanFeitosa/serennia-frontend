@@ -1,24 +1,19 @@
 // src/pages/Comandas.tsx
 import { useState } from 'react';
-import { mockOrders } from '../data/orders';
-import { mockClients } from '../data/clients';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import type { Order } from '../types';
-import Modal from '../components/ui/Modal';
-import ComandaForm from '../components/comandas/ComandaForm';
-import ComandaDetails from '../components/comandas/ComandaDetails';
+import { mockOrders } from '../data/orders.ts';
+import { mockClients } from '../data/clients.ts';
+import { Button } from '../components/ui/Button.tsx';
+import { Badge } from '../components/ui/Badge.tsx';
+import Modal from '../components/ui/Modal.tsx';
+import ComandaForm from '../components/comandas/ComandaForm.tsx';
+import ComandaDetails from '../components/comandas/ComandaDetails.tsx';
+import type { Order } from '../types/index.ts';
 
 const Comandas = () => {
   const [filter, setFilter] = useState<'all' | 'open' | 'closed' | 'pending_payment'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedComanda, setSelectedComanda] = useState<Order | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const handleViewComanda = (order: Order) => {
-    setSelectedComanda(order);
-    setIsModalOpen(true);
-  };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -34,15 +29,16 @@ const Comandas = () => {
     }
   };
 
-  const filteredOrders = mockOrders.filter(order => {
-    const client = mockClients.find(c => c.id === order.clientId);
-    const clientName = client?.name || '';
-    const comandaId = order.id.slice(0, 6);
+  const getClientName = (clientId: string) => {
+    return mockClients.find(c => c.id === clientId)?.name || 'Cliente não encontrado';
+  };
 
-    const matchesFilter = filter === 'all' || order.status === filter;
+  const filteredComandas = mockOrders.filter(comanda => {
+    const clientName = getClientName(comanda.clientId);
+    const matchesFilter = filter === 'all' || comanda.status === filter;
     const matchesSearch = 
       clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      comandaId.toLowerCase().includes(searchTerm.toLowerCase());
+      comanda.id.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesFilter && matchesSearch;
   });
@@ -70,42 +66,37 @@ const Comandas = () => {
           <Button variant={filter === 'closed' ? 'primary' : 'ghost'} onClick={() => setFilter('closed')}>Fechadas</Button>
           <Button variant={filter === 'pending_payment' ? 'primary' : 'ghost'} onClick={() => setFilter('pending_payment')}>Pendentes</Button>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>+ Nova Comanda</Button>
+        <Button className="font-semibold bg-secondary text-secondary border-2 border-primary font-bold py-4 px-4 rounded-lg w-40" onClick={() => setIsModalOpen(true)}>+ Nova Comanda</Button>
       </header>
 
       <div className="bg-white rounded-xl shadow-md">
         <table className="w-full text-left">
           <thead className="border-b border-gray-200">
             <tr>
-                            <th className="p-4">Cliente</th>
+              <th className="p-4">Cliente</th>
+              <th className="p-4">Data</th>
               <th className="p-4">Valor</th>
               <th className="p-4">Status</th>
-              <th className="p-4">Aberta em</th>
               <th className="p-4">Ações</th>
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map(order => {
-              const client = mockClients.find(c => c.id === order.clientId);
-              return (
-                <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                    <td className="p-4">{client?.name || 'N/A'}</td>
-                  <td className="p-4">{order.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                  <td className="p-4">
-                    <Badge variant={getStatusVariant(order.status)}>
-                      {order.status.replace('_', ' ')}
-                    </Badge>
-                  </td>
-                  <td className="p-4">{new Date(order.createdAt).toLocaleString('pt-BR')}</td>
-                  <td className="p-4"><Button variant="ghost" size="sm" onClick={() => handleViewComanda(order)}>Ver</Button></td>
-                </tr>
-              );
-            })}
+            {filteredComandas.map(comanda => (
+              <tr key={comanda.id} className="border-b border-gray-100 hover:bg-gray-50">
+                <td className="p-4">{getClientName(comanda.clientId)}</td>
+                <td className="p-4">{new Date(comanda.createdAt).toLocaleDateString('pt-BR')}</td>
+                <td className="p-4">{comanda.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td className="p-4"><Badge variant={getStatusVariant(comanda.status)}>{comanda.status}</Badge></td>
+                <td className="p-4">
+                  <Button variant="ghost" onClick={() => { setSelectedComanda(comanda); setIsModalOpen(true); }}>Ver</Button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={selectedComanda ? mockClients.find(c => c.id === selectedComanda.clientId)?.name || 'Comanda' : 'Nova Comanda'}>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={selectedComanda ? getClientName(selectedComanda.clientId) : 'Nova Comanda'}>
         {selectedComanda ? (
           <ComandaDetails order={selectedComanda} />
         ) : (
@@ -117,4 +108,3 @@ const Comandas = () => {
 };
 
 export default Comandas;
-

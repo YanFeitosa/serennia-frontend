@@ -6,6 +6,7 @@ import Agenda from '../pages/Agenda';
 import AgendamentoForm from '../pages/AgendamentoForm';
 import Comandas from '../pages/Comandas';
 import Clientes from '../pages/Clientes';
+import ClienteForm from '../pages/ClienteForm.tsx';
 import ClienteProfile from '../pages/ClienteProfile';
 import Servicos from '../pages/Servicos';
 import Colaboradores from '../pages/Colaboradores';
@@ -39,15 +40,15 @@ const router = createBrowserRouter([
         path: 'clientes',
         children: [
           { path: '', element: <Clientes />, index: true },
+          { path: 'novo', element: <ClienteForm /> },
           { path: ':id', element: <ClienteProfile /> },
-          { path: 'novo', element: <ClienteProfile /> }, // Reusing for creation
         ],
       },
       { path: 'servicos', element: <Servicos /> },
       { path: 'colaboradores', element: <Colaboradores /> },
       { path: 'colaboradores/novo', element: <ColaboradorForm /> },
       { path: 'financeiro', element: <Financeiro /> },
-            { path: 'configuracoes', element: <Configuracoes /> },
+      { path: 'configuracoes', element: <Configuracoes /> },
       { path: 'auditoria', element: <Auditoria /> },
       { path: 'notificacoes', element: <Notificacoes /> },
       {

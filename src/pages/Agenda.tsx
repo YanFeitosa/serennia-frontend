@@ -26,7 +26,7 @@ const Agenda = () => {
           <Button variant={view === 'daily' ? 'primary' : 'ghost'} onClick={() => setView('daily')}>Diária</Button>
           <Button variant={view === 'weekly' ? 'primary' : 'ghost'} onClick={() => setView('weekly')}>Semanal</Button>
           <Button variant={view === 'monthly' ? 'primary' : 'ghost'} onClick={() => setView('monthly')}>Mensal</Button>
-          <Button onClick={() => handleEditAppointment(null)}>+ Novo Agendamento</Button>
+          <Button className="font-semibold bg-secondary text-secondary border-2 border-primary font-bold py-4 px-4 rounded-lg w-50" onClick={() => handleEditAppointment(null)}>+ Novo Agendamento</Button>
         </div>
       </header>
 

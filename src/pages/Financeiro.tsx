@@ -5,7 +5,8 @@ import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { mockOrders } from '../data/orders';
 import { Badge } from '../components/ui/Badge';
-import { DateRangePicker } from '../components/ui/DateRangePicker';
+import { DatePicker } from '../components/ui/DatePicker.tsx';
+import { Button } from '../components/ui/Button.tsx';
 
 const Financeiro = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -15,8 +16,20 @@ const Financeiro = () => {
 
   const filteredOrders = mockOrders.filter(order => {
     const orderDate = new Date(order.createdAt);
-    if (!dateRange || !dateRange.from || !dateRange.to) return false;
-    return orderDate >= dateRange.from && orderDate <= dateRange.to;
+    if (!dateRange || (!dateRange.from && !dateRange.to)) return true;
+
+    const { from, to } = dateRange;
+
+    if (from && to) {
+      return orderDate >= from && orderDate <= to;
+    }
+    if (from) {
+      return orderDate >= from;
+    }
+    if (to) {
+      return orderDate <= to;
+    }
+    return true;
   });
 
   const getChartData = () => {
@@ -106,7 +119,19 @@ const Financeiro = () => {
           <h1 className="text-3xl font-bold text-text">Financeiro</h1>
           <p className="text-gray-500">Acompanhe a saúde financeira do seu negócio.</p>
         </div>
-        <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
+        <div className="flex items-center space-x-2">
+          <DatePicker
+            date={dateRange?.from}
+            setDate={(date) => setDateRange((prev) => ({ from: date, to: prev?.to }))}
+            placeholder="Data de Início"
+          />
+          <DatePicker
+            date={dateRange?.to}
+            setDate={(date) => setDateRange((prev) => ({ from: prev?.from, to: date }))}
+            placeholder="Data de Fim"
+          />
+          <Button variant="ghost" onClick={() => setDateRange({ from: undefined, to: undefined })}>Limpar Filtro</Button>
+        </div>
       </header>
 
       {/* Summary Cards */}
@@ -166,7 +191,7 @@ const Financeiro = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-md p-6">
-        <h3 className="font-bold mb-4">Faturamento Semanal</h3>
+        <h3 className="font-bold mb-4">Faturamento</h3>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />

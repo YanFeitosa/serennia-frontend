@@ -12,7 +12,6 @@ import { Button } from '../components/ui/Button.tsx';
 import { SearchableSelect } from '../components/ui/SearchableSelect.tsx';
 import { MultiSelect } from '../components/ui/MultiSelect.tsx';
 import { Input } from '../components/ui/Input.tsx';
-import { Select } from '../components/ui/Select.tsx';
 import { Textarea } from '../components/ui/Textarea.tsx';
 
 const toDateTimeLocal = (dateStr: string | Date): string => {
@@ -104,12 +103,12 @@ const AgendamentoForm = () => {
 
         <div>
           <label htmlFor="collaboratorId" className="block text-sm font-medium text-gray-700">Profissional</label>
-          <Select id="collaboratorId" {...register('collaboratorId')}>
-            <option value="">Selecione um profissional</option>
-            {mockCollaborators.filter(c => c.status === 'active').map(collab => (
-              <option key={collab.id} value={collab.id}>{collab.name}</option>
-            ))}
-          </Select>
+          <SearchableSelect
+            options={mockCollaborators.filter(c => c.status === 'active').map(collab => ({ value: collab.id, label: collab.name }))}
+            value={watch('collaboratorId')}
+            onChange={value => setValue('collaboratorId', value)}
+            placeholder="Selecione um profissional"
+          />
           {errors.collaboratorId && <p className="mt-1 text-sm text-red-600">{errors.collaboratorId.message}</p>}
         </div>
 
