@@ -46,6 +46,15 @@ export interface Service {
   color?: string; // for agenda display
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  price: number;
+  stock: number;
+}
+
 // 3. Appointments and Scheduling
 
 export type AppointmentStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'canceled' | 'no_show';

@@ -1,7 +1,7 @@
 // src/components/layout/Sidebar.tsx
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Calendar, ShoppingCart, Users, Scissors, Briefcase, TrendingUp, Settings, Shield, Bell, Moon, Sun, LogOut } from 'lucide-react';
-import React, { useState } from 'react';
+import { Calendar, ShoppingCart, Users, Scissors, Briefcase, TrendingUp, Settings, Shield, Bell, Moon, Sun, LogOut, Package } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface SidebarLinkProps {
@@ -37,6 +37,19 @@ const Sidebar = () => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [showLogout, setShowLogout] = useState(false);
+  const profileRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handlePointerDown = (e: PointerEvent) => {
+      if (!profileRef.current) return;
+      const target = e.target as Node | null;
+      if (target && profileRef.current.contains(target)) return;
+      setShowLogout(false);
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    return () => window.removeEventListener('pointerdown', handlePointerDown);
+  }, []);
 
   const handleLogout = () => {
     // Limpar dados de autenticação (se houver)
@@ -56,6 +69,7 @@ const Sidebar = () => {
           <SidebarLink to="/comandas" icon={<ShoppingCart />}>Comandas</SidebarLink>
           <SidebarLink to="/clientes" icon={<Users />}>Clientes</SidebarLink>
           <SidebarLink to="/servicos" icon={<Scissors />}>Serviços</SidebarLink>
+          <SidebarLink to="/produtos" icon={<Package />}>Produtos</SidebarLink>
           <SidebarLink to="/colaboradores" icon={<Briefcase />}>Colaboradores</SidebarLink>
           <SidebarLink to="/financeiro" icon={<TrendingUp />}>Financeiro</SidebarLink>
           <SidebarLink to="/configuracoes" icon={<Settings />}>Configurações</SidebarLink>
@@ -87,11 +101,9 @@ const Sidebar = () => {
       </div>
 
       {/* User Profile */}
-      <div className="p-4 relative">
+      <div className="p-4 relative" ref={profileRef}>
         <button
           onClick={() => setShowLogout(!showLogout)}
-          onMouseEnter={() => setShowLogout(true)}
-          onMouseLeave={() => setShowLogout(false)}
           className="w-full flex items-center space-x-3 px-4 py-3 bg-card rounded-xl hover:ring-2 hover:ring-primary transition-all duration-200 border border-border"
         >
           <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
@@ -107,8 +119,6 @@ const Sidebar = () => {
         {showLogout && (
           <div 
             className="absolute bottom-full left-4 right-4 mb-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-slide-up"
-            onMouseEnter={() => setShowLogout(true)}
-            onMouseLeave={() => setShowLogout(false)}
           >
             <button
               onClick={handleLogout}

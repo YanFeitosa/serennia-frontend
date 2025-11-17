@@ -17,8 +17,51 @@ const getDayOffset = (offset: number) => {
   date.setDate(date.getDate() + offset);
   return date;
 };
+const getDateKey = (iso: string) => {
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+};
 
-export const mockAppointments: Appointment[] = [
+const ensureNoOverlap = (appointments: Appointment[]): Appointment[] => {
+  const groups: Record<string, Appointment[]> = {};
+
+  for (const appt of appointments) {
+    const key = `${appt.collaboratorId}-${getDateKey(appt.start)}`;
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(appt);
+  }
+
+  const result: Appointment[] = [];
+
+  Object.values(groups).forEach(group => {
+    const sorted = [...group].sort(
+      (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+    );
+    let lastEnd: number | null = null;
+
+    sorted.forEach(current => {
+      let start = new Date(current.start);
+      let end = new Date(current.end);
+
+      if (lastEnd !== null && start.getTime() < lastEnd) {
+        const duration = end.getTime() - start.getTime();
+        start = new Date(lastEnd);
+        end = new Date(start.getTime() + duration);
+        current = { ...current, start: start.toISOString(), end: end.toISOString() };
+      }
+
+      lastEnd = end.getTime();
+      result.push(current);
+    });
+  });
+
+  return result;
+};
+
+const initialMockAppointments: Appointment[] = [
   // Today's appointments
   {
     id: 'appt-1',
@@ -27,7 +70,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-1'],
     start: toISO(today, 9, 0),
     end: toISO(today, 10, 0),
-    status: 'confirmed',
+    status: 'completed',
     origin: 'reception',
     price: 120,
   },
@@ -60,7 +103,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-13'],
     start: toISO(today, 15, 30),
     end: toISO(today, 16, 30),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'totem',
     price: 180,
   },
@@ -71,9 +114,20 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-5', 'service-22'],
     start: toISO(today, 16, 0),
     end: toISO(today, 17, 15),
-    status: 'confirmed',
+    status: 'in_progress',
     origin: 'reception',
     price: 130,
+  },
+  {
+    id: 'appt-31',
+    clientId: 'client-2',
+    collaboratorId: 'collab-1',
+    serviceIds: ['service-10'],
+    start: toISO(today, 17, 30),
+    end: toISO(today, 18, 30),
+    status: 'pending',
+    origin: 'app',
+    price: 100,
   },
   
   // Tomorrow's appointments
@@ -84,7 +138,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-1', 'service-10'],
     start: toISO(tomorrow, 11, 0),
     end: toISO(tomorrow, 13, 0),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'totem',
     price: 220,
   },
@@ -95,7 +149,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-6'],
     start: toISO(tomorrow, 9, 0),
     end: toISO(tomorrow, 11, 0),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'whatsapp',
     price: 280,
   },
@@ -117,7 +171,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-19'],
     start: toISO(tomorrow, 10, 0),
     end: toISO(tomorrow, 11, 30),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'reception',
     price: 220,
   },
@@ -128,7 +182,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-11'],
     start: toISO(tomorrow, 15, 0),
     end: toISO(tomorrow, 16, 30),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'totem',
     price: 120,
   },
@@ -141,7 +195,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-7'],
     start: toISO(getDayOffset(2), 9, 0),
     end: toISO(getDayOffset(2), 11, 30),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'whatsapp',
     price: 350,
   },
@@ -163,7 +217,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-14'],
     start: toISO(getDayOffset(2), 14, 0),
     end: toISO(getDayOffset(2), 15, 30),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'reception',
     price: 350,
   },
@@ -174,7 +228,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-5'],
     start: toISO(getDayOffset(2), 16, 0),
     end: toISO(getDayOffset(2), 16, 45),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'totem',
     price: 80,
   },
@@ -187,7 +241,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-8'],
     start: toISO(getDayOffset(3), 9, 0),
     end: toISO(getDayOffset(3), 12, 0),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'whatsapp',
     price: 450,
   },
@@ -209,7 +263,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-20'],
     start: toISO(getDayOffset(3), 15, 0),
     end: toISO(getDayOffset(3), 16, 0),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'reception',
     price: 280,
   },
@@ -222,7 +276,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-23'],
     start: toISO(getDayOffset(4), 10, 0),
     end: toISO(getDayOffset(4), 11, 30),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'totem',
     price: 200,
   },
@@ -233,7 +287,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-18'],
     start: toISO(getDayOffset(4), 14, 0),
     end: toISO(getDayOffset(4), 15, 0),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'whatsapp',
     price: 110,
   },
@@ -257,7 +311,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-25'],
     start: toISO(getDayOffset(5), 9, 0),
     end: toISO(getDayOffset(5), 13, 0),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'reception',
     price: 800,
   },
@@ -268,7 +322,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-5', 'service-22'],
     start: toISO(getDayOffset(5), 10, 0),
     end: toISO(getDayOffset(5), 11, 15),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'totem',
     price: 130,
   },
@@ -279,7 +333,7 @@ export const mockAppointments: Appointment[] = [
     serviceIds: ['service-6', 'service-10'],
     start: toISO(getDayOffset(5), 14, 0),
     end: toISO(getDayOffset(5), 17, 0),
-    status: 'confirmed',
+    status: 'pending',
     origin: 'whatsapp',
     price: 380,
   },
@@ -365,3 +419,12 @@ export const mockAppointments: Appointment[] = [
     price: 80,
   },
 ];
+
+export let mockAppointments: Appointment[] = ensureNoOverlap(initialMockAppointments);
+
+export const upsertMockAppointment = (appointment: Appointment) => {
+  mockAppointments = ensureNoOverlap([
+    ...mockAppointments.filter(a => a.id !== appointment.id),
+    appointment,
+  ]);
+};

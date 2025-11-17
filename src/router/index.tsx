@@ -9,6 +9,7 @@ import Clientes from '../pages/Clientes';
 import ClienteForm from '../pages/ClienteForm.tsx';
 import ClienteProfile from '../pages/ClienteProfile';
 import Servicos from '../pages/Servicos';
+import Produtos from '../pages/Produtos';
 import Colaboradores from '../pages/Colaboradores';
 import ColaboradorForm from '../pages/ColaboradorForm';
 import Financeiro from '../pages/Financeiro';
@@ -56,6 +57,7 @@ const router = createBrowserRouter([
         ],
       },
       { path: 'servicos', element: <Servicos /> },
+      { path: 'produtos', element: <Produtos /> },
       { path: 'colaboradores', element: <Colaboradores /> },
       { path: 'colaboradores/novo', element: <ColaboradorForm /> },
       { path: 'financeiro', element: <Financeiro /> },

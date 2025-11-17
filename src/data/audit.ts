@@ -58,7 +58,7 @@ export const mockAuditLogs: AuditLog[] = [
     tableName: 'appointments',
     recordId: 'appt-2',
     timestamp: new Date(new Date().setHours(new Date().getHours() - 5)).toISOString(),
-    oldValue: { status: 'confirmed' },
+    oldValue: { status: 'pending' },
     newValue: { status: 'in_progress' },
   },
   {
@@ -129,7 +129,7 @@ export const mockAuditLogs: AuditLog[] = [
     tableName: 'appointments',
     recordId: 'appt-30',
     timestamp: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
-    oldValue: { status: 'confirmed' },
+    oldValue: { status: 'pending' },
     newValue: { status: 'no_show' },
   },
   {
@@ -180,7 +180,7 @@ export const mockAuditLogs: AuditLog[] = [
     recordId: 'appt-17',
     timestamp: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString(),
     oldValue: { status: 'pending' },
-    newValue: { status: 'confirmed' },
+    newValue: { status: 'in_progress' },
   },
   {
     id: 'log-19',

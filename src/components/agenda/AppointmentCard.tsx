@@ -1,29 +1,72 @@
 // src/components/agenda/AppointmentCard.tsx
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { CSSProperties } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Appointment, Client, Service } from '../../types';
 import { Clock, User, Tag, Pencil } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { mockOrders, createOrderFromAppointment } from '../../data/orders';
 
 interface AppointmentCardProps {
   appointment: Appointment;
   client: Client;
   services: Service[];
   onEdit: (appointment: Appointment) => void;
+  minHeight?: number;
 }
 
-const AppointmentCard = ({ appointment, client, services, onEdit }: AppointmentCardProps) => {
+const getLatestOrderForClient = (clientId: string) => {
+  const ordersForClient = mockOrders.filter(order => order.clientId === clientId);
+  if (ordersForClient.length === 0) return null;
+  return [...ordersForClient].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )[0];
+};
+
+const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: AppointmentCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const cardStyle = {
-    backgroundColor: services[0]?.color || '#E5E7EB', // Default gray
-    borderLeft: `4px solid ${services[0]?.color ? darkenColor(services[0].color, -20) : '#9CA3AF'}`,
+  const [isExpanded, setIsExpanded] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
+  const latestOrder = getLatestOrderForClient(client.id);
+  const hasOpenOrder = latestOrder?.status === 'open';
+
+  const cardStyle: CSSProperties = {
+    backgroundColor: 'var(--color-primary-light)',
+    minHeight,
   };
+
+  if (appointment.status === 'in_progress') {
+    cardStyle.backgroundColor = 'var(--color-status-warning)';
+  } else if (appointment.status === 'completed') {
+    cardStyle.backgroundColor = 'var(--color-status-success)';
+  }
+
+  useEffect(() => {
+    if (!isExpanded) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setIsExpanded(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isExpanded]);
 
   return (
     <div 
-      className="p-3 rounded-lg shadow-sm text-sm text-text space-y-2 relative h-full"
+      ref={cardRef}
+      className={`p-3 rounded-lg shadow-sm text-sm text-text space-y-2 relative h-full cursor-pointer ${
+        isExpanded ? 'overflow-visible' : 'overflow-hidden'
+      }`}
       style={cardStyle}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => setIsExpanded(true)}
     >
       {isHovered && (
         <Button 
@@ -35,30 +78,73 @@ const AppointmentCard = ({ appointment, client, services, onEdit }: AppointmentC
           <Pencil className="w-4 h-4 text-text" />
         </Button>
       )}
-      <div className="font-bold flex items-center space-x-2">
-        <User className="w-4 h-4 text-text-muted" />
-        <span>{client.name}</span>
+      <div className="space-y-2">
+        <div className="font-bold flex items-center space-x-2">
+          <User className="w-4 h-4 text-text-muted" />
+          <span className="break-words leading-snug">{client.name}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Tag className="w-4 h-4 text-text-muted" />
+          <span className="break-words leading-snug">{services.map(s => s.name).join(', ')}</span>
+        </div>
+        <div className="flex items-center space-x-2 text-xs">
+          <Clock className="w-4 h-4 text-text-muted" />
+          <span>
+            {new Date(appointment.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {' - '}
+            {new Date(appointment.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
       </div>
-      <div className="flex items-center space-x-2">
-        <Tag className="w-4 h-4 text-text-muted" />
-        <span>{services.map(s => s.name).join(', ')}</span>
-      </div>
-      <div className="flex items-center space-x-2 text-xs">
-        <Clock className="w-4 h-4 text-text-muted" />
-        <span>{new Date(appointment.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(appointment.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-      </div>
+      {isExpanded && (() => {
+        let label: string | null = null;
+        let onClick: ((e: React.MouseEvent) => void) | null = null;
+
+        if (appointment.status === 'pending') {
+          // Cards azuis (pending) nunca mostram "Acessar comanda";
+          // só permitem abrir nova comanda se não houver comanda aberta.
+          if (!hasOpenOrder) {
+            label = 'Abrir comanda';
+            onClick = (e) => {
+              e.stopPropagation();
+              const order = createOrderFromAppointment(appointment);
+              navigate('/comandas', {
+                state: { focusOrderId: order.id },
+              });
+            };
+          }
+        } else if (appointment.status === 'in_progress' || appointment.status === 'completed') {
+          if (latestOrder) {
+            label = 'Acessar comanda';
+            onClick = (e) => {
+              e.stopPropagation();
+              navigate('/comandas', {
+                state: { focusOrderId: latestOrder.id },
+              });
+            };
+          }
+        }
+
+        if (!label || !onClick) return null;
+
+        return (
+          <div className="pt-2 flex justify-center">
+            <Button size="sm" variant="secondary" onClick={onClick}>
+              {label}
+            </Button>
+          </div>
+        );
+      })()}
+      {!isExpanded && (
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-6"
+          style={{
+            background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0))',
+          }}
+        />
+      )}
     </div>
   );
-};
-
-// Helper to darken the border color
-function darkenColor(hex: string, percent: number) {
-  const num = parseInt(hex.replace("#", ""), 16),
-    amt = Math.round(2.55 * percent),
-    R = (num >> 16) + amt,
-    G = (num >> 8 & 0x00FF) + amt,
-    B = (num & 0x0000FF) + amt;
-  return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
 };
 
 export default AppointmentCard;

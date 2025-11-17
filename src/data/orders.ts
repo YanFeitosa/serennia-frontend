@@ -1,5 +1,6 @@
 // src/data/orders.ts
-import type { Order, OrderItem } from '../types';
+import type { Appointment, Order, OrderItem } from '../types';
+import { mockServices } from './services';
 
 const orderItems: OrderItem[] = [
   { id: 'oi-1', serviceId: 'service-1', collaboratorId: 'collab-1', price: 120, commission: 60 },
@@ -29,7 +30,7 @@ const orderItems: OrderItem[] = [
   { id: 'oi-25', serviceId: 'service-25', collaboratorId: 'collab-9', price: 800, commission: 464 },
 ];
 
-export const mockOrders: Order[] = [
+export let mockOrders: Order[] = [
   // Open orders (today)
   {
     id: 'order-1',
@@ -288,3 +289,96 @@ export const mockOrders: Order[] = [
     createdAt: new Date(new Date().setDate(new Date().getDate() - 14)).toISOString(),
   },
 ];
+
+const calcTotals = (items: OrderItem[]): { total: number; finalValue: number } => {
+  const total = items.reduce((sum, item) => sum + item.price, 0);
+  return { total, finalValue: total };
+};
+
+export const createEmptyOrderForClient = (clientId: string): Order => {
+  const id = `order-${Date.now()}`;
+  const now = new Date().toISOString();
+  const order: Order = {
+    id,
+    clientId,
+    items: [],
+    total: 0,
+    discount: 0,
+    finalValue: 0,
+    status: 'open',
+    createdAt: now,
+  };
+  mockOrders = [...mockOrders, order];
+  return order;
+};
+
+export const createOrderFromAppointment = (appointment: Appointment): Order => {
+  const now = new Date().toISOString();
+  const items: OrderItem[] = appointment.serviceIds.map(serviceId => {
+    const service = mockServices.find(s => s.id === serviceId);
+    const price = service?.price ?? 0;
+    const commission = service ? service.price * service.commission : 0;
+    return {
+      id: `oi-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      serviceId,
+      collaboratorId: appointment.collaboratorId,
+      price,
+      commission,
+    };
+  });
+
+  const { total, finalValue } = calcTotals(items);
+
+  const order: Order = {
+    id: `order-${Date.now()}`,
+    clientId: appointment.clientId,
+    items,
+    total,
+    discount: 0,
+    finalValue,
+    status: 'open',
+    createdAt: now,
+  };
+
+  mockOrders = [...mockOrders, order];
+  return order;
+};
+
+export const addItemToOrder = (orderId: string, serviceId: string, collaboratorId: string): Order | null => {
+  const service = mockServices.find(s => s.id === serviceId);
+  if (!service) return null;
+
+  const price = service.price;
+  const commission = service.price * service.commission;
+  const item: OrderItem = {
+    id: `oi-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    serviceId,
+    collaboratorId,
+    price,
+    commission,
+  };
+
+  mockOrders = mockOrders.map(order => {
+    if (order.id !== orderId) return order;
+    const items = [...order.items, item];
+    const { total, finalValue } = calcTotals(items);
+    return { ...order, items, total, finalValue };
+  });
+
+  return mockOrders.find(o => o.id === orderId) ?? null;
+};
+
+export const removeItemFromOrder = (orderId: string, itemId: string): Order | null => {
+  mockOrders = mockOrders.map(order => {
+    if (order.id !== orderId) return order;
+    const items = order.items.filter(item => item.id !== itemId);
+    const { total, finalValue } = calcTotals(items);
+    return { ...order, items, total, finalValue };
+  });
+
+  return mockOrders.find(o => o.id === orderId) ?? null;
+};
+
+export const findOrderById = (id: string): Order | null => {
+  return mockOrders.find(o => o.id === id) ?? null;
+};

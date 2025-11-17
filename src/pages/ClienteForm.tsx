@@ -1,10 +1,12 @@
 // src/pages/ClienteForm.tsx
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Button } from '../components/ui/Button.tsx';
 import { Input } from '../components/ui/Input.tsx';
+import type { Client } from '../types';
+import { addMockClient } from '../data/clients';
 
 const clientSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
@@ -16,12 +18,38 @@ type ClientSchema = z.infer<typeof clientSchema>;
 
 const ClienteForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as { from?: 'agendamento' | 'comandas' } | null;
+  const from = state?.from;
   const { register, handleSubmit, formState: { errors } } = useForm<ClientSchema>({
     resolver: zodResolver(clientSchema),
   });
 
   const onSubmit: SubmitHandler<ClientSchema> = (data) => {
-    console.log(data);
+    const id = `client-${Date.now()}`;
+    const newClient: Client = {
+      id,
+      name: data.name,
+      phone: data.phone,
+      email: data.email,
+      visitCount: 0,
+    };
+    addMockClient(newClient);
+
+    if (from === 'agendamento') {
+      navigate('/agenda/novo', {
+        state: { newClientId: id },
+      });
+      return;
+    }
+
+    if (from === 'comandas') {
+      navigate('/comandas', {
+        state: { fromNewClientClientId: id },
+      });
+      return;
+    }
+
     navigate('/clientes');
   };
 

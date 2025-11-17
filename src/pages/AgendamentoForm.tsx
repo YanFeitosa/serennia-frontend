@@ -3,8 +3,9 @@ import { useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import type { Appointment } from '../types';
 import { appointmentSchema, type AppointmentSchema } from '../lib/schemas.ts';
-import { mockAppointments } from '../data/appointments.ts';
+import { mockAppointments, upsertMockAppointment } from '../data/appointments.ts';
 import { mockClients } from '../data/clients.ts';
 import { mockCollaborators } from '../data/collaborators.ts';
 import { mockServices } from '../data/services.ts';
@@ -35,11 +36,17 @@ const toDateTimeLocal = (dateStr: string | Date): string => {
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
-}
+};
 
 const AgendamentoForm = () => {
+  const location = useLocation();
   const query = useQuery();
-  const clientId = query.get('clientId');
+  const clientIdFromQuery = query.get('clientId');
+  const startFromQuery = query.get('start');
+  const collaboratorIdFromQuery = query.get('collaboratorId');
+  const state = location.state as { newClientId?: string } | null;
+  const newClientIdFromState = state?.newClientId;
+  const initialClientId = newClientIdFromState || clientIdFromQuery || '';
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const appointment = id ? mockAppointments.find(a => a.id === id) : null;
@@ -62,20 +69,85 @@ const AgendamentoForm = () => {
         start: toDateTimeLocal(appointment.start),
       });
     } else {
+      const initialStart = startFromQuery ?? toDateTimeLocal(new Date());
       reset({
-        clientId: clientId || '',
-        collaboratorId: '',
+        clientId: initialClientId,
+        collaboratorId: collaboratorIdFromQuery || '',
         serviceIds: [],
         notes: '',
-        start: toDateTimeLocal(new Date()),
+        start: initialStart,
       });
     }
-  }, [appointment, reset]);
+  }, [appointment, reset, initialClientId, startFromQuery, collaboratorIdFromQuery]);
 
   const onSubmit: SubmitHandler<AppointmentSchema> = (data) => {
-    console.log('Appointment data:', data);
+    const startDate = new Date(data.start);
+    if (isNaN(startDate.getTime())) {
+      alert('Data e hora de início inválidas.');
+      return;
+    }
+
+    const now = new Date();
+    if (startDate.getTime() < now.getTime()) {
+      alert('Não é possível criar um agendamento no passado.');
+      return;
+    }
+
+    const selectedServices = mockServices.filter(service => data.serviceIds.includes(service.id));
+    const totalDurationMinutes = selectedServices.reduce(
+      (acc, service) => acc + service.duration + (service.bufferTime ?? 0),
+      0
+    );
+
+    if (totalDurationMinutes <= 0) {
+      alert('Não foi possível calcular a duração do agendamento.');
+      return;
+    }
+
+    const endDate = new Date(startDate.getTime() + totalDurationMinutes * 60 * 1000);
+
+    const hasOverlap = mockAppointments.some(existing => {
+      if (appointment && existing.id === appointment.id) return false;
+      if (existing.collaboratorId !== data.collaboratorId) return false;
+      const existingStart = new Date(existing.start);
+      const existingEnd = new Date(existing.end);
+      return startDate < existingEnd && endDate > existingStart;
+    });
+
+    if (hasOverlap) {
+      alert('Este profissional já possui um agendamento que conflita com este horário.');
+      return;
+    }
+
+    const baseAppointment: Appointment = appointment
+      ? { ...appointment }
+      : {
+          id: `appt-${Date.now()}`,
+          clientId: data.clientId,
+          collaboratorId: data.collaboratorId,
+          serviceIds: data.serviceIds,
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+          status: 'pending',
+          origin: 'reception',
+          notes: data.notes,
+          price: selectedServices.reduce((sum, service) => sum + service.price, 0),
+        };
+
+    const nextAppointment: Appointment = {
+      ...baseAppointment,
+      clientId: data.clientId,
+      collaboratorId: data.collaboratorId,
+      serviceIds: data.serviceIds,
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+      notes: data.notes,
+      price: selectedServices.reduce((sum, service) => sum + service.price, 0),
+    };
+
     return new Promise(resolve => {
       setTimeout(() => {
+        upsertMockAppointment(nextAppointment);
         alert(appointment ? 'Agendamento atualizado!' : 'Agendamento criado!');
         navigate('/agenda');
         resolve(void 0);
@@ -93,9 +165,18 @@ const AgendamentoForm = () => {
         <div>
           <label htmlFor="clientId" className="block text-sm font-medium text-text">Cliente</label>
           <SearchableSelectPlain
-            options={mockClients.map(client => ({ value: client.id, label: client.name }))}
+            options={[
+              ...mockClients.map(client => ({ value: client.id, label: client.name })),
+              { value: '__add_client__', label: '+ adicionar cliente' },
+            ]}
             value={watch('clientId')}
-            onChange={(value: string) => setValue('clientId', value)}
+            onChange={(value: string) => {
+              if (value === '__add_client__') {
+                navigate('/clientes/novo', { state: { from: 'agendamento' } });
+                return;
+              }
+              setValue('clientId', value);
+            }}
             placeholder="Selecione um cliente"
           />
           {errors.clientId && <p className="mt-1 text-sm text-red-600">{errors.clientId.message}</p>}
@@ -150,3 +231,4 @@ const AgendamentoForm = () => {
 };
 
 export default AgendamentoForm;
+

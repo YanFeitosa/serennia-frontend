@@ -1,26 +1,47 @@
 // src/pages/Comandas.tsx
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import { mockOrders } from '../data/orders.ts';
+import { mockOrders, createEmptyOrderForClient, findOrderById } from '../data/orders.ts';
 import { mockClients } from '../data/clients.ts';
 import { mockServices } from '../data/services.ts';
 import { Button } from '../components/ui/Button.tsx';
 import { Badge } from '../components/ui/Badge.tsx';
 import Modal from '../components/ui/Modal.tsx';
-import ComandaForm from '../components/comandas/ComandaForm.tsx';
 import ComandaDetails from '../components/comandas/ComandaDetails.tsx';
 import type { Order } from '../types/index.ts';
+import SearchableSelectPlain from '../components/ui/SearchableSelectPlain.tsx';
 
 const Comandas = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const state = location.state as
+    | { focusOrderId?: string; fromNewClientClientId?: string }
+    | null;
+  const focusOrderId = state?.focusOrderId;
+  const fromNewClientClientId = state?.fromNewClientClientId;
+
+  // Inicializa comanda selecionada a partir do estado de navegação (agenda ou novo cliente)
+  const [selectedComanda, setSelectedComanda] = useState<Order | null>(() => {
+    if (focusOrderId) {
+      return findOrderById(focusOrderId);
+    }
+    if (fromNewClientClientId) {
+      return createEmptyOrderForClient(fromNewClientClientId);
+    }
+    return null;
+  });
+
   const [filter, setFilter] = useState<'all' | 'open' | 'closed' | 'paid'>('all');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedComanda, setSelectedComanda] = useState<Order | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(!!focusOrderId || !!fromNewClientClientId);
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedComanda, setExpandedComanda] = useState<string | null>(null);
+  const [expandedComanda, setExpandedComanda] = useState<string | null>(() => selectedComanda?.id ?? null);
+  const [newOrderClientId, setNewOrderClientId] = useState('');
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedComanda(null);
+    setNewOrderClientId('');
   };
 
   const getStatusVariant = (status: Order['status']) => {
@@ -71,7 +92,13 @@ const Comandas = () => {
             <h1 className="text-3xl font-bold text-text">Comandas</h1>
             <p className="text-text-muted mt-1">Gerencie as comandas dos seus clientes</p>
           </div>
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button
+            onClick={() => {
+              setSelectedComanda(null);
+              setNewOrderClientId('');
+              setIsModalOpen(true);
+            }}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Nova Comanda
           </Button>
@@ -220,11 +247,56 @@ const Comandas = () => {
         </table>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={selectedComanda ? getClientName(selectedComanda.clientId) : 'Nova Comanda'}>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={selectedComanda ? getClientName(selectedComanda.clientId) : 'Nova Comanda'}
+      >
         {selectedComanda ? (
-          <ComandaDetails order={selectedComanda} />
+          <ComandaDetails
+            order={selectedComanda}
+            onOrderChange={(next) => {
+              setSelectedComanda(next);
+              setExpandedComanda(next.id);
+            }}
+          />
         ) : (
-          <ComandaForm />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-text">Cliente</label>
+              <SearchableSelectPlain
+                options={[
+                  ...mockClients.map(client => ({ value: client.id, label: client.name })),
+                  { value: '__add_client__', label: '+ adicionar cliente' },
+                ]}
+                value={newOrderClientId}
+                onChange={(value: string) => {
+                  if (value === '__add_client__') {
+                    navigate('/clientes/novo', { state: { from: 'comandas' } });
+                    return;
+                  }
+                  setNewOrderClientId(value);
+                }}
+                placeholder="Selecione um cliente"
+              />
+            </div>
+            <div className="flex justify-end space-x-2 pt-2">
+              <Button variant="ghost" onClick={handleCloseModal}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!newOrderClientId) return;
+                  const order = createEmptyOrderForClient(newOrderClientId);
+                  setSelectedComanda(order);
+                  setExpandedComanda(order.id);
+                }}
+                disabled={!newOrderClientId}
+              >
+                Abrir comanda
+              </Button>
+            </div>
+          </div>
         )}
       </Modal>
     </div>

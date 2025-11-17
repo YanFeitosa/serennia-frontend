@@ -1,7 +1,7 @@
 // src/data/clients.ts
 import type { Client } from '../types';
 
-export const mockClients: Client[] = [
+export let mockClients: Client[] = [
   {
     id: 'client-1',
     name: 'Helena Martins',
@@ -129,3 +129,7 @@ export const mockClients: Client[] = [
     tags: ['prefere-sem-conversa'],
   },
 ];
+
+export const addMockClient = (client: Client) => {
+  mockClients = [...mockClients, client];
+};
