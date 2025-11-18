@@ -133,3 +133,9 @@ export let mockClients: Client[] = [
 export const addMockClient = (client: Client) => {
   mockClients = [...mockClients, client];
 };
+
+export const updateMockClient = (id: string, updates: Partial<Client>) => {
+  mockClients = mockClients.map(client =>
+    client.id === id ? { ...client, ...updates } : client
+  );
+};

@@ -62,15 +62,27 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 							onClick={() => onSelectDate(d)}
 							className={`h-24 border border-border rounded-lg p-1 flex flex-col text-left transition-colors ${
 								isCurrentMonth ? 'bg-background' : 'bg-muted/40 text-text-muted'
-							} ${isToday ? 'ring-2 ring-primary' : ''} hover:bg-primary/5`}
-							style={count > 0 ? { backgroundColor: 'var(--color-accent-light)' } : undefined}
+							}`}
+							style={{
+								backgroundColor:
+									count > 0
+										? 'color-mix(in srgb, var(--color-status-info) 8%, var(--color-background) 92%)'
+										: undefined,
+								boxShadow: isToday ? '0 0 0 2px var(--color-status-info)' : undefined,
+							}}
 						>
 							<div className="flex items-center justify-between mb-1">
 								<span className="text-sm font-semibold">
 									{d.getDate()}
 								</span>
 								{count > 0 && (
-									<span className="text-xs px-1 rounded-full bg-primary/10 text-primary font-semibold">
+									<span
+										className="text-xs px-1 rounded-full font-semibold"
+										style={{
+											backgroundColor: 'color-mix(in srgb, var(--color-status-info) 12%, transparent)',
+											color: 'var(--color-status-info)',
+										}}
+									>
 										{count} agend.
 									</span>
 								)}

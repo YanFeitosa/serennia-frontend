@@ -33,6 +33,7 @@ export interface Collaborator {
   phone?: string;
   email?: string;
   commissionRate: number; // Default commission rate
+  serviceCategories?: string[];
 }
 
 export interface Service {
@@ -41,9 +42,10 @@ export interface Service {
   description?: string;
   duration: number; // in minutes
   price: number;
-  commission: number; // percentage or fixed value
+  commission: number; // commission percentage as fraction (0-1)
   bufferTime?: number; // minutes after service
-  color?: string; // for agenda display
+  color?: string; // for agenda display (não usado na UI atual)
+  category?: string;
 }
 
 export interface Product {
@@ -77,8 +79,10 @@ export interface Appointment {
 
 export interface OrderItem {
   id: string;
-  serviceId: string;
-  collaboratorId: string;
+  type: 'service' | 'product';
+  serviceId?: string;
+  productId?: string;
+  collaboratorId?: string;
   price: number;
   commission: number;
 }

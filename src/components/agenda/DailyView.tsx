@@ -7,6 +7,7 @@ import { mockServices } from '../../data/services';
 import AppointmentCard from './AppointmentCard';
 import { useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DailyViewProps {
   date: Date;
@@ -49,6 +50,32 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
       className="bg-card rounded-xl shadow-md p-4 border border-border"
       style={{ minHeight: columnHeight + 32 }}
     >
+      {/* Controles de rolagem horizontal */}
+      <div className="flex justify-end items-center mb-2 gap-2">
+        <button
+          type="button"
+          className="px-2 py-1 text-xs rounded border border-border text-text-muted hover:bg-secondary hover:text-text transition-colors flex items-center gap-1"
+          onClick={() => {
+            if (scrollRef.current) {
+              scrollRef.current.scrollBy({ left: -220, behavior: 'smooth' });
+            }
+          }}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          className="px-2 py-1 text-xs rounded border border-border text-text-muted hover:bg-secondary hover:text-text transition-colors flex items-center gap-1"
+          onClick={() => {
+            if (scrollRef.current) {
+              scrollRef.current.scrollBy({ left: 220, behavior: 'smooth' });
+            }
+          }}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
       <div className="flex">
         {/* Time Scale */}
         <div className="w-16 text-right pr-2 border-r border-border" style={{ paddingTop: HEADER_HEIGHT }}>
@@ -71,35 +98,8 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
             );
           })}
         </div>
-
         {/* Agenda Grid */}
         <div className="flex-1 overflow-hidden">
-          {/* Controles de rolagem horizontal */}
-          <div className="flex justify-end items-center mb-2 gap-2">
-            <button
-              type="button"
-              className="px-2 py-1 text-xs rounded border border-border text-text-muted hover:bg-secondary hover:text-text transition-colors"
-              onClick={() => {
-                if (scrollRef.current) {
-                  scrollRef.current.scrollBy({ left: -220, behavior: 'smooth' });
-                }
-              }}
-            >
-              ◀
-            </button>
-            <button
-              type="button"
-              className="px-2 py-1 text-xs rounded border border-border text-text-muted hover:bg-secondary hover:text-text transition-colors"
-              onClick={() => {
-                if (scrollRef.current) {
-                  scrollRef.current.scrollBy({ left: 220, behavior: 'smooth' });
-                }
-              }}
-            >
-              ▶
-            </button>
-          </div>
-
           <div
             ref={scrollRef}
             className="relative flex overflow-x-auto"

@@ -8,31 +8,33 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={`p-3 ${className}`}
+      className={`bg-card rounded-xl border border-border p-4 ${className ?? ''}`}
       classNames={{
-        months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
+        months: 'flex flex-col space-y-4',
         month: 'space-y-4',
-        caption: 'flex justify-center pt-1 relative items-center',
-        caption_label: 'text-sm font-medium',
-        nav: 'space-x-1 flex items-center',
-        nav_button: 'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100',
-        nav_button_previous: 'absolute left-1',
-        nav_button_next: 'absolute right-1',
-        table: 'w-full border-collapse space-y-1',
-        head_row: 'flex',
-        head_cell: 'text-gray-500 rounded-md w-9 font-normal text-[0.8rem]',
-        row: 'flex w-full mt-2',
-        cell: 'h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
-        day: 'h-9 w-9 p-0 font-normal aria-selected:opacity-100',
-        day_selected: 'bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white',
-        day_today: 'bg-accent text-accent-foreground',
-        day_outside: 'text-gray-500 opacity-50',
-        day_disabled: 'text-gray-500 opacity-50',
-        day_range_middle: 'aria-selected:bg-accent aria-selected:text-accent-foreground',
+        caption: 'flex items-center justify-between px-1',
+        caption_label: 'text-sm font-medium text-text',
+        nav: 'flex items-center space-x-1',
+        nav_button:
+          'inline-flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-sidebar hover:text-text',
+        nav_button_previous: 'order-first',
+        nav_button_next: 'order-last',
+        table: 'w-full border-collapse',
+        head_row: 'grid grid-cols-7 gap-1',
+        head_cell: 'text-[0.75rem] text-center text-text-muted font-normal',
+        row: 'grid grid-cols-7 gap-1 mt-1',
+        cell: 'relative text-center text-sm',
+        day: 'h-9 w-9 rounded-full flex items-center justify-center text-sm font-normal text-text hover:bg-sidebar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        day_selected:
+          'bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white',
+        day_today: 'border border-primary text-primary',
+        day_outside: 'text-text-muted opacity-50',
+        day_disabled: 'text-text-muted opacity-40',
+        day_range_middle: 'bg-accent text-text',
         day_hidden: 'invisible',
         ...classNames,
       }}
-      {...props as any}
+      {...(props as any)}
     />
   );
 }

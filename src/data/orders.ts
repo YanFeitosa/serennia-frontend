@@ -1,33 +1,34 @@
 // src/data/orders.ts
 import type { Appointment, Order, OrderItem } from '../types';
 import { mockServices } from './services';
+import { mockProducts } from './products';
 
 const orderItems: OrderItem[] = [
-  { id: 'oi-1', serviceId: 'service-1', collaboratorId: 'collab-1', price: 120, commission: 60 },
-  { id: 'oi-2', serviceId: 'service-2', collaboratorId: 'collab-2', price: 80, commission: 32 },
-  { id: 'oi-3', serviceId: 'service-3', collaboratorId: 'collab-3', price: 180, commission: 99 },
-  { id: 'oi-4', serviceId: 'service-4', collaboratorId: 'collab-9', price: 250, commission: 125 },
-  { id: 'oi-5', serviceId: 'service-5', collaboratorId: 'collab-6', price: 80, commission: 38.4 },
-  { id: 'oi-6', serviceId: 'service-6', collaboratorId: 'collab-8', price: 280, commission: 145.6 },
-  { id: 'oi-7', serviceId: 'service-7', collaboratorId: 'collab-1', price: 350, commission: 175 },
-  { id: 'oi-8', serviceId: 'service-8', collaboratorId: 'collab-8', price: 450, commission: 247.5 },
-  { id: 'oi-9', serviceId: 'service-9', collaboratorId: 'collab-1', price: 70, commission: 35 },
-  { id: 'oi-10', serviceId: 'service-10', collaboratorId: 'collab-1', price: 100, commission: 50 },
-  { id: 'oi-11', serviceId: 'service-11', collaboratorId: 'collab-2', price: 120, commission: 48 },
-  { id: 'oi-12', serviceId: 'service-12', collaboratorId: 'collab-7', price: 60, commission: 28.8 },
-  { id: 'oi-13', serviceId: 'service-13', collaboratorId: 'collab-5', price: 180, commission: 86.4 },
-  { id: 'oi-14', serviceId: 'service-14', collaboratorId: 'collab-5', price: 350, commission: 168 },
-  { id: 'oi-15', serviceId: 'service-15', collaboratorId: 'collab-7', price: 150, commission: 70.5 },
-  { id: 'oi-16', serviceId: 'service-16', collaboratorId: 'collab-7', price: 200, commission: 94 },
-  { id: 'oi-17', serviceId: 'service-17', collaboratorId: 'collab-9', price: 180, commission: 91.8 },
-  { id: 'oi-18', serviceId: 'service-18', collaboratorId: 'collab-2', price: 110, commission: 44 },
-  { id: 'oi-19', serviceId: 'service-19', collaboratorId: 'collab-3', price: 220, commission: 118.8 },
-  { id: 'oi-20', serviceId: 'service-20', collaboratorId: 'collab-3', price: 280, commission: 156.8 },
-  { id: 'oi-21', serviceId: 'service-21', collaboratorId: 'collab-5', price: 300, commission: 156 },
-  { id: 'oi-22', serviceId: 'service-22', collaboratorId: 'collab-6', price: 50, commission: 22.5 },
-  { id: 'oi-23', serviceId: 'service-23', collaboratorId: 'collab-1', price: 200, commission: 100 },
-  { id: 'oi-24', serviceId: 'service-24', collaboratorId: 'collab-9', price: 130, commission: 63.7 },
-  { id: 'oi-25', serviceId: 'service-25', collaboratorId: 'collab-9', price: 800, commission: 464 },
+  { id: 'oi-1', type: 'service', serviceId: 'service-1', collaboratorId: 'collab-1', price: 120, commission: 60 },
+  { id: 'oi-2', type: 'service', serviceId: 'service-2', collaboratorId: 'collab-2', price: 80, commission: 32 },
+  { id: 'oi-3', type: 'service', serviceId: 'service-3', collaboratorId: 'collab-3', price: 180, commission: 99 },
+  { id: 'oi-4', type: 'service', serviceId: 'service-4', collaboratorId: 'collab-9', price: 250, commission: 125 },
+  { id: 'oi-5', type: 'service', serviceId: 'service-5', collaboratorId: 'collab-6', price: 80, commission: 38.4 },
+  { id: 'oi-6', type: 'service', serviceId: 'service-6', collaboratorId: 'collab-8', price: 280, commission: 145.6 },
+  { id: 'oi-7', type: 'service', serviceId: 'service-7', collaboratorId: 'collab-1', price: 350, commission: 175 },
+  { id: 'oi-8', type: 'service', serviceId: 'service-8', collaboratorId: 'collab-8', price: 450, commission: 247.5 },
+  { id: 'oi-9', type: 'service', serviceId: 'service-9', collaboratorId: 'collab-1', price: 70, commission: 35 },
+  { id: 'oi-10', type: 'service', serviceId: 'service-10', collaboratorId: 'collab-1', price: 100, commission: 50 },
+  { id: 'oi-11', type: 'service', serviceId: 'service-11', collaboratorId: 'collab-2', price: 120, commission: 48 },
+  { id: 'oi-12', type: 'service', serviceId: 'service-12', collaboratorId: 'collab-7', price: 60, commission: 28.8 },
+  { id: 'oi-13', type: 'service', serviceId: 'service-13', collaboratorId: 'collab-5', price: 180, commission: 86.4 },
+  { id: 'oi-14', type: 'service', serviceId: 'service-14', collaboratorId: 'collab-5', price: 350, commission: 168 },
+  { id: 'oi-15', type: 'service', serviceId: 'service-15', collaboratorId: 'collab-7', price: 150, commission: 70.5 },
+  { id: 'oi-16', type: 'service', serviceId: 'service-16', collaboratorId: 'collab-7', price: 200, commission: 94 },
+  { id: 'oi-17', type: 'service', serviceId: 'service-17', collaboratorId: 'collab-9', price: 180, commission: 91.8 },
+  { id: 'oi-18', type: 'service', serviceId: 'service-18', collaboratorId: 'collab-2', price: 110, commission: 44 },
+  { id: 'oi-19', type: 'service', serviceId: 'service-19', collaboratorId: 'collab-3', price: 220, commission: 118.8 },
+  { id: 'oi-20', type: 'service', serviceId: 'service-20', collaboratorId: 'collab-3', price: 280, commission: 156.8 },
+  { id: 'oi-21', type: 'service', serviceId: 'service-21', collaboratorId: 'collab-5', price: 300, commission: 156 },
+  { id: 'oi-22', type: 'service', serviceId: 'service-22', collaboratorId: 'collab-6', price: 50, commission: 22.5 },
+  { id: 'oi-23', type: 'service', serviceId: 'service-23', collaboratorId: 'collab-1', price: 200, commission: 100 },
+  { id: 'oi-24', type: 'service', serviceId: 'service-24', collaboratorId: 'collab-9', price: 130, commission: 63.7 },
+  { id: 'oi-25', type: 'service', serviceId: 'service-25', collaboratorId: 'collab-9', price: 800, commission: 464 },
 ];
 
 export let mockOrders: Order[] = [
@@ -295,7 +296,16 @@ const calcTotals = (items: OrderItem[]): { total: number; finalValue: number } =
   return { total, finalValue: total };
 };
 
+const findOpenOrderForClient = (clientId: string): Order | undefined => {
+  return mockOrders.find(order => order.clientId === clientId && order.status === 'open');
+};
+
 export const createEmptyOrderForClient = (clientId: string): Order => {
+  const existing = findOpenOrderForClient(clientId);
+  if (existing) {
+    return existing;
+  }
+
   const id = `order-${Date.now()}`;
   const now = new Date().toISOString();
   const order: Order = {
@@ -313,6 +323,11 @@ export const createEmptyOrderForClient = (clientId: string): Order => {
 };
 
 export const createOrderFromAppointment = (appointment: Appointment): Order => {
+  const existing = findOpenOrderForClient(appointment.clientId);
+  if (existing) {
+    return existing;
+  }
+
   const now = new Date().toISOString();
   const items: OrderItem[] = appointment.serviceIds.map(serviceId => {
     const service = mockServices.find(s => s.id === serviceId);
@@ -320,6 +335,7 @@ export const createOrderFromAppointment = (appointment: Appointment): Order => {
     const commission = service ? service.price * service.commission : 0;
     return {
       id: `oi-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      type: 'service',
       serviceId,
       collaboratorId: appointment.collaboratorId,
       price,
@@ -352,10 +368,33 @@ export const addItemToOrder = (orderId: string, serviceId: string, collaboratorI
   const commission = service.price * service.commission;
   const item: OrderItem = {
     id: `oi-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    type: 'service',
     serviceId,
     collaboratorId,
     price,
     commission,
+  };
+
+  mockOrders = mockOrders.map(order => {
+    if (order.id !== orderId) return order;
+    const items = [...order.items, item];
+    const { total, finalValue } = calcTotals(items);
+    return { ...order, items, total, finalValue };
+  });
+
+  return mockOrders.find(o => o.id === orderId) ?? null;
+};
+
+export const addProductToOrder = (orderId: string, productId: string): Order | null => {
+  const product = mockProducts.find(p => p.id === productId);
+  if (!product) return null;
+
+  const item: OrderItem = {
+    id: `oi-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    type: 'product',
+    productId,
+    price: product.price,
+    commission: 0,
   };
 
   mockOrders = mockOrders.map(order => {
@@ -381,4 +420,8 @@ export const removeItemFromOrder = (orderId: string, itemId: string): Order | nu
 
 export const findOrderById = (id: string): Order | null => {
   return mockOrders.find(o => o.id === id) ?? null;
+};
+
+export const findOpenOrderByClientId = (clientId: string): Order | null => {
+  return findOpenOrderForClient(clientId) ?? null;
 };

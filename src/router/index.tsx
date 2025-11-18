@@ -5,13 +5,17 @@ import LoginPage from '../pages/Login';
 import Agenda from '../pages/Agenda';
 import AgendamentoForm from '../pages/AgendamentoForm';
 import Comandas from '../pages/Comandas';
+import PagamentoComanda from '../pages/PagamentoComanda';
 import Clientes from '../pages/Clientes';
 import ClienteForm from '../pages/ClienteForm.tsx';
 import ClienteProfile from '../pages/ClienteProfile';
 import Servicos from '../pages/Servicos';
+import ServicoForm from '../pages/ServicoForm';
 import Produtos from '../pages/Produtos';
+import ProdutoForm from '../pages/ProdutoForm';
 import Colaboradores from '../pages/Colaboradores';
 import ColaboradorForm from '../pages/ColaboradorForm';
+import ColaboradorProfile from '../pages/ColaboradorProfile';
 import Financeiro from '../pages/Financeiro';
 import Configuracoes from '../pages/Configuracoes';
 import Auditoria from '../pages/Auditoria';
@@ -48,6 +52,7 @@ const router = createBrowserRouter([
       { path: 'agenda/novo', element: <AgendamentoForm /> },
       { path: 'agenda/editar/:id', element: <AgendamentoForm /> },
       { path: 'comandas', element: <Comandas /> },
+      { path: 'comandas/:id/pagamento', element: <PagamentoComanda /> },
       {
         path: 'clientes',
         children: [
@@ -57,9 +62,19 @@ const router = createBrowserRouter([
         ],
       },
       { path: 'servicos', element: <Servicos /> },
+      { path: 'servicos/novo', element: <ServicoForm /> },
+      { path: 'servicos/:id', element: <ServicoForm /> },
       { path: 'produtos', element: <Produtos /> },
-      { path: 'colaboradores', element: <Colaboradores /> },
-      { path: 'colaboradores/novo', element: <ColaboradorForm /> },
+      { path: 'produtos/novo', element: <ProdutoForm /> },
+      { path: 'produtos/:id', element: <ProdutoForm /> },
+      {
+        path: 'colaboradores',
+        children: [
+          { path: '', element: <Colaboradores />, index: true },
+          { path: 'novo', element: <ColaboradorForm /> },
+          { path: ':id', element: <ColaboradorProfile /> },
+        ],
+      },
       { path: 'financeiro', element: <Financeiro /> },
       { path: 'configuracoes', element: <Configuracoes /> },
       { path: 'auditoria', element: <Auditoria /> },

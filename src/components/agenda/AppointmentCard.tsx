@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Appointment, Client, Service } from '../../types';
 import { Clock, User, Tag, Pencil } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { mockOrders, createOrderFromAppointment } from '../../data/orders';
+import { mockOrders } from '../../data/orders';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -32,7 +32,7 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
   const hasOpenOrder = latestOrder?.status === 'open';
 
   const cardStyle: CSSProperties = {
-    backgroundColor: 'var(--color-primary-light)',
+    backgroundColor: 'var(--color-status-info)',
     minHeight,
   };
 
@@ -107,9 +107,8 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
             label = 'Abrir comanda';
             onClick = (e) => {
               e.stopPropagation();
-              const order = createOrderFromAppointment(appointment);
               navigate('/comandas', {
-                state: { focusOrderId: order.id },
+                state: { newOrderClientId: client.id },
               });
             };
           }

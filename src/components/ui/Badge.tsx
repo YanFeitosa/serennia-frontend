@@ -22,9 +22,9 @@ const Badge = ({ children, variant = 'default', className = '' }: BadgeProps) =>
       borderColor: 'color-mix(in srgb, var(--color-status-warning) 20%, transparent)'
     },
     info: { 
-      backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
-      color: 'var(--color-primary)',
-      borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)'
+      backgroundColor: 'color-mix(in srgb, var(--color-status-info) 10%, transparent)',
+      color: 'var(--color-status-info)',
+      borderColor: 'color-mix(in srgb, var(--color-status-info) 20%, transparent)'
     },
     destructive: { 
       backgroundColor: 'color-mix(in srgb, var(--color-status-error) 10%, transparent)',

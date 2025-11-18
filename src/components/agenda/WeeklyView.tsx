@@ -75,8 +75,11 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
                   return (
                     <div
                       key={appt.id}
-                      className="rounded-md px-2 py-1 text-[11px] bg-primary/10 border-l-4"
-                      style={{ borderColor: services[0].color || '#9CA3AF' }}
+                      className="rounded-md px-2 py-1 text-[11px] border-l-4"
+                      style={{
+                        backgroundColor: 'color-mix(in srgb, var(--color-status-info) 10%, transparent)',
+                        borderColor: 'var(--color-status-info)',
+                      }}
                     >
                       <div className="font-semibold text-text">
                         {client.name}

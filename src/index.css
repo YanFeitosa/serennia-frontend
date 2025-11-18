@@ -2,20 +2,28 @@
 
 /* 🎨 IDENTIDADE VISUAL — Serenna UI System (ATUALIZADO) */
 :root {
-  --color-primary: #25445A;    /* Azul-acinzentado profundo (mais profissional) */
-  --color-secondary: #7AA7D8;  /* Azul suave / secundário */
-  --color-accent: #BFA2DB;     /* Lilás sóbrio */
-  --color-text: #0F1724;       /* Grafite escuro (um pouco mais contrastante) */
-  --color-background: #FFFFFF; /* Branco puro para fundo principal */
+  /* Paleta base — modo claro */
+  --color-primary-light-theme: #25445A;    /* Azul-acinzentado profundo (mais profissional) */
+  --color-secondary-light-theme: #7AA7D8;  /* Azul suave / secundário */
+  --color-accent-light-theme: #BFA2DB;     /* Lilás sóbrio */
+  --color-text-light-theme: #0F1724;       /* Grafite escuro (um pouco mais contrastante) */
+  --color-background-light-theme: #FFFFFF; /* Branco puro para fundo principal */
 
-  /* Gradações complementares */
-  --color-primary-light: #4A708A;
-  --color-primary-dark: #18333F;
-  --color-accent-light: #E9E2FF;
-  --color-text-muted: #6B7280;
-  --color-border: #E5E7EB;
-  --color-card: #FFFFFF;
-  --color-sidebar: #F7F9FB;    /* Leve variação para o light mode */
+  /* Tokens efetivos usados na UI (seguem o tema atual) */
+  --color-primary: var(--color-primary-light-theme);
+  --color-secondary: var(--color-secondary-light-theme);
+  --color-accent: var(--color-accent-light-theme);
+  --color-text: var(--color-text-light-theme);
+  --color-background: var(--color-background-light-theme);
+
+  /* Gradações complementares (derivadas automaticamente da paleta) */
+  --color-primary-light: color-mix(in srgb, var(--color-primary) 70%, #ffffff 30%);
+  --color-primary-dark: color-mix(in srgb, var(--color-primary) 70%, #000000 30%);
+  --color-accent-light: color-mix(in srgb, var(--color-accent) 75%, #ffffff 25%);
+  --color-text-muted: color-mix(in srgb, var(--color-text) 60%, var(--color-background) 40%);
+  --color-border: color-mix(in srgb, var(--color-background) 85%, var(--color-text) 15%);
+  --color-card: color-mix(in srgb, var(--color-background) 96%, var(--color-text) 4%);
+  --color-sidebar: color-mix(in srgb, var(--color-background) 94%, var(--color-primary) 6%);    /* Leve variação para o light mode */
 
   /* 🎯 Cores de Status (Comandas, etc.) */
   --color-status-success: #22C55E;     /* Verde para "Paga" */
@@ -26,19 +34,27 @@
 
 /* 🌙 Dark Mode */
 .dark {
-  --color-primary: #4A708A;    /* Azul mais claro para contraste no dark */
-  --color-secondary: #0F1724;  /* Base escura para secundário em dark */
-  --color-accent: #BFA2DB;     /* Lilás mantido (contrasta bem) */
-  --color-text: #F8FAFC;       /* Texto claro */
-  --color-background: #0B1220; /* Fundo escuro neutro */
+  /* Paleta base — modo escuro (mantém as cores originais) */
+  --color-primary-dark-theme: #4A708A;    /* Azul mais claro para contraste no dark */
+  --color-secondary-dark-theme: #0F1724;  /* Base escura para secundário em dark */
+  --color-accent-dark-theme: #BFA2DB;     /* Lilás mantido (contrasta bem) */
+  --color-text-dark-theme: #F8FAFC;       /* Texto claro */
+  --color-background-dark-theme: #0B1220; /* Fundo escuro neutro */
 
-  --color-primary-light: #7BA6C8;
-  --color-primary-dark: #25445A;
-  --color-accent-light: #B99FE0;
-  --color-text-muted: #9CA3AF;
-  --color-border: #263445;
-  --color-card: #0F1724;
-  --color-sidebar: #0F1724;
+  /* Tokens efetivos quando o modo escuro está ativo */
+  --color-primary: var(--color-primary-dark-theme);
+  --color-secondary: var(--color-secondary-dark-theme);
+  --color-accent: var(--color-accent-dark-theme);
+  --color-text: var(--color-text-dark-theme);
+  --color-background: var(--color-background-dark-theme);
+
+  --color-primary-light: color-mix(in srgb, var(--color-primary) 70%, #ffffff 30%);
+  --color-primary-dark: color-mix(in srgb, var(--color-primary) 70%, #000000 30%);
+  --color-accent-light: color-mix(in srgb, var(--color-accent) 75%, #ffffff 25%);
+  --color-text-muted: color-mix(in srgb, var(--color-text) 55%, var(--color-background) 45%);
+  --color-border: color-mix(in srgb, var(--color-background) 70%, var(--color-text) 30%);
+  --color-card: color-mix(in srgb, var(--color-background) 80%, var(--color-text) 20%);
+  --color-sidebar: color-mix(in srgb, var(--color-background) 78%, var(--color-primary) 22%);
 
   /* 🎯 Cores de Status (Dark Mode) */
   --color-status-success: #4ADE80;     /* Verde mais claro */

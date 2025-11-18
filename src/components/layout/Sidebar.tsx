@@ -38,6 +38,7 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const [showLogout, setShowLogout] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const [platformName, setPlatformName] = useState('Serenna');
 
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
@@ -51,6 +52,39 @@ const Sidebar = () => {
     return () => window.removeEventListener('pointerdown', handlePointerDown);
   }, []);
 
+  useEffect(() => {
+    const loadAppearanceName = () => {
+      try {
+        const stored = window.localStorage.getItem('serenna-appearance');
+        if (!stored) {
+          setPlatformName('Serenna');
+          return;
+        }
+        const parsed = JSON.parse(stored) as { platformName?: string };
+        if (parsed.platformName && parsed.platformName.trim().length > 0) {
+          setPlatformName(parsed.platformName.trim());
+        } else {
+          setPlatformName('Serenna');
+        }
+      } catch {
+        setPlatformName('Serenna');
+      }
+    };
+
+    loadAppearanceName();
+
+    const handler = () => loadAppearanceName();
+    window.addEventListener('serenna-appearance-changed', handler);
+    return () => window.removeEventListener('serenna-appearance-changed', handler);
+  }, []);
+
+  const normalizedName = platformName.trim();
+  const titleLength = normalizedName.length;
+  let titleSizeClass = 'text-3xl';
+  if (titleLength > 18) titleSizeClass = 'text-2xl';
+  if (titleLength > 26) titleSizeClass = 'text-xl';
+  if (titleLength > 34) titleSizeClass = 'text-lg';
+
   const handleLogout = () => {
     // Limpar dados de autenticação (se houver)
     localStorage.removeItem('user');
@@ -60,7 +94,11 @@ const Sidebar = () => {
   return (
     <aside className="w-64 h-screen bg-sidebar shadow-serenna flex flex-col border-r border-border">
       <div className="p-6">
-        <h1 className="text-3xl font-semibold text-primary">Serenna</h1>
+        <h1
+          className={`${titleSizeClass} font-semibold text-primary leading-tight break-words max-w-full`}
+        >
+          {normalizedName}
+        </h1>
         <p className="text-xs text-text-muted mt-1">Gestão de Salão</p>
       </div>
       <nav className="flex-1 py-4 px-2">
@@ -86,7 +124,7 @@ const Sidebar = () => {
           aria-label="Toggle dark mode"
         >
           <span className="text-sm font-medium text-text">
-            {theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}
+            {theme === 'light' ? 'Modo Claro' : 'Modo Escuro'}
           </span>
           <div className="relative w-12 h-6 bg-border rounded-full transition-colors">
             <div className={`absolute top-1 ${theme === 'dark' ? 'right-1' : 'left-1'} w-4 h-4 bg-primary rounded-full transition-all duration-200 flex items-center justify-center`}>

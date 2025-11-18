@@ -40,6 +40,8 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    watch,
+    setValue,
   } = useForm<AppointmentSchema>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
@@ -67,6 +69,23 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
       });
     }
   }, [appointment, reset]);
+
+  const selectedCollaboratorId = watch('collaboratorId');
+  const selectedCollaborator = mockCollaborators.find(c => c.id === selectedCollaboratorId);
+
+  const availableServices = selectedCollaborator
+    ? mockServices.filter(service => {
+        const categories = selectedCollaborator.serviceCategories;
+        if (!categories || categories.length === 0) return true;
+        if (!service.category) return true;
+        return categories.includes(service.category);
+      })
+    : [];
+
+  useEffect(() => {
+    // Ao trocar o profissional, limpamos os serviços selecionados
+    setValue('serviceIds', []);
+  }, [selectedCollaboratorId, setValue]);
 
   const onSubmit: SubmitHandler<AppointmentSchema> = (data) => {
     console.log('Appointment data:', data);
@@ -111,9 +130,11 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
           className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
         >
           <option value="">Selecione um profissional</option>
-          {mockCollaborators.filter(c => c.status === 'active').map(collab => (
-            <option key={collab.id} value={collab.id}>{collab.name}</option>
-          ))}
+          {mockCollaborators
+            .filter(c => c.status === 'active' && c.role === 'professional')
+            .map(collab => (
+              <option key={collab.id} value={collab.id}>{collab.name}</option>
+            ))}
         </select>
         {errors.collaboratorId && <p className="mt-1 text-sm text-red-600">{errors.collaboratorId.message}</p>}
       </div>
@@ -124,11 +145,16 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
           id="serviceIds"
           multiple
           {...register('serviceIds')}
-          className="mt-1 block w-full h-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
+          disabled={!selectedCollaborator}
+          className="mt-1 block w-full h-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md disabled:bg-gray-100 disabled:text-gray-400"
         >
-          {mockServices.map(service => (
-            <option key={service.id} value={service.id}>{service.name}</option>
-          ))}
+          {selectedCollaborator ? (
+            availableServices.map(service => (
+              <option key={service.id} value={service.id}>{service.name}</option>
+            ))
+          ) : (
+            <option value="">Selecione um profissional primeiro</option>
+          )}
         </select>
         {errors.serviceIds && <p className="mt-1 text-sm text-red-600">{errors.serviceIds.message}</p>}
       </div>

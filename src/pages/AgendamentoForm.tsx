@@ -80,6 +80,23 @@ const AgendamentoForm = () => {
     }
   }, [appointment, reset, initialClientId, startFromQuery, collaboratorIdFromQuery]);
 
+  const selectedCollaboratorId = watch('collaboratorId');
+  const selectedCollaborator = mockCollaborators.find(c => c.id === selectedCollaboratorId);
+
+  const availableServices = selectedCollaborator
+    ? mockServices.filter(service => {
+        const categories = selectedCollaborator.serviceCategories;
+        if (!categories || categories.length === 0) return true;
+        if (!service.category) return true;
+        return categories.includes(service.category);
+      })
+    : [];
+
+  useEffect(() => {
+    // Ao trocar o profissional, limpamos os serviços selecionados
+    setValue('serviceIds', []);
+  }, [selectedCollaboratorId, setValue]);
+
   const onSubmit: SubmitHandler<AppointmentSchema> = (data) => {
     const startDate = new Date(data.start);
     if (isNaN(startDate.getTime())) {
@@ -185,7 +202,9 @@ const AgendamentoForm = () => {
         <div>
           <label htmlFor="collaboratorId" className="block text-sm font-medium text-text">Profissional</label>
           <SearchableSelectPlain
-            options={mockCollaborators.filter(c => c.status === 'active').map(collab => ({ value: collab.id, label: collab.name }))}
+            options={mockCollaborators
+              .filter(c => c.status === 'active' && c.role === 'professional')
+              .map(collab => ({ value: collab.id, label: collab.name }))}
             value={watch('collaboratorId')}
             onChange={(value: string) => setValue('collaboratorId', value)}
             placeholder="Selecione um profissional"
@@ -195,12 +214,22 @@ const AgendamentoForm = () => {
 
         <div>
           <label className="block text-sm font-medium text-text">Serviços</label>
-          <MultiSelectPlain
-            options={mockServices.map(service => ({ value: service.id, label: service.name }))}
-            selected={watch('serviceIds') || []}
-            onChange={(value: string[]) => setValue('serviceIds', value)}
-            placeholder="Selecione os serviços"
-          />
+          {selectedCollaborator ? (
+            <MultiSelectPlain
+              options={availableServices.map(service => ({ value: service.id, label: service.name }))}
+              selected={watch('serviceIds') || []}
+              onChange={(value: string[]) => setValue('serviceIds', value)}
+              placeholder={
+                availableServices.length
+                  ? 'Selecione os serviços'
+                  : 'Nenhum serviço disponível para este profissional'
+              }
+            />
+          ) : (
+            <div className="px-3 py-2 border border-border rounded-md bg-muted text-text-muted text-sm">
+              Selecione um profissional primeiro
+            </div>
+          )}
           {errors.serviceIds && <p className="mt-1 text-sm text-red-600">{errors.serviceIds.message}</p>}
         </div>
 

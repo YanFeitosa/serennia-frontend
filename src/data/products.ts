@@ -1,7 +1,7 @@
 // src/data/products.ts
 import type { Product } from '../types';
 
-export const mockProducts: Product[] = [
+export let mockProducts: Product[] = [
   {
     id: 'product-1',
     name: 'Shampoo Hidratante 300ml',
@@ -45,3 +45,13 @@ export const mockProducts: Product[] = [
     stock: 15,
   },
 ];
+
+export const addMockProduct = (product: Product) => {
+  mockProducts = [...mockProducts, product];
+};
+
+export const updateMockProduct = (id: string, updates: Partial<Product>) => {
+  mockProducts = mockProducts.map(product =>
+    product.id === id ? { ...product, ...updates } : product
+  );
+};

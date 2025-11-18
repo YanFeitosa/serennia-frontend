@@ -72,7 +72,12 @@ const Colaboradores = () => {
             </div>
             
             <div className="pt-4 border-t border-border">
-              <Button variant="ghost" size="sm" className="w-full">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => navigate(`/colaboradores/${collab.id}`)}
+              >
                 <Eye className="w-4 h-4 mr-2" />
                 Ver Detalhes
               </Button>

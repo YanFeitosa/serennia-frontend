@@ -1,45 +1,74 @@
 // src/pages/Financeiro.tsx
 import { useState } from 'react';
-import { type DateRange } from 'react-day-picker';
-import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Calendar as CalendarIcon, X } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { mockOrders } from '../data/orders';
 import { Badge } from '../components/ui/Badge';
-import DatePickerPlain from '../components/ui/DatePickerPlain.tsx';
+import { Calendar } from '../components/ui/Calendar.tsx';
 import { Button } from '../components/ui/Button.tsx';
+import type { Order } from '../types';
+
+const getStatusLabel = (status: Order['status']) => {
+  switch (status) {
+    case 'open':
+      return 'Aberta';
+    case 'closed':
+      return 'Fechada';
+    case 'paid':
+      return 'Paga';
+    default:
+      return status;
+  }
+};
+
+const getStatusVariant = (status: Order['status']) => {
+  switch (status) {
+    case 'open':
+      return 'info';
+    case 'closed':
+      return 'warning';
+    case 'paid':
+      return 'success';
+    default:
+      return 'default';
+  }
+};
 
 const Financeiro = () => {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(new Date().setDate(new Date().getDate() - 30)),
-    to: new Date(),
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date;
   });
+  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
+  const [openStartPicker, setOpenStartPicker] = useState(false);
+  const [openEndPicker, setOpenEndPicker] = useState(false);
 
   // Filtrar apenas comandas pagas
   const filteredOrders = mockOrders.filter(order => {
     // Primeiro filtro: apenas comandas pagas
     if (order.status !== 'paid') return false;
-    
+
     const orderDate = new Date(order.createdAt);
-    if (!dateRange || (!dateRange.from && !dateRange.to)) return true;
+    if (!startDate && !endDate) return true;
 
-    const { from, to } = dateRange;
-
-    if (from && to) {
-      return orderDate >= from && orderDate <= to;
+    if (startDate && endDate) {
+      return orderDate >= startDate && orderDate <= endDate;
     }
-    if (from) {
-      return orderDate >= from;
+    if (startDate) {
+      return orderDate >= startDate;
     }
-    if (to) {
-      return orderDate <= to;
+    if (endDate) {
+      return orderDate <= endDate;
     }
     return true;
   });
 
   const getChartData = () => {
-    if (!dateRange || !dateRange.from || !dateRange.to) return [];
+    if (!startDate || !endDate) return [];
 
-    const { from, to } = dateRange;
+    const from = startDate;
+    const to = endDate;
     const diffTime = Math.abs(to.getTime() - from.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -124,17 +153,97 @@ const Financeiro = () => {
           <p className="text-text-muted">Acompanhe a saúde financeira do seu negócio.</p>
         </div>
         <div className="flex items-center space-x-2">
-          <DatePickerPlain
-            date={dateRange?.from}
-            setDate={(date: Date | undefined) => setDateRange((prev) => ({ from: date, to: prev?.to }))}
-            placeholder="Data de Início"
-          />
-          <DatePickerPlain
-            date={dateRange?.to}
-            setDate={(date: Date | undefined) => setDateRange((prev) => ({ from: prev?.from, to: date }))}
-            placeholder="Data de Fim"
-          />
-          <Button variant="ghost" onClick={() => setDateRange({ from: undefined, to: undefined })}>Limpar Filtro</Button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenStartPicker(!openStartPicker)}
+              className="w-[180px] text-left px-3 py-2 h-10 border border-border rounded-md bg-card text-text hover:bg-background transition-colors flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 opacity-60" />
+                <span className={startDate ? '' : 'text-text-muted'}>
+                  {startDate ? startDate.toLocaleDateString('pt-BR') : 'Data inicial'}
+                </span>
+              </div>
+              {startDate && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setStartDate(undefined);
+                  }}
+                  className="p-1 hover:bg-background rounded"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </button>
+            {openStartPicker && (
+              <div className="absolute z-50 mt-1 left-0 rounded-md border border-border bg-card text-text shadow-lg animate-slide-up">
+                <div className="p-2">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(date) => {
+                      setStartDate(date ?? undefined);
+                      setOpenStartPicker(false);
+                    }}
+                    initialFocus
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenEndPicker(!openEndPicker)}
+              className="w-[180px] text-left px-3 py-2 h-10 border border-border rounded-md bg-card text-text hover:bg-background transition-colors flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 opacity-60" />
+                <span className={endDate ? '' : 'text-text-muted'}>
+                  {endDate ? endDate.toLocaleDateString('pt-BR') : 'Data final'}
+                </span>
+              </div>
+              {endDate && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEndDate(undefined);
+                  }}
+                  className="p-1 hover:bg-background rounded"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </button>
+            {openEndPicker && (
+              <div className="absolute z-50 mt-1 left-0 rounded-md border border-border bg-card text-text shadow-lg animate-slide-up">
+                <div className="p-2">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={(date) => {
+                      setEndDate(date ?? undefined);
+                      setOpenEndPicker(false);
+                    }}
+                    initialFocus
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setStartDate(undefined);
+              setEndDate(undefined);
+            }}
+          >
+            Limpar Filtro
+          </Button>
         </div>
       </header>
 
@@ -187,7 +296,11 @@ const Financeiro = () => {
                 <td className="p-4 font-mono text-sm text-text">#{order.id.slice(0, 6)}</td>
                 <td className="p-4 text-text">{new Date(order.createdAt).toLocaleString('pt-BR')}</td>
                 <td className="p-4 text-text">{order.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                <td className="p-4"><Badge>{order.status}</Badge></td>
+                <td className="p-4">
+                  <Badge variant={getStatusVariant(order.status)}>
+                    {getStatusLabel(order.status)}
+                  </Badge>
+                </td>
               </tr>
             ))}
           </tbody>

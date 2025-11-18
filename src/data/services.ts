@@ -1,7 +1,7 @@
 // src/data/services.ts
 import type { Service } from '../types';
 
-export const mockServices: Service[] = [
+export let mockServices: Service[] = [
   {
     id: 'service-1',
     name: 'Corte Feminino',
@@ -226,3 +226,13 @@ export const mockServices: Service[] = [
     color: '#F0E68C',
   },
 ];
+
+export const addMockService = (service: Service) => {
+  mockServices = [...mockServices, service];
+};
+
+export const updateMockService = (id: string, updates: Partial<Service>) => {
+  mockServices = mockServices.map(service =>
+    service.id === id ? { ...service, ...updates } : service
+  );
+};
