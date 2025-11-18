@@ -1,12 +1,14 @@
 // src/pages/Financeiro.tsx
 import { useState } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Calendar as CalendarIcon, X } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { mockOrders } from '../data/orders';
 import { Badge } from '../components/ui/Badge';
-import { Calendar } from '../components/ui/Calendar.tsx';
+import DatePickerPlain from '../components/ui/DatePickerPlain.tsx';
 import { Button } from '../components/ui/Button.tsx';
 import type { Order } from '../types';
+
+type ChartResolution = 'auto' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 const getStatusLabel = (status: Order['status']) => {
   switch (status) {
@@ -41,8 +43,7 @@ const Financeiro = () => {
     return date;
   });
   const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
-  const [openStartPicker, setOpenStartPicker] = useState(false);
-  const [openEndPicker, setOpenEndPicker] = useState(false);
+  const [chartResolution, setChartResolution] = useState<ChartResolution>('auto');
 
   // Filtrar apenas comandas pagas
   const filteredOrders = mockOrders.filter(order => {
@@ -52,14 +53,30 @@ const Financeiro = () => {
     const orderDate = new Date(order.createdAt);
     if (!startDate && !endDate) return true;
 
+    const normalizeDay = (date: Date) =>
+      new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    const orderDay = normalizeDay(orderDate);
+
     if (startDate && endDate) {
-      return orderDate >= startDate && orderDate <= endDate;
+      const startDay = normalizeDay(startDate);
+      const endDay = normalizeDay(endDate);
+
+      if (startDay.getTime() === endDay.getTime()) {
+        // Mesmo dia selecionado nos dois campos: considerar apenas esse dia
+        return orderDay.getTime() === startDay.getTime();
+      }
+
+      // Intervalo inclusivo: do primeiro até o último dia selecionado
+      return orderDay >= startDay && orderDay <= endDay;
     }
     if (startDate) {
-      return orderDate >= startDate;
+      const startDay = normalizeDay(startDate);
+      return orderDay >= startDay;
     }
     if (endDate) {
-      return orderDate <= endDate;
+      const endDay = normalizeDay(endDate);
+      return orderDay <= endDay;
     }
     return true;
   });
@@ -67,26 +84,57 @@ const Financeiro = () => {
   const getChartData = () => {
     if (!startDate || !endDate) return [];
 
-    const from = startDate;
-    const to = endDate;
-    const diffTime = Math.abs(to.getTime() - from.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const from = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate()
+    );
+    const to = new Date(
+      endDate.getFullYear(),
+      endDate.getMonth(),
+      endDate.getDate()
+    );
 
-    if (diffDays <= 7) {
+    const dayMs = 1000 * 60 * 60 * 24;
+    const diffDays = Math.max(
+      1,
+      Math.floor((to.getTime() - from.getTime()) / dayMs) + 1
+    );
+
+    type BaseResolution = Exclude<ChartResolution, 'auto'>;
+    let effective: BaseResolution;
+
+    if (chartResolution === 'auto') {
+      if (diffDays <= 7) {
+        effective = 'daily';
+      } else if (diffDays <= 31) {
+        effective = 'weekly';
+      } else if (diffDays <= 365) {
+        effective = 'monthly';
+      } else {
+        effective = 'yearly';
+      }
+    } else {
+      effective = chartResolution;
+    }
+
+    if (effective === 'daily') {
       return Array.from({ length: diffDays }, (_, i) => {
         const date = new Date(from);
         date.setDate(date.getDate() + i);
-        const day = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+        const dayLabel = date.toLocaleDateString('pt-BR', { weekday: 'short' });
         const faturamento = filteredOrders
           .filter(order => new Date(order.createdAt).toDateString() === date.toDateString())
           .reduce((acc, order) => acc + order.finalValue, 0);
         const comissao = filteredOrders
           .filter(order => new Date(order.createdAt).toDateString() === date.toDateString())
           .reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
-        return { name: day, faturamento, comissao };
+        return { name: dayLabel, faturamento, comissao };
       });
-    } else if (diffDays <= 31) {
-      const weeks = Math.ceil(diffDays / 7);
+    }
+
+    if (effective === 'weekly') {
+      const weeks = Math.max(1, Math.ceil(diffDays / 7));
       return Array.from({ length: weeks }, (_, i) => {
         const weekStart = new Date(from);
         weekStart.setDate(weekStart.getDate() + i * 7);
@@ -107,38 +155,49 @@ const Financeiro = () => {
           .reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
         return { name: weekLabel, faturamento, comissao };
       });
-    } else if (diffDays <= 365) {
-      const months = to.getMonth() - from.getMonth() + 12 * (to.getFullYear() - from.getFullYear());
+    }
+
+    if (effective === 'monthly') {
+      const months =
+        (to.getFullYear() - from.getFullYear()) * 12 +
+        (to.getMonth() - from.getMonth()) +
+        1;
       return Array.from({ length: months }, (_, i) => {
         const month = new Date(from.getFullYear(), from.getMonth() + i, 1);
         const monthLabel = month.toLocaleDateString('pt-BR', { month: 'long' });
         const faturamento = filteredOrders
           .filter(order => {
             const orderDate = new Date(order.createdAt);
-            return orderDate.getMonth() === month.getMonth() && orderDate.getFullYear() === month.getFullYear();
+            return (
+              orderDate.getMonth() === month.getMonth() &&
+              orderDate.getFullYear() === month.getFullYear()
+            );
           })
           .reduce((acc, order) => acc + order.finalValue, 0);
         const comissao = filteredOrders
           .filter(order => {
             const orderDate = new Date(order.createdAt);
-            return orderDate.getMonth() === month.getMonth() && orderDate.getFullYear() === month.getFullYear();
+            return (
+              orderDate.getMonth() === month.getMonth() &&
+              orderDate.getFullYear() === month.getFullYear()
+            );
           })
           .reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
         return { name: monthLabel, faturamento, comissao };
       });
-    } else {
-      const years = to.getFullYear() - from.getFullYear() + 1;
-      return Array.from({ length: years }, (_, i) => {
-        const year = from.getFullYear() + i;
-        const faturamento = filteredOrders
-          .filter(order => new Date(order.createdAt).getFullYear() === year)
-          .reduce((acc, order) => acc + order.finalValue, 0);
-        const comissao = filteredOrders
-          .filter(order => new Date(order.createdAt).getFullYear() === year)
-          .reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
-        return { name: String(year), faturamento, comissao };
-      });
     }
+
+    const years = to.getFullYear() - from.getFullYear() + 1;
+    return Array.from({ length: years }, (_, i) => {
+      const year = from.getFullYear() + i;
+      const faturamento = filteredOrders
+        .filter(order => new Date(order.createdAt).getFullYear() === year)
+        .reduce((acc, order) => acc + order.finalValue, 0);
+      const comissao = filteredOrders
+        .filter(order => new Date(order.createdAt).getFullYear() === year)
+        .reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
+      return { name: String(year), faturamento, comissao };
+    });
   };
 
   const chartData = getChartData();
@@ -153,93 +212,25 @@ const Financeiro = () => {
           <p className="text-text-muted">Acompanhe a saúde financeira do seu negócio.</p>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenStartPicker(!openStartPicker)}
-              className="w-[180px] text-left px-3 py-2 h-10 border border-border rounded-md bg-card text-text hover:bg-background transition-colors flex items-center justify-between gap-2"
-            >
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4 opacity-60" />
-                <span className={startDate ? '' : 'text-text-muted'}>
-                  {startDate ? startDate.toLocaleDateString('pt-BR') : 'Data inicial'}
-                </span>
-              </div>
-              {startDate && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setStartDate(undefined);
-                  }}
-                  className="p-1 hover:bg-background rounded"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </button>
-            {openStartPicker && (
-              <div className="absolute z-50 mt-1 left-0 rounded-md border border-border bg-card text-text shadow-lg animate-slide-up">
-                <div className="p-2">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={(date) => {
-                      setStartDate(date ?? undefined);
-                      setOpenStartPicker(false);
-                    }}
-                    initialFocus
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenEndPicker(!openEndPicker)}
-              className="w-[180px] text-left px-3 py-2 h-10 border border-border rounded-md bg-card text-text hover:bg-background transition-colors flex items-center justify-between gap-2"
-            >
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4 opacity-60" />
-                <span className={endDate ? '' : 'text-text-muted'}>
-                  {endDate ? endDate.toLocaleDateString('pt-BR') : 'Data final'}
-                </span>
-              </div>
-              {endDate && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEndDate(undefined);
-                  }}
-                  className="p-1 hover:bg-background rounded"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </button>
-            {openEndPicker && (
-              <div className="absolute z-50 mt-1 left-0 rounded-md border border-border bg-card text-text shadow-lg animate-slide-up">
-                <div className="p-2">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={(date) => {
-                      setEndDate(date ?? undefined);
-                      setOpenEndPicker(false);
-                    }}
-                    initialFocus
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          <DatePickerPlain
+            date={startDate}
+            setDate={setStartDate}
+            placeholder="Data inicial"
+            className="w-[180px]"
+          />
+          <DatePickerPlain
+            date={endDate}
+            setDate={setEndDate}
+            placeholder="Data final"
+            className="w-[180px]"
+          />
           <Button
             variant="ghost"
             onClick={() => {
-              setStartDate(undefined);
-              setEndDate(undefined);
+              const today = new Date();
+              const sameDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+              setStartDate(sameDay);
+              setEndDate(sameDay);
             }}
           >
             Limpar Filtro
@@ -308,7 +299,36 @@ const Financeiro = () => {
       </div>
 
       <div className="bg-card rounded-xl shadow-md p-6 border border-border">
-        <h3 className="font-bold text-text mb-4">Faturamento</h3>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+          <h3 className="font-bold text-text">Faturamento</h3>
+          <div className="inline-flex rounded-full bg-sidebar p-1 text-xs">
+            {(['daily', 'weekly', 'monthly', 'yearly'] as const).map(key => {
+              const label =
+                key === 'daily'
+                  ? 'Diária'
+                  : key === 'weekly'
+                  ? 'Semanal'
+                  : key === 'monthly'
+                  ? 'Mensal'
+                  : 'Anual';
+              const isActive = chartResolution !== 'auto' && chartResolution === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setChartResolution(key)}
+                  className={`px-3 py-1 rounded-full transition-colors ${
+                    isActive
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-text-muted hover:text-text'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />

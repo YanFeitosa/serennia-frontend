@@ -14,7 +14,7 @@ const Login: React.FC = () => {
         className="w-full max-w-lg"
       >
         <h1 className="text-4xl font-semibold text-primary mb-8 text-center">Identifique-se</h1>
-        <form className="bg-white p-8 rounded-xl shadow-serenna">
+        <form className="bg-card p-8 rounded-xl shadow-serenna">
           <div className="mb-6">
             <label htmlFor="phone" className="block text-text text-sm font-medium mb-2">Telefone</label>
             <input 

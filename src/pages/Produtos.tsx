@@ -4,10 +4,14 @@ import { Plus, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { mockProducts } from '../data/products';
 import { Button } from '../components/ui/Button';
+import { useAuth } from '../contexts/AuthContext';
 
 const Produtos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const role = user?.role ?? 'admin';
+  const canEdit = role === 'admin' || role === 'manager';
 
   const filteredProducts = mockProducts.filter((product) => {
     const term = searchTerm.toLowerCase();
@@ -25,10 +29,12 @@ const Produtos = () => {
             <h1 className="text-3xl font-bold text-text">Produtos</h1>
             <p className="text-text-muted mt-1">Gerencie os produtos de venda do salão</p>
           </div>
-          <Button onClick={() => navigate('/produtos/novo')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Produto
-          </Button>
+          {canEdit && (
+            <Button onClick={() => navigate('/produtos/novo')}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Produto
+            </Button>
+          )}
         </div>
         <div className="relative max-w-md">
           <input
@@ -60,9 +66,11 @@ const Produtos = () => {
             <tr className="bg-sidebar border-b border-border">
               <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Produto</th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Categoria</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Preço</th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Estoque</th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Preço</th>
+              {canEdit && (
+                <th className="px-6 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -74,23 +82,25 @@ const Produtos = () => {
                 <td className="px-6 py-4 text-sm text-text-muted">
                   {product.category ?? '-'}
                 </td>
+                <td className="px-6 py-4 text-sm text-text-muted">{product.stock}</td>
                 <td className="px-6 py-4 text-sm font-semibold text-text">
                   {product.price.toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
                   })}
                 </td>
-                <td className="px-6 py-4 text-sm text-text-muted">{product.stock}</td>
-                <td className="px-6 py-4 text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(`/produtos/${product.id}`)}
-                  >
-                    <Edit2 className="w-4 h-4 mr-1" />
-                    Editar
-                  </Button>
-                </td>
+                {canEdit && (
+                  <td className="px-6 py-4 text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/produtos/${product.id}`)}
+                    >
+                      <Edit2 className="w-4 h-4 mr-1" />
+                      Editar
+                    </Button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

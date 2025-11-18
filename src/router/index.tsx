@@ -1,6 +1,7 @@
 // src/router/index.tsx
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from '../App';
+import RoleGuard from '../components/auth/RoleGuard';
 import LoginPage from '../pages/Login';
 import Agenda from '../pages/Agenda';
 import AgendamentoForm from '../pages/AgendamentoForm';
@@ -47,38 +48,195 @@ const router = createBrowserRouter([
     path: '/',
     element: <App />,
     children: [
-      { path: '/', element: <Agenda />, index: true }, // Redirect root to agenda
-      { path: 'agenda', element: <Agenda /> },
-      { path: 'agenda/novo', element: <AgendamentoForm /> },
-      { path: 'agenda/editar/:id', element: <AgendamentoForm /> },
-      { path: 'comandas', element: <Comandas /> },
-      { path: 'comandas/:id/pagamento', element: <PagamentoComanda /> },
+      {
+        path: '/',
+        index: true,
+        element: (
+          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+            <Agenda />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'agenda',
+        element: (
+          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+            <Agenda />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'agenda/novo',
+        element: (
+          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+            <AgendamentoForm />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'agenda/editar/:id',
+        element: (
+          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+            <AgendamentoForm />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'comandas',
+        element: (
+          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+            <Comandas />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'comandas/:id/pagamento',
+        element: (
+          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+            <PagamentoComanda />
+          </RoleGuard>
+        ),
+      },
       {
         path: 'clientes',
         children: [
-          { path: '', element: <Clientes />, index: true },
-          { path: 'novo', element: <ClienteForm /> },
-          { path: ':id', element: <ClienteProfile /> },
+          {
+            path: '',
+            index: true,
+            element: (
+              <RoleGuard allowed={['admin', 'receptionist']}>
+                <Clientes />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'novo',
+            element: (
+              <RoleGuard allowed={['admin', 'receptionist']}>
+                <ClienteForm />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: ':id',
+            element: (
+              <RoleGuard allowed={['admin', 'receptionist']}>
+                <ClienteProfile />
+              </RoleGuard>
+            ),
+          },
         ],
       },
-      { path: 'servicos', element: <Servicos /> },
-      { path: 'servicos/novo', element: <ServicoForm /> },
-      { path: 'servicos/:id', element: <ServicoForm /> },
-      { path: 'produtos', element: <Produtos /> },
-      { path: 'produtos/novo', element: <ProdutoForm /> },
-      { path: 'produtos/:id', element: <ProdutoForm /> },
+      {
+        path: 'servicos',
+        element: (
+          <RoleGuard allowed={['admin', 'manager', 'receptionist']}>
+            <Servicos />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'servicos/novo',
+        element: (
+          <RoleGuard allowed={['admin', 'manager']}>
+            <ServicoForm />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'servicos/:id',
+        element: (
+          <RoleGuard allowed={['admin', 'manager']}>
+            <ServicoForm />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'produtos',
+        element: (
+          <RoleGuard allowed={['admin', 'manager', 'receptionist']}>
+            <Produtos />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'produtos/novo',
+        element: (
+          <RoleGuard allowed={['admin', 'manager']}>
+            <ProdutoForm />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'produtos/:id',
+        element: (
+          <RoleGuard allowed={['admin', 'manager']}>
+            <ProdutoForm />
+          </RoleGuard>
+        ),
+      },
       {
         path: 'colaboradores',
         children: [
-          { path: '', element: <Colaboradores />, index: true },
-          { path: 'novo', element: <ColaboradorForm /> },
-          { path: ':id', element: <ColaboradorProfile /> },
+          {
+            path: '',
+            index: true,
+            element: (
+              <RoleGuard allowed={['admin', 'manager', 'receptionist']}>
+                <Colaboradores />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: 'novo',
+            element: (
+              <RoleGuard allowed={['admin', 'manager']}>
+                <ColaboradorForm />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: ':id',
+            element: (
+              <RoleGuard allowed={['admin', 'manager', 'receptionist']}>
+                <ColaboradorProfile />
+              </RoleGuard>
+            ),
+          },
         ],
       },
-      { path: 'financeiro', element: <Financeiro /> },
-      { path: 'configuracoes', element: <Configuracoes /> },
-      { path: 'auditoria', element: <Auditoria /> },
-      { path: 'notificacoes', element: <Notificacoes /> },
+      {
+        path: 'financeiro',
+        element: (
+          <RoleGuard allowed={['admin', 'manager']}>
+            <Financeiro />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'configuracoes',
+        element: (
+          <RoleGuard allowed={['admin', 'manager']}>
+            <Configuracoes />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'auditoria',
+        element: (
+          <RoleGuard allowed={['admin', 'manager']}>
+            <Auditoria />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'notificacoes',
+        element: (
+          <RoleGuard allowed={['admin', 'receptionist']}>
+            <Notificacoes />
+          </RoleGuard>
+        ),
+      },
     ],
   },
 ]);

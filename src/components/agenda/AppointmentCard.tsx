@@ -138,7 +138,8 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-6"
           style={{
-            background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0))',
+            background:
+              'linear-gradient(to top, color-mix(in srgb, var(--color-text) 60%, transparent), transparent)',
           }}
         />
       )}

@@ -5,6 +5,7 @@ import { mockCollaborators } from '../data/collaborators';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import type { Collaborator } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 const getRoleLabel = (role: Collaborator['role']) => {
   switch (role) {
@@ -25,6 +26,9 @@ const ColaboradorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const collaborator = mockCollaborators.find(c => c.id === id);
+  const { user } = useAuth();
+  const role = user?.role ?? 'admin';
+  const canEdit = role === 'admin' || role === 'manager';
 
   if (!collaborator) {
     return <div>Colaborador não encontrado.</div>;
@@ -54,14 +58,16 @@ const ColaboradorProfile = () => {
             </div>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-2 rounded-full"
-          onClick={() => navigate('/colaboradores/novo', { state: { editCollaboratorId: collaborator.id } })}
-        >
-          <Edit className="w-5 h-5 text-text" />
-        </Button>
+        {canEdit && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2 rounded-full"
+            onClick={() => navigate('/colaboradores/novo', { state: { editCollaboratorId: collaborator.id } })}
+          >
+            <Edit className="w-5 h-5 text-text" />
+          </Button>
+        )}
       </header>
 
       <section className="bg-card rounded-xl shadow-md border border-border p-6 space-y-4">

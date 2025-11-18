@@ -14,7 +14,7 @@ const Cadastro: React.FC = () => {
         className="w-full max-w-lg"
       >
         <h1 className="text-4xl font-semibold text-primary mb-8 text-center">Cadastro</h1>
-        <form className="bg-white p-8 rounded-xl shadow-serenna space-y-6">
+        <form className="bg-card p-8 rounded-xl shadow-serenna space-y-6">
           <div>
             <label htmlFor="name" className="block text-text text-sm font-medium mb-2">Nome Completo</label>
             <input 

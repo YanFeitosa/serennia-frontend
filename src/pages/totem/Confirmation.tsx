@@ -12,7 +12,7 @@ const Confirmation: React.FC = () => {
         className="w-full max-w-4xl"
       >
         <h1 className="text-4xl font-semibold text-primary mb-8 text-center">Confirmação</h1>
-        <div className="bg-white p-8 rounded-xl shadow-serenna">
+        <div className="bg-card p-8 rounded-xl shadow-serenna">
           <p className="text-text-muted text-center">A tela de confirmação será implementada aqui</p>
         </div>
       </motion.div>

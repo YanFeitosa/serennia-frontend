@@ -7,7 +7,7 @@ const TotemLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header com logo */}
-      <header className="bg-white shadow-md py-4 px-8">
+      <header className="bg-card shadow-md py-4 px-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-semibold text-primary">Serenna</h1>
         </div>

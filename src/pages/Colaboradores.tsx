@@ -5,10 +5,15 @@ import { Plus, Mail, Phone, Eye } from 'lucide-react';
 import { mockCollaborators } from '../data/collaborators';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { useAuth } from '../contexts/AuthContext';
 
 const Colaboradores = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const role = user?.role ?? 'admin';
+  const canCreate = role === 'admin' || role === 'manager';
+
   return (
     <div className="space-y-4">
       <header className="mb-6">
@@ -17,10 +22,12 @@ const Colaboradores = () => {
             <h1 className="text-3xl font-bold text-text">Colaboradores</h1>
             <p className="text-text-muted mt-1">Gerencie sua equipe de profissionais</p>
           </div>
-          <Button onClick={() => navigate('/colaboradores/novo')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Colaborador
-          </Button>
+          {canCreate && (
+            <Button onClick={() => navigate('/colaboradores/novo')}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Colaborador
+            </Button>
+          )}
         </div>
         <div className="relative max-w-md">
           <input

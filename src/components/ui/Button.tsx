@@ -8,7 +8,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'primary', size = 'md', disabled, ...props }, ref) => {
-    const baseClasses = 'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]';
+    const baseClasses = 'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]';
 
     const sizeClasses = {
       sm: 'px-3 py-1.5 text-sm',
@@ -17,11 +17,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const variantClasses = {
-      primary: 'bg-secondary text-text hover:opacity-90 focus:ring-primary shadow-md border-2 border-primary',
-      secondary: 'bg-card text-text hover:bg-sidebar focus:ring-primary border border-border',
+      primary: 'bg-secondary text-text hover:opacity-90 shadow-md border-2 border-primary',
+      secondary: 'bg-card text-text hover:bg-sidebar border border-border',
       ghost: 'bg-transparent text-text hover:bg-secondary',
       outline: 'border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-background',
-      destructive: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-md',
+      destructive: 'bg-red-600 text-white hover:bg-red-700 shadow-md',
     };
 
     return (

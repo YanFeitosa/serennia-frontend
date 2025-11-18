@@ -45,7 +45,25 @@ module.exports = {
         border: 'var(--color-border)',
         card: 'var(--color-card)',
         sidebar: 'var(--color-sidebar)',
-        
+
+        // Mapear utilitários padrão para o sistema de design (status + escala de cinza)
+        red: {
+          500: 'color-mix(in srgb, var(--color-status-error) 85%, var(--color-background) 15%)',
+          600: 'var(--color-status-error)',
+          700: 'color-mix(in srgb, var(--color-status-error) 85%, var(--color-text) 15%)',
+        },
+        green: {
+          600: 'var(--color-status-success)',
+        },
+        gray: {
+          700: 'var(--color-text)',
+          500: 'var(--color-text-muted)',
+          400: 'color-mix(in srgb, var(--color-text-muted) 80%, var(--color-background) 20%)',
+          300: 'var(--color-border)',
+          200: 'color-mix(in srgb, var(--color-border) 80%, var(--color-background) 20%)',
+          100: 'color-mix(in srgb, var(--color-card) 80%, var(--color-background) 20%)',
+        },
+
         // Aliases para compatibilidade
         'accent-foreground': 'var(--color-text)',
         input: 'var(--color-text)',

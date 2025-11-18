@@ -1,13 +1,16 @@
 // src/pages/Login.tsx
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { loginSchema, type LoginSchema } from '../lib/schemas';
 import { Mail, Lock } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { useAuth, findTestUserByEmail, getDefaultPathForRole } from '../contexts/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { loginAs } = useAuth();
   const {
     register,
     handleSubmit,
@@ -17,16 +20,23 @@ const LoginPage = () => {
   });
 
   const onSubmit = (data: LoginSchema) => {
-    console.log('Login data:', data);
-    // Simulate API call
-    setTimeout(() => {
-      navigate('/'); // Redirect to root after login
-    }, 1000);
+    const user = findTestUserByEmail(data.email);
+    if (!user) {
+      alert(
+        'Usuário não encontrado. Use um dos e-mails de teste:\n- admin@serenna.com\n- manager@serenna.com\n- reception@serenna.com',
+      );
+      return;
+    }
+
+    loginAs(user);
+    const from = (location.state as any)?.from?.pathname as string | undefined;
+    const target = from || getDefaultPathForRole(user.role);
+    navigate(target, { replace: true });
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-serenna">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-xl shadow-serenna">
         <div className="text-center">
           <h1 className="text-4xl font-semibold text-primary">Serenna</h1>
           <p className="mt-2 text-text-muted">Bem-vindo(a) de volta!</p>
@@ -61,19 +71,15 @@ const LoginPage = () => {
             </a>
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
-            {isSubmitting ? 'Entrando...' : 'Entrar'}
-          </Button>
-
-          <div className="relative flex items-center justify-center my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative px-2 text-sm bg-white text-text-muted">Ou continue com</div>
+          <div className="text-xs text-text-muted space-y-1">
+            <p>Use um dos e-mails de teste para entrar:</p>
+            <p>admin@serenna.com — Administrador</p>
+            <p>manager@serenna.com — Gerente</p>
+            <p>reception@serenna.com — Recepcionista</p>
           </div>
 
-          <Button type="button" variant="outline" className="w-full" size="lg">
-            Entrar com Google
+          <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
+            {isSubmitting ? 'Entrando...' : 'Entrar'}
           </Button>
         </form>
       </div>
