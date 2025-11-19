@@ -49,7 +49,6 @@ const Configuracoes = () => {
 
   // Comissão padrão de profissionais (em porcentagem, 0-100)
   const [defaultCommissionPercent, setDefaultCommissionPercent] = useState<number>(50);
-  const [savedCommissionPercent, setSavedCommissionPercent] = useState<number | null>(null);
 
   // Categorias por tipo
   const [serviceCategories, setServiceCategories] = useState<string[]>([
@@ -175,13 +174,11 @@ const Configuracoes = () => {
     const raw = window.localStorage.getItem('serenna-default-commission');
     if (!raw) {
       setDefaultCommissionPercent(50);
-      setSavedCommissionPercent(50);
       return;
     }
     const parsed = Number(raw);
     if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
       setDefaultCommissionPercent(parsed);
-      setSavedCommissionPercent(parsed);
     }
   }, []);
 
@@ -200,7 +197,6 @@ const Configuracoes = () => {
   const handleSaveDefaultCommission = () => {
     const normalized = Math.max(0, Math.min(100, defaultCommissionPercent || 0));
     setDefaultCommissionPercent(normalized);
-    setSavedCommissionPercent(normalized);
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('serenna-default-commission', String(normalized));
     }
