@@ -1,5 +1,5 @@
 // src/components/agenda/WeeklyView.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { mockAppointments } from '../../data/appointments';
 import { mockCollaborators } from '../../data/collaborators';
@@ -14,6 +14,10 @@ interface WeeklyViewProps {
 
 const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
   const today = new Date();
+  const [selectedCollaboratorId, setSelectedCollaboratorId] = useState<string>('');
+  const activeCollaborators = mockCollaborators.filter(
+    c => c.status === 'active' && c.role === 'professional',
+  );
   const dayOfWeek = date.getDay();
   const startOfWeek = new Date(date);
   startOfWeek.setDate(date.getDate() - dayOfWeek);
@@ -66,7 +70,11 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
   const groupedByDay = days.map(d => {
     const key = getDateKey(d);
     const appointments = mockAppointments
-      .filter((appt: Appointment) => appt.start.slice(0, 10) === key)
+      .filter(
+        (appt: Appointment) =>
+          appt.start.slice(0, 10) === key &&
+          (!selectedCollaboratorId || appt.collaboratorId === selectedCollaboratorId),
+      )
       .sort(
         (a: Appointment, b: Appointment) =>
           new Date(a.start).getTime() - new Date(b.start).getTime(),
@@ -76,7 +84,24 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
 
   return (
     <div className="bg-card rounded-xl shadow-md p-4 border border-border">
-      <h2 className="text-xl font-bold mb-4 text-text">Visualização Semanal</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-text">Visualização Semanal</h2>
+        <div className="flex items-center space-x-2 text-[11px]">
+          <span className="text-text-muted">Profissional:</span>
+          <select
+            value={selectedCollaboratorId}
+            onChange={(e) => setSelectedCollaboratorId(e.target.value)}
+            className="border border-border bg-card text-text text-xs rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">Todos</option>
+            {activeCollaborators.map(collab => (
+              <option key={collab.id} value={collab.id}>
+                {collab.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="grid grid-cols-7 gap-2 text-xs mb-2">
         {groupedByDay.map(({ date, appointments }) => {
           const label = `${weekdayLabels[date.getDay()]} ${date

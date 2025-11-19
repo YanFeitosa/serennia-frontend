@@ -1,7 +1,8 @@
 // src/components/agenda/MonthlyView.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { mockAppointments } from '../../data/appointments';
 import { mockOrders } from '../../data/orders';
+import { mockCollaborators } from '../../data/collaborators';
 import type { AppointmentStatus } from '../../types';
 
 interface MonthlyViewProps {
@@ -13,6 +14,10 @@ const weekdayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 	const today = new Date();
+	const [selectedCollaboratorId, setSelectedCollaboratorId] = useState<string>('');
+	const activeCollaborators = mockCollaborators.filter(
+		c => c.status === 'active' && c.role === 'professional',
+	);
 	const currentMonth = date.getMonth();
 	const currentYear = date.getFullYear();
 
@@ -75,6 +80,7 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 
 	// Agendamentos
 	for (const appt of mockAppointments) {
+		if (selectedCollaboratorId && appt.collaboratorId !== selectedCollaboratorId) continue;
 		const key = appt.start.slice(0, 10);
 		const aggregate = ensureAggregate(aggregatedByDay, key);
 		aggregate.totalAppointments += 1;
@@ -111,16 +117,17 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 	}
 
 	// Comandas abertas por dia
-	const todayKey = getDateKey(today);
 	for (const order of mockOrders) {
 		if (order.status !== 'open') continue;
 		const key = order.createdAt.slice(0, 10);
 		const aggregate = ensureAggregate(aggregatedByDay, key);
 		aggregate.openOrders += 1;
-		// Vermelho apenas para comandas abertas em dias anteriores ao atual
-		if (key < todayKey) {
-			aggregate.priority = Math.max(aggregate.priority, 10);
-			aggregate.colorToken = 'error';
+		// Comandas abertas contribuem com cor laranja (warning), mas
+		// não sobrepõem estados mais críticos como "not_paid" (erro).
+		const orderPriority = 3; // similar ao in_progress
+		if (orderPriority > aggregate.priority) {
+			aggregate.priority = orderPriority;
+			aggregate.colorToken = 'warning';
 		}
 	}
 
@@ -131,6 +138,21 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 				<span>
 					{date.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
 				</span>
+				<div className="flex items-center space-x-2 text-[11px]">
+					<span className="text-text-muted">Profissional:</span>
+					<select
+						value={selectedCollaboratorId}
+						onChange={(e) => setSelectedCollaboratorId(e.target.value)}
+						className="border border-border bg-card text-text text-xs rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+					>
+						<option value="">Todos</option>
+						{activeCollaborators.map(collab => (
+							<option key={collab.id} value={collab.id}>
+								{collab.name}
+							</option>
+						))}
+					</select>
+				</div>
 			</div>
 			<div className="grid grid-cols-7 gap-1 text-xs mb-1">
 				{weekdayLabels.map(label => (
@@ -157,7 +179,6 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 						error: 'var(--color-status-error)',
 						muted: 'var(--color-status-muted)',
 					}[token];
-					const isOverdueDayWithOpenOrders = openOrders > 0 && key < todayKey;
 
 					return (
 						<button
@@ -184,7 +205,12 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 								{totalAppointments > 0 && (
 									<span
 										className="block text-[10px] font-normal"
-										style={{ color: 'var(--color-status-info)' }}
+										style={{
+											color:
+												token === 'muted'
+													? 'var(--color-status-muted)'
+													: 'var(--color-status-info)',
+										}}
 									>
 										{totalAppointments} agendamento(s)
 									</span>
@@ -200,11 +226,7 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 								{openOrders > 0 && (
 									<span
 										className="block text-[10px] font-normal"
-										style={{
-											color: isOverdueDayWithOpenOrders
-												? 'var(--color-status-error)'
-												: 'var(--color-status-info)',
-										}}
+										style={{ color: 'var(--color-status-warning)' }}
 									>
 										{openOrders} comanda(s) aberta(s)
 									</span>
