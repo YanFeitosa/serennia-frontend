@@ -1,5 +1,5 @@
 // src/data/orders.ts
-import type { Order, OrderItem } from '../types';
+import type { Appointment, Order, OrderItem } from '../types';
 import { mockServices } from './services';
 import { mockProducts } from './products';
 
@@ -258,4 +258,45 @@ export const removeItemFromOrder = (
 
 export const findOpenOrderByClientId = (clientId: string): Order | null => {
   return findOpenOrderForClient(clientId) ?? null;
+};
+
+// Garante uma comanda aberta para o agendamento informado,
+// adicionando os serviços do agendamento como itens (se ainda não existirem)
+// e vinculando o appointmentId na comanda.
+export const ensureOrderForAppointment = (appointment: Appointment): Order => {
+  // Garante uma comanda aberta para o cliente (reutiliza se já existir)
+  const baseOrder = createEmptyOrderForClient(appointment.clientId);
+
+  // Adiciona itens de serviço referentes aos serviceIds do agendamento,
+  // evitando duplicar itens idênticos (mesmo serviceId e collaboratorId).
+  let currentOrder: Order = baseOrder;
+
+  for (const serviceId of appointment.serviceIds) {
+    const alreadyHasItem = currentOrder.items.some(
+      item =>
+        item.type === 'service' &&
+        item.serviceId === serviceId &&
+        item.collaboratorId === appointment.collaboratorId,
+    );
+
+    if (!alreadyHasItem) {
+      const updated = addItemToOrder(currentOrder.id, serviceId, appointment.collaboratorId);
+      if (updated) {
+        currentOrder = updated;
+      }
+    }
+  }
+
+  // Garante vínculo com o agendamento
+  if (currentOrder.appointmentId !== appointment.id) {
+    const updated = updateOrderById(currentOrder.id, (order) => ({
+      ...order,
+      appointmentId: appointment.id,
+    }));
+    if (updated) {
+      currentOrder = updated;
+    }
+  }
+
+  return currentOrder;
 };

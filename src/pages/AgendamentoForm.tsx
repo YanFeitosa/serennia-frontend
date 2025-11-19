@@ -82,6 +82,13 @@ const AgendamentoForm = () => {
     }
   }, [appointment, reset, initialClientId, startFromQuery, collaboratorIdFromQuery]);
 
+  useEffect(() => {
+    if (appointment && appointment.status !== 'pending') {
+      alert('Apenas agendamentos com status pendente podem ser editados.');
+      navigate('/agenda');
+    }
+  }, [appointment, navigate]);
+
   const selectedCollaboratorId = watch('collaboratorId');
   const selectedCollaborator = mockCollaborators.find(c => c.id === selectedCollaboratorId);
 

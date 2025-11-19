@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Appointment, Client, Service } from '../../types';
 import { Clock, User, Tag, Pencil } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { mockOrders } from '../../data/orders';
+import { mockOrders, ensureOrderForAppointment } from '../../data/orders';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -92,7 +92,7 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => setIsExpanded(true)}
     >
-      {isHovered && (
+      {isHovered && appointment.status === 'pending' && (
         <Button 
           variant="ghost"
           size="sm"
@@ -131,8 +131,9 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
             label = 'Abrir comanda';
             onClick = (e) => {
               e.stopPropagation();
+              const order = ensureOrderForAppointment(appointment);
               navigate('/comandas', {
-                state: { newOrderClientId: client.id },
+                state: { focusOrderId: order.id },
               });
             };
           }
