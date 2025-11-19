@@ -4,9 +4,9 @@ import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { mockOrders } from '../data/orders';
 import { Badge } from '../components/ui/Badge';
-import DatePickerPlain from '../components/ui/DatePickerPlain.tsx';
-import { Button } from '../components/ui/Button.tsx';
-import type { Order } from '../types';
+import DatePickerPlain from '../components/ui/DatePickerPlain';
+import { Button } from '../components/ui/Button';
+import type { Order, OrderItem } from '../types';
 
 type ChartResolution = 'auto' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -38,15 +38,17 @@ const getStatusVariant = (status: Order['status']) => {
 
 const Financeiro = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date;
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate());
   });
-  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  });
   const [chartResolution, setChartResolution] = useState<ChartResolution>('auto');
 
   // Filtrar apenas comandas pagas
-  const filteredOrders = mockOrders.filter(order => {
+  const filteredOrders = mockOrders.filter((order: Order) => {
     // Primeiro filtro: apenas comandas pagas
     if (order.status !== 'paid') return false;
 
@@ -124,11 +126,19 @@ const Financeiro = () => {
         date.setDate(date.getDate() + i);
         const dayLabel = date.toLocaleDateString('pt-BR', { weekday: 'short' });
         const faturamento = filteredOrders
-          .filter(order => new Date(order.createdAt).toDateString() === date.toDateString())
-          .reduce((acc, order) => acc + order.finalValue, 0);
+          .filter((order: Order) => new Date(order.createdAt).toDateString() === date.toDateString())
+          .reduce((acc: number, order: Order) => acc + order.finalValue, 0);
         const comissao = filteredOrders
-          .filter(order => new Date(order.createdAt).toDateString() === date.toDateString())
-          .reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
+          .filter((order: Order) => new Date(order.createdAt).toDateString() === date.toDateString())
+          .reduce(
+            (acc: number, order: Order) =>
+              acc +
+              order.items.reduce(
+                (itemAcc: number, item: OrderItem) => itemAcc + item.commission,
+                0,
+              ),
+            0,
+          );
         return { name: dayLabel, faturamento, comissao };
       });
     }
@@ -142,17 +152,25 @@ const Financeiro = () => {
         weekEnd.setDate(weekEnd.getDate() + 6);
         const weekLabel = `Semana ${i + 1}`;
         const faturamento = filteredOrders
-          .filter(order => {
+          .filter((order: Order) => {
             const orderDate = new Date(order.createdAt);
             return orderDate >= weekStart && orderDate <= weekEnd;
           })
-          .reduce((acc, order) => acc + order.finalValue, 0);
+          .reduce((acc: number, order: Order) => acc + order.finalValue, 0);
         const comissao = filteredOrders
-          .filter(order => {
+          .filter((order: Order) => {
             const orderDate = new Date(order.createdAt);
             return orderDate >= weekStart && orderDate <= weekEnd;
           })
-          .reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
+          .reduce(
+            (acc: number, order: Order) =>
+              acc +
+              order.items.reduce(
+                (itemAcc: number, item: OrderItem) => itemAcc + item.commission,
+                0,
+              ),
+            0,
+          );
         return { name: weekLabel, faturamento, comissao };
       });
     }
@@ -166,23 +184,31 @@ const Financeiro = () => {
         const month = new Date(from.getFullYear(), from.getMonth() + i, 1);
         const monthLabel = month.toLocaleDateString('pt-BR', { month: 'long' });
         const faturamento = filteredOrders
-          .filter(order => {
+          .filter((order: Order) => {
             const orderDate = new Date(order.createdAt);
             return (
               orderDate.getMonth() === month.getMonth() &&
               orderDate.getFullYear() === month.getFullYear()
             );
           })
-          .reduce((acc, order) => acc + order.finalValue, 0);
+          .reduce((acc: number, order: Order) => acc + order.finalValue, 0);
         const comissao = filteredOrders
-          .filter(order => {
+          .filter((order: Order) => {
             const orderDate = new Date(order.createdAt);
             return (
               orderDate.getMonth() === month.getMonth() &&
               orderDate.getFullYear() === month.getFullYear()
             );
           })
-          .reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
+          .reduce(
+            (acc: number, order: Order) =>
+              acc +
+              order.items.reduce(
+                (itemAcc: number, item: OrderItem) => itemAcc + item.commission,
+                0,
+              ),
+            0,
+          );
         return { name: monthLabel, faturamento, comissao };
       });
     }
@@ -191,18 +217,37 @@ const Financeiro = () => {
     return Array.from({ length: years }, (_, i) => {
       const year = from.getFullYear() + i;
       const faturamento = filteredOrders
-        .filter(order => new Date(order.createdAt).getFullYear() === year)
-        .reduce((acc, order) => acc + order.finalValue, 0);
+        .filter((order: Order) => new Date(order.createdAt).getFullYear() === year)
+        .reduce((acc: number, order: Order) => acc + order.finalValue, 0);
       const comissao = filteredOrders
-        .filter(order => new Date(order.createdAt).getFullYear() === year)
-        .reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
+        .filter((order: Order) => new Date(order.createdAt).getFullYear() === year)
+        .reduce(
+          (acc: number, order: Order) =>
+            acc +
+            order.items.reduce(
+              (itemAcc: number, item: OrderItem) => itemAcc + item.commission,
+              0,
+            ),
+          0,
+        );
       return { name: String(year), faturamento, comissao };
     });
   };
 
   const chartData = getChartData();
-  const totalFaturado = filteredOrders.reduce((acc, order) => acc + order.finalValue, 0);
-  const totalComissao = filteredOrders.reduce((acc, order) => acc + order.items.reduce((itemAcc, item) => itemAcc + item.commission, 0), 0);
+  const totalFaturado = filteredOrders.reduce(
+    (acc: number, order: Order) => acc + order.finalValue,
+    0,
+  );
+  const totalComissao = filteredOrders.reduce(
+    (acc: number, order: Order) =>
+      acc +
+      order.items.reduce(
+        (itemAcc: number, item: OrderItem) => itemAcc + item.commission,
+        0,
+      ),
+    0,
+  );
 
   return (
     <div className="space-y-6">

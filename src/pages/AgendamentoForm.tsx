@@ -4,16 +4,17 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import type { Appointment } from '../types';
-import { appointmentSchema, type AppointmentSchema } from '../lib/schemas.ts';
-import { mockAppointments, upsertMockAppointment } from '../data/appointments.ts';
-import { mockClients } from '../data/clients.ts';
-import { mockCollaborators } from '../data/collaborators.ts';
-import { mockServices } from '../data/services.ts';
-import { Button } from '../components/ui/Button.tsx';
-import SearchableSelectPlain from '../components/ui/SearchableSelectPlain.tsx';
-import MultiSelectPlain from '../components/ui/MultiSelectPlain.tsx';
-import DateTimePickerPlain from '../components/ui/DateTimePickerPlain.tsx';
-import { Textarea } from '../components/ui/Textarea.tsx';
+import { appointmentSchema, type AppointmentSchema } from '../lib/schemas';
+import { mockAppointments, upsertMockAppointment } from '../data/appointments';
+import { mockClients } from '../data/clients';
+import { mockCollaborators } from '../data/collaborators';
+import { mockServices } from '../data/services';
+import { Button } from '../components/ui/Button';
+import SearchableSelectPlain from '../components/ui/SearchableSelectPlain';
+import MultiSelectPlain from '../components/ui/MultiSelectPlain';
+import DateTimePickerPlain from '../components/ui/DateTimePickerPlain';
+import { Textarea } from '../components/ui/Textarea';
+import { useAuth } from '../contexts/AuthContext';
 
 const toDateTimeLocal = (dateStr: string | Date): string => {
   const date = new Date(dateStr);
@@ -39,6 +40,7 @@ const useQuery = () => {
 };
 
 const AgendamentoForm = () => {
+  const { user } = useAuth();
   const location = useLocation();
   const query = useQuery();
   const clientIdFromQuery = query.get('clientId');
@@ -140,6 +142,7 @@ const AgendamentoForm = () => {
       ? { ...appointment }
       : {
           id: `appt-${Date.now()}`,
+          salonId: user?.salonId ?? 'salon-1',
           clientId: data.clientId,
           collaboratorId: data.collaboratorId,
           serviceIds: data.serviceIds,
@@ -148,7 +151,6 @@ const AgendamentoForm = () => {
           status: 'pending',
           origin: 'reception',
           notes: data.notes,
-          price: selectedServices.reduce((sum, service) => sum + service.price, 0),
         };
 
     const nextAppointment: Appointment = {
@@ -159,7 +161,6 @@ const AgendamentoForm = () => {
       start: startDate.toISOString(),
       end: endDate.toISOString(),
       notes: data.notes,
-      price: selectedServices.reduce((sum, service) => sum + service.price, 0),
     };
 
     return new Promise(resolve => {

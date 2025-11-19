@@ -1,16 +1,23 @@
 // src/pages/Comandas.tsx
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import { mockOrders, createEmptyOrderForClient, findOrderById, findOpenOrderByClientId } from '../data/orders.ts';
-import { mockClients } from '../data/clients.ts';
-import { mockServices } from '../data/services.ts';
-import { mockProducts } from '../data/products.ts';
-import { Button } from '../components/ui/Button.tsx';
-import { Badge } from '../components/ui/Badge.tsx';
-import ComandaDetails from '../components/comandas/ComandaDetails.tsx';
-import type { Order, OrderItem } from '../types/index.ts';
-import SearchableSelectPlain from '../components/ui/SearchableSelectPlain.tsx';
+import {
+  mockOrders,
+  createEmptyOrderForClient,
+  findOrderById,
+  findOpenOrderByClientId,
+} from '../data/orders';
+import { mockClients } from '../data/clients';
+import { mockServices } from '../data/services';
+import { mockProducts } from '../data/products';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
+import { upsertNotification } from '../data/notifications';
+import type { Notification } from '../types';
+import ComandaDetails from '../components/comandas/ComandaDetails';
+import type { Order, OrderItem } from '../types';
+import SearchableSelectPlain from '../components/ui/SearchableSelectPlain';
 
 const Comandas = () => {
   const location = useLocation();
@@ -51,8 +58,18 @@ const Comandas = () => {
     !!initialNewOrderClientId && !existingOpenForInitialClient,
   );
 
-  const getStatusVariant = (status: Order['status']) => {
-    switch (status) {
+  const todayAtMidnight = new Date();
+  todayAtMidnight.setHours(0, 0, 0, 0);
+
+  const isOverdueOpenOrder = (order: Order): boolean => {
+    if (order.status !== 'open') return false;
+    const created = new Date(order.createdAt);
+    return created.getTime() < todayAtMidnight.getTime();
+  };
+
+  const getStatusVariant = (order: Order) => {
+    if (isOverdueOpenOrder(order)) return 'destructive';
+    switch (order.status) {
       case 'open': return 'info';
       case 'closed': return 'warning';
       case 'paid': return 'success';
@@ -97,8 +114,31 @@ const Comandas = () => {
     paid: 2,
   };
 
+  const overdueOpenOrders = mockOrders.filter(isOverdueOpenOrder);
+
+  useEffect(() => {
+    if (overdueOpenOrders.length === 0) return;
+
+    const message =
+      overdueOpenOrders.length === 1
+        ? 'Existe 1 comanda aberta com data anterior a hoje.'
+        : `Existem ${overdueOpenOrders.length} comandas abertas com data anterior a hoje.`;
+
+    const notification: Notification = {
+      id: 'overdue-open-orders',
+      userId: 'system',
+      salonId: 'salon-1',
+      message,
+      read: false,
+      createdAt: new Date().toISOString(),
+      type: 'warning',
+    };
+
+    upsertNotification(notification);
+  }, [overdueOpenOrders.length]);
+
   const filteredComandas = mockOrders
-    .filter(comanda => {
+    .filter((comanda: Order) => {
       const clientName = getClientName(comanda.clientId);
       const matchesFilter = filter === 'all' || comanda.status === filter;
       const matchesSearch =
@@ -107,7 +147,7 @@ const Comandas = () => {
 
       return matchesFilter && matchesSearch;
     })
-    .sort((a, b) => {
+    .sort((a: Order, b: Order) => {
       const statusDiff = statusPriority[a.status] - statusPriority[b.status];
       if (statusDiff !== 0) return statusDiff;
 
@@ -229,15 +269,17 @@ const Comandas = () => {
               <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Data</th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Valor</th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
+              <th className="px-6 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Visualizar</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {filteredComandas.map(comanda => (
+            {filteredComandas.map((comanda: Order) => (
               <>
                 <tr 
                   key={comanda.id} 
-                  className="hover:bg-sidebar cursor-pointer transition-colors"
+                  className={`hover:bg-sidebar cursor-pointer transition-colors ${
+                    isOverdueOpenOrder(comanda) ? 'bg-red-950/30' : ''
+                  }`}
                   onClick={() => toggleExpand(comanda.id)}
                 >
                   <td className="px-6 py-4">
@@ -254,7 +296,7 @@ const Comandas = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant={getStatusVariant(comanda.status)}>{getStatusLabel(comanda.status)}</Badge>
+                    <Badge variant={getStatusVariant(comanda)}>{getStatusLabel(comanda.status)}</Badge>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
@@ -281,7 +323,7 @@ const Comandas = () => {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                              {comanda.items.map(item => (
+                              {comanda.items.map((item: OrderItem) => (
                                 <tr key={item.id} className="hover:bg-sidebar">
                                   <td className="px-4 py-3 text-sm text-text">{getItemLabel(item)}</td>
                                   <td className="px-4 py-3 text-sm text-text text-right">
@@ -300,17 +342,14 @@ const Comandas = () => {
                             <div className="text-sm">
                               <span className="text-text-muted">Subtotal: </span>
                               <span className="font-semibold text-text">
-                                {comanda.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                {comanda.items
+                                  .reduce(
+                                    (sum: number, item: OrderItem) => sum + item.price,
+                                    0,
+                                  )
+                                  .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                               </span>
                             </div>
-                            {comanda.discount > 0 && (
-                              <div className="text-sm">
-                                <span className="text-text-muted">Desconto: </span>
-                                <span className="font-semibold text-green-600">
-                                  -{comanda.discount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                </span>
-                              </div>
-                            )}
                             <div className="text-sm">
                               <span className="text-text-muted">Total: </span>
                               <span className="font-bold text-text">

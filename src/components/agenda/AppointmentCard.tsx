@@ -29,17 +29,41 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
   const cardRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const latestOrder = getLatestOrderForClient(client.id);
+
+  const todayAtMidnight = new Date();
+  todayAtMidnight.setHours(0, 0, 0, 0);
+
   const hasOpenOrder = latestOrder?.status === 'open';
+  const hasOverdueOpenOrder =
+    !!latestOrder &&
+    latestOrder.status === 'open' &&
+    new Date(latestOrder.createdAt).getTime() < todayAtMidnight.getTime();
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-status-info)',
     minHeight,
   };
 
-  if (appointment.status === 'in_progress') {
-    cardStyle.backgroundColor = 'var(--color-status-warning)';
+  const appointmentDay = new Date(appointment.start);
+  appointmentDay.setHours(0, 0, 0, 0);
+  const isPastDay = appointmentDay.getTime() < todayAtMidnight.getTime();
+
+  if (appointment.status === 'not_paid') {
+    cardStyle.backgroundColor = 'var(--color-status-error)';
+  } else if (appointment.status === 'pending') {
+    cardStyle.backgroundColor = 'var(--color-status-info)';
+  } else if (appointment.status === 'in_progress') {
+    if (isPastDay && hasOverdueOpenOrder) {
+      // Agendamento atrasado com comanda aberta em dia anterior
+      cardStyle.backgroundColor = 'var(--color-status-error)';
+    } else {
+      // Em andamento hoje (ou sem comanda aberta atrasada): laranja
+      cardStyle.backgroundColor = 'var(--color-status-warning)';
+    }
   } else if (appointment.status === 'completed') {
     cardStyle.backgroundColor = 'var(--color-status-success)';
+  } else if (appointment.status === 'no_show') {
+    cardStyle.backgroundColor = 'var(--color-status-muted)';
   }
 
   useEffect(() => {
@@ -112,7 +136,11 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
               });
             };
           }
-        } else if (appointment.status === 'in_progress' || appointment.status === 'completed') {
+        } else if (
+          appointment.status === 'in_progress' ||
+          appointment.status === 'completed' ||
+          appointment.status === 'not_paid'
+        ) {
           if (latestOrder) {
             label = 'Acessar comanda';
             onClick = (e) => {
@@ -139,7 +167,7 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
           className="pointer-events-none absolute inset-x-0 bottom-0 h-6"
           style={{
             background:
-              'linear-gradient(to top, color-mix(in srgb, var(--color-text) 60%, transparent), transparent)',
+              'linear-gradient(to top, color-mix(in srgb, var(--color-background) 85%, transparent), transparent)',
           }}
         />
       )}

@@ -4,8 +4,8 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Button } from '../components/ui/Button.tsx';
-import { Input } from '../components/ui/Input.tsx';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import type { Client } from '../types';
 import { addMockClient, mockClients, updateMockClient } from '../data/clients';
 
@@ -64,10 +64,10 @@ const ClienteForm = () => {
     const id = `client-${Date.now()}`;
     const newClient: Client = {
       id,
+      salonId: 'salon-1',
       name: data.name,
       phone: data.phone,
       email: data.email,
-      visitCount: 0,
     };
     addMockClient(newClient);
 

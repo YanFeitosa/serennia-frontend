@@ -1,9 +1,11 @@
 // src/components/agenda/WeeklyView.tsx
 import React from 'react';
+import type { CSSProperties } from 'react';
 import { mockAppointments } from '../../data/appointments';
 import { mockCollaborators } from '../../data/collaborators';
 import { mockClients } from '../../data/clients';
 import { mockServices } from '../../data/services';
+import type { Appointment, AppointmentStatus } from '../../types';
 
 interface WeeklyViewProps {
   date: Date;
@@ -25,11 +27,50 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
   const getDateKey = (date: Date) => date.toISOString().slice(0, 10);
   const weekdayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
+  const getStatusToken = (
+    status: AppointmentStatus,
+  ): 'info' | 'warning' | 'success' | 'error' | 'muted' => {
+    switch (status) {
+      case 'in_progress':
+        return 'warning';
+      case 'completed':
+        return 'success';
+      case 'no_show':
+        return 'muted';
+      case 'not_paid':
+        return 'error';
+      case 'canceled':
+        // Cancelados não devem aparecer na agenda, mas mantemos um fallback neutro
+        return 'info';
+      case 'pending':
+      default:
+        return 'info';
+    }
+  };
+
+  const getStatusStyle = (status: AppointmentStatus) => {
+    const token = getStatusToken(status);
+    const colorVar = {
+      info: 'var(--color-status-info)',
+      warning: 'var(--color-status-warning)',
+      success: 'var(--color-status-success)',
+      error: 'var(--color-status-error)',
+      muted: 'var(--color-status-muted)',
+    }[token];
+    return {
+      backgroundColor: `color-mix(in srgb, ${colorVar} 10%, transparent)`,
+      borderColor: colorVar,
+    } as CSSProperties;
+  };
+
   const groupedByDay = days.map(d => {
     const key = getDateKey(d);
     const appointments = mockAppointments
-      .filter(appt => appt.start.slice(0, 10) === key)
-      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      .filter((appt: Appointment) => appt.start.slice(0, 10) === key)
+      .sort(
+        (a: Appointment, b: Appointment) =>
+          new Date(a.start).getTime() - new Date(b.start).getTime(),
+      );
     return { date: d, appointments };
   });
 
@@ -60,7 +101,7 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
                 {appointments.length === 0 && (
                   <div className="text-[11px] text-text-muted">Sem agendamentos</div>
                 )}
-                {appointments.map(appt => {
+                {appointments.map((appt: Appointment) => {
                   const client = mockClients.find(c => c.id === appt.clientId);
                   const collaborator = mockCollaborators.find(c => c.id === appt.collaboratorId);
                   const services = mockServices.filter(s => appt.serviceIds.includes(s.id));
@@ -72,14 +113,13 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
                     minute: '2-digit',
                   })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
+                  const style = getStatusStyle(appt.status as AppointmentStatus);
+
                   return (
                     <div
                       key={appt.id}
                       className="rounded-md px-2 py-1 text-[11px] border-l-4"
-                      style={{
-                        backgroundColor: 'color-mix(in srgb, var(--color-status-info) 10%, transparent)',
-                        borderColor: 'var(--color-status-info)',
-                      }}
+                      style={style}
                     >
                       <div className="font-semibold text-text">
                         {client.name}

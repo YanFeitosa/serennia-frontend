@@ -3,12 +3,17 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Phone, Calendar, Eye } from 'lucide-react';
 import { mockClients } from '../data/clients';
+import { mockOrders } from '../data/orders';
+import type { Order } from '../types';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 
 const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+
+  const getVisitCount = (clientId: string) =>
+    mockOrders.filter((order: Order) => order.clientId === clientId).length;
 
   return (
     <div className="space-y-4">
@@ -53,7 +58,6 @@ const Clientes = () => {
               <tr key={client.id} className="hover:bg-sidebar transition-colors">
                 <td className="px-6 py-4">
                   <div className="font-medium text-text">{client.name}</div>
-                  {client.email && <div className="text-sm text-text-muted">{client.email}</div>}
                 </td>
                 <td className="px-6 py-4 text-sm text-text-muted">
                   <div className="flex items-center">
@@ -68,8 +72,8 @@ const Clientes = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <Badge variant={client.visitCount > 5 ? 'success' : 'default'}>
-                    {client.visitCount} {client.visitCount === 1 ? 'visita' : 'visitas'}
+                  <Badge variant={getVisitCount(client.id) > 5 ? 'success' : 'default'}>
+                    {getVisitCount(client.id)} {getVisitCount(client.id) === 1 ? 'visita' : 'visitas'}
                   </Badge>
                 </td>
                 <td className="px-6 py-4 text-right">

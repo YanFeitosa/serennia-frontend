@@ -175,16 +175,12 @@ const PagamentoComanda = () => {
             <div className="space-y-1 pt-2 border-t border-border">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>{order.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                <span>
+                  {order.items
+                    .reduce((sum, item) => sum + item.price, 0)
+                    .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </span>
               </div>
-              {order.discount > 0 && (
-                <div className="flex justify-between">
-                  <span>Desconto</span>
-                  <span className="text-green-600">
-                    -{order.discount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </span>
-                </div>
-              )}
               <div className="flex justify-between font-semibold">
                 <span>Total a pagar</span>
                 <span>{order.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>

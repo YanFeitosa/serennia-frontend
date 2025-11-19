@@ -4,10 +4,10 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Button } from '../components/ui/Button.tsx';
-import { Input } from '../components/ui/Input.tsx';
-import MultiSelectPlain from '../components/ui/MultiSelectPlain.tsx';
-import { mockCollaborators, addMockCollaborator, updateMockCollaborator } from '../data/collaborators.ts';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import MultiSelectPlain from '../components/ui/MultiSelectPlain';
+import { mockCollaborators, addMockCollaborator, updateMockCollaborator } from '../data/collaborators';
 
 const SERVICE_CATEGORIES = [
   'Cabelo',
@@ -31,6 +31,15 @@ const collaboratorSchema = z.object({
 });
 
 type CollaboratorSchema = z.infer<typeof collaboratorSchema>;
+
+const getDefaultCommissionRate = (): number => {
+  if (typeof window === 'undefined') return 0.5;
+  const raw = window.localStorage.getItem('serenna-default-commission');
+  const percent = Number(raw);
+  if (!Number.isFinite(percent)) return 0.5;
+  const clamped = Math.max(0, Math.min(100, percent));
+  return clamped / 100;
+};
 
 const ColaboradorForm = () => {
   const navigate = useNavigate();
@@ -71,6 +80,7 @@ const ColaboradorForm = () => {
   }, [editingCollaborator, reset]);
 
   const onSubmit: SubmitHandler<CollaboratorSchema> = (data) => {
+    const defaultCommissionRate = getDefaultCommissionRate();
     if (editingCollaborator) {
       updateMockCollaborator(editingCollaborator.id, {
         name: data.name,
@@ -82,12 +92,13 @@ const ColaboradorForm = () => {
     } else {
       addMockCollaborator({
         id: `collab-${Date.now()}`,
+        salonId: 'salon-1',
         name: data.name,
         role: data.role as any,
         status: 'active',
         phone: data.phone,
         email: data.email,
-        commissionRate: 0.5,
+        commissionRate: defaultCommissionRate,
         serviceCategories: data.serviceCategories,
       });
     }

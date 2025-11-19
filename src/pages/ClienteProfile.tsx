@@ -65,11 +65,6 @@ const ClienteProfile = () => {
           <div>
             <h1 className="text-3xl font-bold text-text">{client?.name || 'Novo Cliente'}</h1>
             <p className="text-text-muted">{client?.email}</p>
-            {client?.tags && (
-              <div className="mt-2 flex space-x-2">
-                {client.tags.map(tag => <Badge key={tag}>{tag}</Badge>)}
-              </div>
-            )}
           </div>
         </div>
         <Button

@@ -1,9 +1,10 @@
 // src/components/layout/Sidebar.tsx
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Calendar, ShoppingCart, Users, Scissors, Briefcase, TrendingUp, Settings, Shield, Bell, Moon, Sun, LogOut, Package } from 'lucide-react';
+import { Calendar, ShoppingCart, Users, Scissors, Briefcase, TrendingUp, Settings, Shield, Bell, Moon, Sun, LogOut, Package, User as UserIcon } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { getUnreadNotifications } from '../../data/notifications';
 
 interface SidebarLinkProps {
   to: string;
@@ -41,6 +42,7 @@ const Sidebar = () => {
   const [showLogout, setShowLogout] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const [platformName, setPlatformName] = useState('Serenna');
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
@@ -78,6 +80,22 @@ const Sidebar = () => {
     const handler = () => loadAppearanceName();
     window.addEventListener('serenna-appearance-changed', handler);
     return () => window.removeEventListener('serenna-appearance-changed', handler);
+  }, []);
+
+  useEffect(() => {
+    const updateNotifications = () => {
+      try {
+        setHasUnreadNotifications(getUnreadNotifications().length > 0);
+      } catch {
+        setHasUnreadNotifications(false);
+      }
+    };
+
+    updateNotifications();
+
+    if (typeof window === 'undefined') return;
+    window.addEventListener('serenna-notifications-changed', updateNotifications);
+    return () => window.removeEventListener('serenna-notifications-changed', updateNotifications);
   }, []);
 
 	const normalizedName = platformName.trim();
@@ -158,7 +176,9 @@ const Sidebar = () => {
             <SidebarLink to="/auditoria" icon={<Shield />}>Auditoria</SidebarLink>
           )}
           {canSeeLink('notificacoes') && (
-            <SidebarLink to="/notificacoes" icon={<Bell />} notification={true}>Notificações</SidebarLink>
+            <SidebarLink to="/notificacoes" icon={<Bell />} notification={hasUnreadNotifications}>
+              Notificações
+            </SidebarLink>
           )}
         </ul>
       </nav>
@@ -202,11 +222,21 @@ const Sidebar = () => {
           </div>
         </button>
         
-        {/* Logout Dropdown */}
+        {/* Dropdown Perfil / Logout */}
         {showLogout && (
           <div 
             className="absolute bottom-full left-4 right-4 mb-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-slide-up"
           >
+            <button
+              onClick={() => {
+                setShowLogout(false);
+                navigate('/perfil');
+              }}
+              className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-secondary transition-colors text-left border-b border-border"
+            >
+              <UserIcon className="w-4 h-4 text-text-muted" />
+              <span className="text-sm font-medium text-text">Ver perfil</span>
+            </button>
             <button
               onClick={handleLogout}
               className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-secondary transition-colors text-left"

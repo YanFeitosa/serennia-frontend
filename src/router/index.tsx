@@ -17,6 +17,7 @@ import ProdutoForm from '../pages/ProdutoForm';
 import Colaboradores from '../pages/Colaboradores';
 import ColaboradorForm from '../pages/ColaboradorForm';
 import ColaboradorProfile from '../pages/ColaboradorProfile';
+import UserProfile from '../pages/UserProfile';
 import Financeiro from '../pages/Financeiro';
 import Configuracoes from '../pages/Configuracoes';
 import Auditoria from '../pages/Auditoria';
@@ -126,6 +127,14 @@ const router = createBrowserRouter([
             ),
           },
         ],
+      },
+      {
+        path: 'perfil',
+        element: (
+          <RoleGuard allowed={['admin', 'manager', 'receptionist', 'professional']}>
+            <UserProfile />
+          </RoleGuard>
+        ),
       },
       {
         path: 'servicos',

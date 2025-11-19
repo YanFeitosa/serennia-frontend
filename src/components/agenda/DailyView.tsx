@@ -25,7 +25,9 @@ const toDateTimeLocal = (date: Date): string => {
 
 const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
   const navigate = useNavigate();
-  const activeCollaborators = mockCollaborators.filter(c => c.status === 'active');
+  const activeCollaborators = mockCollaborators.filter(
+    c => c.status === 'active' && c.role === 'professional',
+  );
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const START_HOUR = 8;

@@ -1,5 +1,5 @@
 // src/pages/Configuracoes.tsx
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 
 type MessageTemplate = {
@@ -46,6 +46,10 @@ type AppearanceSettings = {
 
 const Configuracoes = () => {
   const [tab, setTab] = useState<SettingsTab>('geral');
+
+  // Comissão padrão de profissionais (em porcentagem, 0-100)
+  const [defaultCommissionPercent, setDefaultCommissionPercent] = useState<number>(50);
+  const [savedCommissionPercent, setSavedCommissionPercent] = useState<number | null>(null);
 
   // Categorias por tipo
   const [serviceCategories, setServiceCategories] = useState<string[]>([
@@ -166,6 +170,21 @@ const Configuracoes = () => {
     applyAppearance(initial);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const raw = window.localStorage.getItem('serenna-default-commission');
+    if (!raw) {
+      setDefaultCommissionPercent(50);
+      setSavedCommissionPercent(50);
+      return;
+    }
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
+      setDefaultCommissionPercent(parsed);
+      setSavedCommissionPercent(parsed);
+    }
+  }, []);
+
   const handlePlatformNameChange = (value: string) => {
     setAppearanceDraft(prev => (prev ? { ...prev, platformName: value } : prev));
     setAppearanceApplied(prev => {
@@ -176,6 +195,15 @@ const Configuracoes = () => {
       }
       return next;
     });
+  };
+
+  const handleSaveDefaultCommission = () => {
+    const normalized = Math.max(0, Math.min(100, defaultCommissionPercent || 0));
+    setDefaultCommissionPercent(normalized);
+    setSavedCommissionPercent(normalized);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('serenna-default-commission', String(normalized));
+    }
   };
 
   const handlePaletteChange = (
@@ -334,6 +362,39 @@ const Configuracoes = () => {
       <div>
         {tab === 'geral' && (
           <div className="space-y-6">
+            <div className="bg-card rounded-xl shadow-md border border-border p-4 space-y-3">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h3 className="text-lg font-semibold text-text">Comissão padrão dos profissionais</h3>
+                  <p className="text-sm text-text-muted max-w-xl">
+                    Defina o percentual padrão de comissão aplicado quando um colaborador presta um serviço.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={defaultCommissionPercent}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (Number.isNaN(value)) {
+                        setDefaultCommissionPercent(0);
+                      } else {
+                        setDefaultCommissionPercent(value);
+                      }
+                    }}
+                    className="w-20 px-3 py-2 border border-border rounded-md bg-card text-right text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <span className="text-sm text-text">%</span>
+                  <Button type="button" size="sm" onClick={handleSaveDefaultCommission}>
+                    Definir
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-text">Categorias do sistema</h3>
               <p className="text-sm text-text-muted">
@@ -341,7 +402,7 @@ const Configuracoes = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Categorias de serviços */}
               <div className="bg-card rounded-xl shadow-md border border-border p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -504,86 +565,6 @@ const Configuracoes = () => {
                 )}
               </div>
 
-              {/* Funções / cargos */}
-              <div className="bg-card rounded-xl shadow-md border border-border p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-text">Funções / cargos</h4>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setEditingGroup(editingGroup === 'roles' ? null : 'roles')}
-                  >
-                    {editingGroup === 'roles' ? 'Fechar' : 'Editar'}
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2 min-h-[32px]">
-                  {roleCategories.map(category => (
-                    <span
-                      key={category}
-                      className="inline-flex items-center px-3 py-1 rounded-full bg-background text-text text-xs border border-border"
-                    >
-                      {category}
-                      {editingGroup === 'roles' && (
-                        <button
-                          type="button"
-                          className="ml-2 text-[10px] text-text-muted hover:text-red-500"
-                          onClick={() => askRemoveCategory('roles', category)}
-                        >
-                          ×
-                        </button>
-                      )}
-                    </span>
-                  ))}
-                  {roleCategories.length === 0 && (
-                    <span className="text-xs text-text-muted">Nenhuma função cadastrada.</span>
-                  )}
-                </div>
-
-                {editingGroup === 'roles' && (
-                  <div className="space-y-2 pt-3 border-t border-border mt-3">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={newCategoryValues.roles}
-                        onChange={(e) =>
-                          setNewCategoryValues(prev => ({ ...prev, roles: e.target.value }))
-                        }
-                        placeholder="Nova função/cargo"
-                        className="flex-1 px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                      <Button type="button" size="sm" onClick={() => handleAddCategory('roles')}>
-                        Adicionar
-                      </Button>
-                    </div>
-
-                    {deleteConfirm && deleteConfirm.group === 'roles' && (
-                      <div className="flex items-center justify-between px-3 py-2 rounded-md bg-background border border-border text-xs">
-                        <span>
-                          Remover função "{deleteConfirm.category}"?
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setDeleteConfirm(null)}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="destructive"
-                            onClick={handleConfirmRemoveCategory}
-                          >
-                            Remover
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         )}
