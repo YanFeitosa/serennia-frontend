@@ -121,7 +121,7 @@ const AgendamentoForm = () => {
 
     const selectedServices = mockServices.filter(service => data.serviceIds.includes(service.id));
     const totalDurationMinutes = selectedServices.reduce(
-      (acc, service) => acc + service.duration + (service.bufferTime ?? 0),
+      (acc, service) => acc + service.duration,
       0
     );
 

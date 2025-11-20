@@ -52,7 +52,6 @@ export interface Service {
   duration: number; // in minutes
   price: number;
   commission?: number; // commission percentage as fraction (0-1)
-  bufferTime?: number; // minutes after service
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -68,6 +67,17 @@ export interface Product {
   costPrice?: number;
   stock: number;
   isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type CategoryType = 'service' | 'product';
+
+export interface Category {
+  id: string;
+  salonId: string;
+  type: CategoryType;
+  name: string;
   createdAt?: string;
   updatedAt?: string;
 }

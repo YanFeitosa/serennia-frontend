@@ -1,6 +1,8 @@
 // src/pages/Configuracoes.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
+import { getCategories, createCategory, deleteCategory } from '../lib/api';
+import type { CategoryType } from '../types';
 
 type MessageTemplate = {
   id: string;
@@ -50,26 +52,9 @@ const Configuracoes = () => {
   // Comissão padrão de profissionais (em porcentagem, 0-100)
   const [defaultCommissionPercent, setDefaultCommissionPercent] = useState<number>(50);
 
-  // Categorias por tipo
-  const [serviceCategories, setServiceCategories] = useState<string[]>([
-    'Cabelo',
-    'Unhas',
-    'Estética',
-    'Massagem',
-    'Depilação',
-    'Maquiagem',
-    'Corpo',
-    'Barba',
-    'Coloração',
-    'Spa',
-    'Pacote',
-  ]);
-  const [productCategories, setProductCategories] = useState<string[]>([
-    'Cabelo',
-    'Finalização',
-    'Unhas',
-    'Corpo',
-  ]);
+  // Categorias por tipo (serviços/produtos vêm do backend)
+  const [serviceCategories, setServiceCategories] = useState<string[]>([]);
+  const [productCategories, setProductCategories] = useState<string[]>([]);
   const [roleCategories, setRoleCategories] = useState<string[]>([
     'Cabeleireiro(a)',
     'Manicure/Pedicure',
@@ -79,6 +64,13 @@ const Configuracoes = () => {
     'Recepcionista',
     'Gerente',
   ]);
+
+  const [serviceCategoryIdsByName, setServiceCategoryIdsByName] = useState<Record<string, string>>({});
+  const [productCategoryIdsByName, setProductCategoryIdsByName] = useState<Record<string, string>>({});
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false);
 
   const [editingGroup, setEditingGroup] = useState<CategoryGroup | null>(null);
   const [newCategoryValues, setNewCategoryValues] = useState<Record<CategoryGroup, string>>({
@@ -182,6 +174,48 @@ const Configuracoes = () => {
     }
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      try {
+        setIsLoadingCategories(true);
+        setCategoriesError(null);
+
+        const [serviceCats, productCats] = await Promise.all([
+          getCategories('service'),
+          getCategories('product'),
+        ]);
+
+        if (!isMounted) return;
+
+        setServiceCategories(serviceCats.map(c => c.name));
+        setProductCategories(productCats.map(c => c.name));
+        setServiceCategoryIdsByName(
+          Object.fromEntries(serviceCats.map(c => [c.name, c.id])),
+        );
+        setProductCategoryIdsByName(
+          Object.fromEntries(productCats.map(c => [c.name, c.id])),
+        );
+      } catch (error) {
+        console.error('Failed to load categories', error);
+        if (isMounted) {
+          setCategoriesError('Falha ao carregar categorias.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingCategories(false);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handlePlatformNameChange = (value: string) => {
     setAppearanceDraft(prev => (prev ? { ...prev, platformName: value } : prev));
     setAppearanceApplied(prev => {
@@ -238,51 +272,102 @@ const Configuracoes = () => {
     applyAppearance(appearanceApplied);
   };
 
-  const handleAddCategory = (group: CategoryGroup) => {
+  const handleAddCategory = async (group: CategoryGroup) => {
     const value = newCategoryValues[group].trim();
     if (!value) return;
 
-    const listMap: Record<CategoryGroup, string[]> = {
-      services: serviceCategories,
-      products: productCategories,
-      roles: roleCategories,
-    };
+    if (group === 'roles') {
+      if (roleCategories.includes(value)) return;
+      setRoleCategories(prev => [...prev, value]);
+      setNewCategoryValues(prev => ({ ...prev, roles: '' }));
+      return;
+    }
 
-    const setterMap: Record<CategoryGroup, React.Dispatch<React.SetStateAction<string[]>>> = {
-      services: setServiceCategories,
-      products: setProductCategories,
-      roles: setRoleCategories,
-    };
+    const currentList = group === 'services' ? serviceCategories : productCategories;
+    if (currentList.includes(value)) return;
 
-    if (listMap[group].includes(value)) return;
+    try {
+      setIsSavingCategory(true);
+      setCategoriesError(null);
 
-    setterMap[group]([...listMap[group], value]);
-    setNewCategoryValues(prev => ({ ...prev, [group]: '' }));
+      const type: CategoryType = group === 'services' ? 'service' : 'product';
+      const created = await createCategory({ type, name: value });
+
+      if (group === 'services') {
+        setServiceCategories(prev => [...prev, created.name]);
+        setServiceCategoryIdsByName(prev => ({ ...prev, [created.name]: created.id }));
+      } else {
+        setProductCategories(prev => [...prev, created.name]);
+        setProductCategoryIdsByName(prev => ({ ...prev, [created.name]: created.id }));
+      }
+
+      setNewCategoryValues(prev => ({ ...prev, [group]: '' }));
+    } catch (error) {
+      console.error('Failed to create category', error);
+      setCategoriesError('Falha ao criar categoria. Verifique se o nome já não existe.');
+    } finally {
+      setIsSavingCategory(false);
+    }
   };
 
   const askRemoveCategory = (group: CategoryGroup, category: string) => {
     setDeleteConfirm({ group, category });
   };
 
-  const handleConfirmRemoveCategory = () => {
+  const handleConfirmRemoveCategory = async () => {
     if (!deleteConfirm) return;
 
     const { group, category } = deleteConfirm;
 
-    const listMap: Record<CategoryGroup, string[]> = {
-      services: serviceCategories,
-      products: productCategories,
-      roles: roleCategories,
-    };
+    if (group === 'roles') {
+      setRoleCategories(prev => prev.filter(c => c !== category));
+      setDeleteConfirm(null);
+      return;
+    }
 
-    const setterMap: Record<CategoryGroup, React.Dispatch<React.SetStateAction<string[]>>> = {
-      services: setServiceCategories,
-      products: setProductCategories,
-      roles: setRoleCategories,
-    };
+    const isService = group === 'services';
+    const id = isService
+      ? serviceCategoryIdsByName[category]
+      : productCategoryIdsByName[category];
 
-    setterMap[group](listMap[group].filter(c => c !== category));
-    setDeleteConfirm(null);
+    if (!id) {
+      console.warn('Category id not found for', category);
+      if (isService) {
+        setServiceCategories(prev => prev.filter(c => c !== category));
+      } else {
+        setProductCategories(prev => prev.filter(c => c !== category));
+      }
+      setDeleteConfirm(null);
+      return;
+    }
+
+    try {
+      setIsDeletingCategory(true);
+      setCategoriesError(null);
+      await deleteCategory(id);
+
+      if (isService) {
+        setServiceCategories(prev => prev.filter(c => c !== category));
+        setServiceCategoryIdsByName(prev => {
+          const next = { ...prev };
+          delete next[category];
+          return next;
+        });
+      } else {
+        setProductCategories(prev => prev.filter(c => c !== category));
+        setProductCategoryIdsByName(prev => {
+          const next = { ...prev };
+          delete next[category];
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error('Failed to delete category', error);
+      setCategoriesError('Falha ao remover categoria. Ela pode estar sendo usada em serviços ou produtos.');
+    } finally {
+      setDeleteConfirm(null);
+      setIsDeletingCategory(false);
+    }
   };
 
   const handleAddTemplate = () => {
@@ -396,6 +481,12 @@ const Configuracoes = () => {
               <p className="text-sm text-text-muted">
                 Visualize e organize separadamente as categorias usadas em serviços, produtos e funções da equipe.
               </p>
+              {categoriesError && (
+                <p className="text-xs text-red-500">{categoriesError}</p>
+              )}
+              {isLoadingCategories && (
+                <p className="text-xs text-text-muted">Carregando categorias...</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -446,7 +537,12 @@ const Configuracoes = () => {
                         placeholder="Nova categoria de serviço"
                         className="flex-1 px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
                       />
-                      <Button type="button" size="sm" onClick={() => handleAddCategory('services')}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleAddCategory('services')}
+                        disabled={isSavingCategory || isLoadingCategories}
+                      >
                         Adicionar
                       </Button>
                     </div>
@@ -470,6 +566,7 @@ const Configuracoes = () => {
                             size="sm"
                             variant="destructive"
                             onClick={handleConfirmRemoveCategory}
+                            disabled={isDeletingCategory}
                           >
                             Remover
                           </Button>
@@ -527,7 +624,12 @@ const Configuracoes = () => {
                         placeholder="Nova categoria de produto"
                         className="flex-1 px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
                       />
-                      <Button type="button" size="sm" onClick={() => handleAddCategory('products')}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleAddCategory('products')}
+                        disabled={isSavingCategory || isLoadingCategories}
+                      >
                         Adicionar
                       </Button>
                     </div>
@@ -551,6 +653,7 @@ const Configuracoes = () => {
                             size="sm"
                             variant="destructive"
                             onClick={handleConfirmRemoveCategory}
+                            disabled={isDeletingCategory}
                           >
                             Remover
                           </Button>

@@ -1,17 +1,50 @@
 // src/pages/Servicos.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Clock, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { mockServices } from '../data/services';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
+import type { Service } from '../types';
+import { getServices } from '../lib/api';
 
 const Servicos = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const role = user?.role ?? 'admin';
   const canEdit = role === 'admin' || role === 'manager';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadServices = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getServices();
+        if (!isMounted) return;
+        setServices(data);
+      } catch (err) {
+        console.error('Failed to load services', err);
+        if (isMounted) {
+          setError('Falha ao carregar serviços.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadServices();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -41,6 +74,12 @@ const Servicos = () => {
       </header>
 
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+        {error && (
+          <p className="text-sm text-red-500">{error}</p>
+        )}
+        {isLoading && (
+          <p className="text-sm text-text-muted">Carregando serviços...</p>
+        )}
         <table className="w-full">
           <thead>
             <tr className="bg-sidebar border-b border-border">
@@ -57,7 +96,7 @@ const Servicos = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {mockServices
+            {services
               .filter(service => service.name.toLowerCase().includes(searchTerm.toLowerCase()))
               .map(service => (
                 <tr key={service.id} className="hover:bg-sidebar transition-colors">
@@ -76,7 +115,7 @@ const Servicos = () => {
                     </div>
                   </td>
                   {canEdit && (
-                    <td className="px-6 py-4 text-sm text-text-muted">{`${Math.round(service.commission * 100)}%`}</td>
+                    <td className="px-6 py-4 text-sm text-text-muted">{`${Math.round((service.commission ?? 0) * 100)}%`}</td>
                   )}
                   <td className="px-6 py-4 text-sm font-semibold text-text">
                     {service.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}

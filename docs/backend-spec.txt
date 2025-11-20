@@ -84,7 +84,6 @@ Table `services`
 - duration (integer, minutes)
 - price (numeric(10,2))
 - commission (numeric, 0–1, optional)
-- buffer_time (integer, minutes, optional)
 - is_active (boolean)
 - created_at
 - updated_at
@@ -320,7 +319,7 @@ POST /appointments
 - Body: { clientId, collaboratorId, serviceIds[], start, notes?, origin }
 - Backend responsibilities:
   - Validate that start is in the future.
-  - Load selected services and calculate total duration (service.duration + bufferTime).
+  - Load selected services and calculate total duration (service.duration).
   - Compute end = start + totalDuration.
   - Ensure no overlapping appointments for that collaborator.
   - Set initial status = 'pending'.

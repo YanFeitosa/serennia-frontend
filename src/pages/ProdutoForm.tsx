@@ -1,15 +1,12 @@
 // src/pages/ProdutoForm.tsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Product } from '../types';
-import { mockProducts, addMockProduct, updateMockProduct } from '../data/products';
+import { getProductById, createProduct, updateProduct, getCategories } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-
-const PRODUCT_CATEGORIES = ['Cabelo', 'Finalização', 'Unhas', 'Corpo'];
 
 const productSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
@@ -23,7 +20,12 @@ type ProductSchema = z.infer<typeof productSchema>;
 const ProdutoForm = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const editingProduct = id ? mockProducts.find(p => p.id === id) : undefined;
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [productCategories, setProductCategories] = useState<string[]>([]);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
   const {
     register,
@@ -32,55 +34,104 @@ const ProdutoForm = () => {
     reset,
   } = useForm<ProductSchema>({
     resolver: zodResolver(productSchema),
-    defaultValues: editingProduct
-      ? {
-          name: editingProduct.name,
-          category: editingProduct.category ?? PRODUCT_CATEGORIES[0],
-          price: editingProduct.price,
-          stock: editingProduct.stock,
-        }
-      : {
-          name: '',
-          category: PRODUCT_CATEGORIES[0],
-          price: 0,
-          stock: 0,
-        },
+    defaultValues: {
+      name: '',
+      category: '',
+      price: 0,
+      stock: 0,
+    },
   });
 
   useEffect(() => {
-    if (editingProduct) {
-      reset({
-        name: editingProduct.name,
-        category: editingProduct.category ?? PRODUCT_CATEGORIES[0],
-        price: editingProduct.price,
-        stock: editingProduct.stock,
-      });
-    }
-  }, [editingProduct, reset]);
+    let isMounted = true;
 
-  const onSubmit: SubmitHandler<ProductSchema> = (data) => {
-    if (editingProduct) {
-      updateMockProduct(editingProduct.id, {
-        name: data.name,
-        category: data.category,
-        price: data.price,
-        stock: data.stock,
-      });
-    } else {
-      const newProduct: Product = {
-        id: `product-${Date.now()}`,
+    const loadCategories = async () => {
+      try {
+        setIsLoadingCategories(true);
+        setCategoriesError(null);
+        const categories = await getCategories('product');
+        if (!isMounted) return;
+        setProductCategories(categories.map(c => c.name));
+      } catch (err) {
+        console.error('Failed to load product categories', err);
+        if (isMounted) {
+          setCategoriesError('Falha ao carregar categorias de produto.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingCategories(false);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+
+    let isMounted = true;
+
+    const loadProduct = async () => {
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+        const product = await getProductById(id);
+        if (!isMounted) return;
+
+        reset({
+          name: product.name,
+          category: product.category ?? '',
+          price: product.price,
+          stock: product.stock,
+        });
+      } catch (err) {
+        console.error('Failed to load product', err);
+        if (isMounted) {
+          setLoadError('Falha ao carregar produto.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, reset]);
+
+  const onSubmit: SubmitHandler<ProductSchema> = async (data) => {
+    try {
+      setSaveError(null);
+      const payload = {
         name: data.name,
         category: data.category,
         price: data.price,
         stock: data.stock,
       };
-      addMockProduct(newProduct);
-    }
 
-    navigate('/produtos');
+      if (id) {
+        await updateProduct(id, payload);
+      } else {
+        await createProduct(payload);
+      }
+
+      navigate('/produtos');
+    } catch (err) {
+      console.error('Failed to save product', err);
+      setSaveError('Falha ao salvar produto. Verifique os dados e tente novamente.');
+    }
   };
 
-  const isEditing = Boolean(editingProduct);
+  const isEditing = Boolean(id);
 
   return (
     <div className="space-y-4">
@@ -94,6 +145,13 @@ const ProdutoForm = () => {
             : 'Preencha os dados para cadastrar um novo produto.'}
         </p>
       </header>
+
+      {loadError && (
+        <p className="text-sm text-red-500">{loadError}</p>
+      )}
+      {saveError && (
+        <p className="text-sm text-red-500">{saveError}</p>
+      )}
 
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -118,7 +176,10 @@ const ProdutoForm = () => {
             {...register('category')}
             className="mt-1 block w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            {PRODUCT_CATEGORIES.map((category) => (
+            <option value="" disabled>
+              Selecione uma categoria de produto
+            </option>
+            {productCategories.map((category) => (
               <option key={category} value={category}>
                 {category}
               </option>
@@ -126,6 +187,14 @@ const ProdutoForm = () => {
           </select>
           {errors.category && (
             <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
+          )}
+          {categoriesError && (
+            <p className="mt-1 text-sm text-red-600">{categoriesError}</p>
+          )}
+          {!categoriesError && !isLoadingCategories && productCategories.length === 0 && (
+            <p className="mt-1 text-sm text-text-muted">
+              Nenhuma categoria de produto cadastrada. Crie categorias em Configurações &gt; Geral.
+            </p>
           )}
         </div>
 
@@ -166,7 +235,9 @@ const ProdutoForm = () => {
           <Button type="button" variant="ghost" onClick={() => navigate('/produtos')}>
             Cancelar
           </Button>
-          <Button type="submit">{isEditing ? 'Salvar alterações' : 'Salvar'}</Button>
+          <Button type="submit" disabled={isLoading}>
+            {isEditing ? 'Salvar alterações' : 'Salvar'}
+          </Button>
         </div>
       </form>
     </div>

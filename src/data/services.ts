@@ -11,7 +11,6 @@ export let mockServices: Service[] = [
     duration: 60,
     price: 120,
     commission: 0.5,
-    bufferTime: 10,
     isActive: true,
   },
   {
@@ -23,7 +22,6 @@ export let mockServices: Service[] = [
     duration: 45,
     price: 80,
     commission: 0.5,
-    bufferTime: 5,
     isActive: true,
   },
   {
@@ -35,7 +33,6 @@ export let mockServices: Service[] = [
     duration: 60,
     price: 100,
     commission: 0.4,
-    bufferTime: 10,
     isActive: true,
   },
   {

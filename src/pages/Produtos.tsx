@@ -1,19 +1,52 @@
 // src/pages/Produtos.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { mockProducts } from '../data/products';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
+import type { Product } from '../types';
+import { getProducts } from '../lib/api';
 
 const Produtos = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const role = user?.role ?? 'admin';
   const canEdit = role === 'admin' || role === 'manager';
 
-  const filteredProducts = mockProducts.filter((product) => {
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProducts = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getProducts();
+        if (!isMounted) return;
+        setProducts(data);
+      } catch (err) {
+        console.error('Failed to load products', err);
+        if (isMounted) {
+          setError('Falha ao carregar produtos.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredProducts = products.filter((product) => {
     const term = searchTerm.toLowerCase();
     return (
       product.name.toLowerCase().includes(term) ||
@@ -61,6 +94,12 @@ const Produtos = () => {
       </header>
 
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+        {error && (
+          <p className="text-sm text-red-500">{error}</p>
+        )}
+        {isLoading && (
+          <p className="text-sm text-text-muted">Carregando produtos...</p>
+        )}
         <table className="w-full">
           <thead>
             <tr className="bg-sidebar border-b border-border">

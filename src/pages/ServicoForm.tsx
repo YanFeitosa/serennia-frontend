@@ -1,24 +1,12 @@
 // src/pages/ServicoForm.tsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Service } from '../types';
-import { mockServices, addMockService, updateMockService } from '../data/services';
+import { getServiceById, createService, updateService, getCategories } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-
-const SERVICE_CATEGORIES = [
-  'Cabelo',
-  'Unhas',
-  'Estética',
-  'Massagem',
-  'Depilação',
-  'Maquiagem',
-  'Corpo',
-  'Pacote',
-];
 
 const serviceSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
@@ -29,7 +17,6 @@ const serviceSchema = z.object({
     .min(0, 'Comissão deve ser pelo menos 0%')
     .max(100, 'Use um valor entre 0 e 100')
     .int('Use apenas valores inteiros'),
-  bufferTime: z.number().min(0).optional(),
   category: z.string().min(1, 'Categoria é obrigatória'),
 });
 
@@ -38,7 +25,12 @@ type ServiceSchema = z.infer<typeof serviceSchema>;
 const ServicoForm = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const editingService = id ? mockServices.find(s => s.id === id) : undefined;
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [serviceCategories, setServiceCategories] = useState<string[]>([]);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
   const {
     register,
@@ -47,65 +39,107 @@ const ServicoForm = () => {
     reset,
   } = useForm<ServiceSchema>({
     resolver: zodResolver(serviceSchema),
-    defaultValues: editingService
-      ? {
-          name: editingService.name,
-          duration: editingService.duration,
-          price: editingService.price,
-          commission: Math.round(editingService.commission * 100),
-          bufferTime: editingService.bufferTime ?? 0,
-          category: editingService.category ?? SERVICE_CATEGORIES[0],
-        }
-      : {
-          name: '',
-          duration: 60,
-          price: 0,
-          commission: 50,
-          bufferTime: 0,
-          category: SERVICE_CATEGORIES[0],
-        },
+    defaultValues: {
+      name: '',
+      duration: 60,
+      price: 0,
+      commission: 50,
+      category: '',
+    },
   });
 
   useEffect(() => {
-    if (editingService) {
-      reset({
-        name: editingService.name,
-        duration: editingService.duration,
-        price: editingService.price,
-        commission: Math.round(editingService.commission * 100),
-        bufferTime: editingService.bufferTime ?? 0,
-        category: editingService.category ?? SERVICE_CATEGORIES[0],
-      });
-    }
-  }, [editingService, reset]);
+    let isMounted = true;
 
-  const onSubmit: SubmitHandler<ServiceSchema> = (data) => {
-    if (editingService) {
-      updateMockService(editingService.id, {
+    const loadCategories = async () => {
+      try {
+        setIsLoadingCategories(true);
+        setCategoriesError(null);
+        const categories = await getCategories('service');
+        if (!isMounted) return;
+        setServiceCategories(categories.map(c => c.name));
+      } catch (err) {
+        console.error('Failed to load service categories', err);
+        if (isMounted) {
+          setCategoriesError('Falha ao carregar categorias de serviço.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingCategories(false);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+
+    let isMounted = true;
+
+    const loadService = async () => {
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+        const service = await getServiceById(id);
+        if (!isMounted) return;
+
+        reset({
+          name: service.name,
+          duration: service.duration,
+          price: service.price,
+          commission: Math.round((service.commission ?? 0) * 100),
+          category: service.category ?? '',
+        });
+      } catch (err) {
+        console.error('Failed to load service', err);
+        if (isMounted) {
+          setLoadError('Falha ao carregar serviço.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadService();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, reset]);
+
+  const onSubmit: SubmitHandler<ServiceSchema> = async (data) => {
+    try {
+      setSaveError(null);
+      const payload = {
         name: data.name,
         duration: data.duration,
         price: data.price,
         commission: data.commission / 100,
-        bufferTime: data.bufferTime,
-        category: data.category,
-      });
-    } else {
-      const newService: Service = {
-        id: `service-${Date.now()}`,
-        name: data.name,
-        duration: data.duration,
-        price: data.price,
-        commission: data.commission / 100,
-        bufferTime: data.bufferTime,
         category: data.category,
       };
-      addMockService(newService);
-    }
 
-    navigate('/servicos');
+      if (id) {
+        await updateService(id, payload);
+      } else {
+        await createService(payload);
+      }
+
+      navigate('/servicos');
+    } catch (err) {
+      console.error('Failed to save service', err);
+      setSaveError('Falha ao salvar serviço. Verifique os dados e tente novamente.');
+    }
   };
 
-  const isEditing = Boolean(editingService);
+  const isEditing = Boolean(id);
 
   return (
     <div className="space-y-4">
@@ -119,6 +153,13 @@ const ServicoForm = () => {
             : 'Preencha os dados para cadastrar um novo serviço.'}
         </p>
       </header>
+
+      {loadError && (
+        <p className="text-sm text-red-500">{loadError}</p>
+      )}
+      {saveError && (
+        <p className="text-sm text-red-500">{saveError}</p>
+      )}
 
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -143,7 +184,10 @@ const ServicoForm = () => {
             {...register('category')}
             className="mt-1 block w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            {SERVICE_CATEGORIES.map((category) => (
+            <option value="" disabled>
+              Selecione uma categoria de serviço
+            </option>
+            {serviceCategories.map((category) => (
               <option key={category} value={category}>
                 {category}
               </option>
@@ -151,6 +195,14 @@ const ServicoForm = () => {
           </select>
           {errors.category && (
             <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
+          )}
+          {categoriesError && (
+            <p className="mt-1 text-sm text-red-600">{categoriesError}</p>
+          )}
+          {!categoriesError && !isLoadingCategories && serviceCategories.length === 0 && (
+            <p className="mt-1 text-sm text-text-muted">
+              Nenhuma categoria de serviço cadastrada. Crie categorias em Configurações &gt; Geral.
+            </p>
           )}
         </div>
 
@@ -204,28 +256,15 @@ const ServicoForm = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="bufferTime" className="block text-sm font-medium text-text">
-              Tempo de buffer (minutos)
-            </label>
-            <Input
-              id="bufferTime"
-              type="number"
-              min={0}
-              {...register('bufferTime', { valueAsNumber: true })}
-            />
-            {errors.bufferTime && (
-              <p className="mt-1 text-sm text-red-600">{errors.bufferTime.message}</p>
-            )}
-          </div>
-        </div>
+        {/* Campo de bufferTime removido: não estamos mais usando tempo de buffer por serviço. */}
 
         <div className="flex justify-end space-x-4 pt-4">
           <Button type="button" variant="ghost" onClick={() => navigate('/servicos')}>
             Cancelar
           </Button>
-          <Button type="submit">{isEditing ? 'Salvar alterações' : 'Salvar'}</Button>
+          <Button type="submit" disabled={isLoading}>
+            {isEditing ? 'Salvar alterações' : 'Salvar'}
+          </Button>
         </div>
       </form>
     </div>
