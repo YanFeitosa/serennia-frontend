@@ -1,18 +1,51 @@
 // src/pages/Colaboradores.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Mail, Phone, Eye } from 'lucide-react';
-import { mockCollaborators } from '../data/collaborators';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../contexts/AuthContext';
+import type { Collaborator } from '../types';
+import { getCollaborators } from '../lib/api';
 
 const Colaboradores = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const role = user?.role ?? 'admin';
   const canCreate = role === 'admin' || role === 'manager';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCollaborators = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getCollaborators();
+        if (!isMounted) return;
+        setCollaborators(data);
+      } catch (err) {
+        console.error('Failed to load collaborators', err);
+        if (isMounted) {
+          setError('Falha ao carregar colaboradores.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadCollaborators();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -41,8 +74,15 @@ const Colaboradores = () => {
         </div>
       </header>
 
+      {error && (
+        <p className="text-sm text-red-500">{error}</p>
+      )}
+      {isLoading && (
+        <p className="text-sm text-text-muted">Carregando colaboradores...</p>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockCollaborators
+        {collaborators
           .filter(collab => collab.name.toLowerCase().includes(searchTerm.toLowerCase()))
           .map(collab => (
           <div key={collab.id} className="bg-card rounded-xl shadow-sm border border-border p-6 hover:shadow-md transition-shadow">

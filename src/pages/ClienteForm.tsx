@@ -1,5 +1,5 @@
 // src/pages/ClienteForm.tsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import type { Client } from '../types';
-import { addMockClient, mockClients, updateMockClient } from '../data/clients';
+import { createClient, updateClient, getClientById } from '../lib/api';
 
 const clientSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
@@ -23,69 +23,96 @@ const ClienteForm = () => {
   const state = location.state as { from?: 'agendamento' | 'comandas' | 'clientes'; editClientId?: string } | null;
   const from = state?.from;
   const editClientId = state?.editClientId;
-  const editingClient = editClientId ? mockClients.find(c => c.id === editClientId) : undefined;
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ClientSchema>({
     resolver: zodResolver(clientSchema),
-    defaultValues: editingClient
-      ? {
-          name: editingClient.name,
-          phone: editingClient.phone,
-          email: editingClient.email ?? '',
-        }
-      : {
-          name: '',
-          phone: '',
-          email: '',
-        },
+    defaultValues: {
+      name: '',
+      phone: '',
+      email: '',
+    },
   });
 
   useEffect(() => {
-    if (editingClient) {
-      reset({
-        name: editingClient.name,
-        phone: editingClient.phone,
-        email: editingClient.email ?? '',
-      });
-    }
-  }, [editingClient, reset]);
+    if (!editClientId) return;
 
-  const onSubmit: SubmitHandler<ClientSchema> = (data) => {
-    if (editingClient) {
-      updateMockClient(editingClient.id, {
-        name: data.name,
-        phone: data.phone,
-        email: data.email,
-      });
-      navigate(`/clientes/${editingClient.id}`);
-      return;
-    }
+    let isMounted = true;
 
-    const id = `client-${Date.now()}`;
-    const newClient: Client = {
-      id,
-      salonId: 'salon-1',
-      name: data.name,
-      phone: data.phone,
-      email: data.email,
+    const loadClient = async () => {
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+        const client = await getClientById(editClientId);
+        if (!isMounted) return;
+        setEditingClient(client);
+        reset({
+          name: client.name,
+          phone: client.phone,
+          email: client.email ?? '',
+        });
+      } catch (err) {
+        console.error('Failed to load client', err);
+        if (isMounted) {
+          setLoadError('Falha ao carregar cliente.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
     };
-    addMockClient(newClient);
 
-    if (from === 'agendamento') {
-      navigate('/agenda/novo', {
-        state: { newClientId: id },
-      });
-      return;
+    loadClient();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [editClientId, reset]);
+
+  const onSubmit: SubmitHandler<ClientSchema> = async (data) => {
+    try {
+      setSaveError(null);
+
+      let client: Client;
+      if (editingClient) {
+        client = await updateClient(editingClient.id, {
+          name: data.name,
+          phone: data.phone,
+          email: data.email,
+        });
+      } else {
+        client = await createClient({
+          name: data.name,
+          phone: data.phone,
+          email: data.email,
+        });
+      }
+
+      const id = client.id;
+
+      if (from === 'agendamento') {
+        navigate('/agenda/novo', {
+          state: { newClientId: id },
+        });
+        return;
+      }
+
+      if (from === 'comandas') {
+        navigate('/comandas', {
+          state: { fromNewClientClientId: id },
+        });
+        return;
+      }
+
+      navigate(`/clientes/${id}`);
+    } catch (err) {
+      console.error('Failed to save client', err);
+      setSaveError('Falha ao salvar cliente.');
     }
-
-    if (from === 'comandas') {
-      navigate('/comandas', {
-        state: { fromNewClientClientId: id },
-      });
-      return;
-    }
-
-    navigate('/clientes');
   };
 
   const isEditing = Boolean(editingClient);
@@ -100,6 +127,12 @@ const ClienteForm = () => {
             : 'Preencha os dados para cadastrar um novo cliente.'}
         </p>
       </header>
+      {loadError && (
+        <p className="text-sm text-red-500">{loadError}</p>
+      )}
+      {saveError && (
+        <p className="text-sm text-red-500">{saveError}</p>
+      )}
       <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-6 rounded-xl shadow-md space-y-4 border border-border">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-text">Nome</label>
@@ -124,7 +157,7 @@ const ClienteForm = () => {
           >
             Cancelar
           </Button>
-          <Button type="submit">Salvar</Button>
+          <Button type="submit" disabled={isLoading}>Salvar</Button>
         </div>
       </form>
     </div>

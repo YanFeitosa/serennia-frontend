@@ -1,19 +1,51 @@
 // src/pages/Clientes.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Phone, Calendar, Eye } from 'lucide-react';
-import { mockClients } from '../data/clients';
 import { mockOrders } from '../data/orders';
-import type { Order } from '../types';
+import type { Order, Client } from '../types';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { getClients } from '../lib/api';
 
 const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const getVisitCount = (clientId: string) =>
     mockOrders.filter((order: Order) => order.clientId === clientId).length;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadClients = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getClients();
+        if (!isMounted) return;
+        setClients(data);
+      } catch (err) {
+        console.error('Failed to load clients', err);
+        if (isMounted) {
+          setError('Falha ao carregar clientes.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadClients();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -41,6 +73,12 @@ const Clientes = () => {
       </header>
 
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+        {error && (
+          <p className="text-sm text-red-500">{error}</p>
+        )}
+        {isLoading && (
+          <p className="text-sm text-text-muted">Carregando clientes...</p>
+        )}
         <table className="w-full">
           <thead>
             <tr className="bg-sidebar border-b border-border">
@@ -52,7 +90,7 @@ const Clientes = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {mockClients
+            {clients
             .filter(client => client.name.toLowerCase().includes(searchTerm.toLowerCase()))
             .map(client => (
               <tr key={client.id} className="hover:bg-sidebar transition-colors">

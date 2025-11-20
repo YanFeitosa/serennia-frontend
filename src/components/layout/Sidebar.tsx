@@ -144,7 +144,7 @@ const Sidebar = () => {
         >
           {normalizedName}
         </h1>
-        <p className="text-xs text-text-muted mt-1">Gestão de Salão</p>
+        <p className="text-xs text-text-muted mt-1">powered by serenna</p>
       </div>
       <nav className="flex-1 py-4 px-2">
         <ul>

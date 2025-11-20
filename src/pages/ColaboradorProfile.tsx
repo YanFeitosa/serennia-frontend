@@ -1,11 +1,12 @@
 // src/pages/ColaboradorProfile.tsx
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit } from 'lucide-react';
-import { mockCollaborators } from '../data/collaborators';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import type { Collaborator } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { getCollaboratorById } from '../lib/api';
 
 const getRoleLabel = (role: Collaborator['role']) => {
   switch (role) {
@@ -25,13 +26,51 @@ const getRoleLabel = (role: Collaborator['role']) => {
 const ColaboradorProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const collaborator = mockCollaborators.find(c => c.id === id);
+  const [collaborator, setCollaborator] = useState<Collaborator | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const role = user?.role ?? 'admin';
   const canEdit = role === 'admin' || role === 'manager';
+  const canViewCommission = role === 'admin' || role === 'manager';
 
-  if (!collaborator) {
-    return <div>Colaborador não encontrado.</div>;
+  useEffect(() => {
+    if (!id) return;
+
+    let isMounted = true;
+
+    const loadCollaborator = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getCollaboratorById(id);
+        if (!isMounted) return;
+        setCollaborator(data);
+      } catch (err) {
+        console.error('Failed to load collaborator', err);
+        if (isMounted) {
+          setError('Falha ao carregar colaborador.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadCollaborator();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  if (isLoading) {
+    return <div>Carregando colaborador...</div>;
+  }
+
+  if (error || !collaborator) {
+    return <div>{error || 'Colaborador não encontrado.'}</div>;
   }
 
   return (
@@ -81,10 +120,12 @@ const ColaboradorProfile = () => {
             <p className="font-medium text-text-muted">Telefone</p>
             <p>{collaborator.phone || 'Não informado'}</p>
           </div>
-          <div>
-            <p className="font-medium text-text-muted">Comissão padrão</p>
-            <p>{Math.round(collaborator.commissionRate * 100)}%</p>
-          </div>
+          {canViewCommission && (
+            <div>
+              <p className="font-medium text-text-muted">Comissão padrão</p>
+              <p>{Math.round(collaborator.commissionRate * 100)}%</p>
+            </div>
+          )}
           <div>
             <p className="font-medium text-text-muted">Categorias de serviços</p>
             {collaborator.serviceCategories && collaborator.serviceCategories.length > 0 ? (

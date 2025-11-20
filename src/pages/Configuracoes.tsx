@@ -1,7 +1,7 @@
 // src/pages/Configuracoes.tsx
 import { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
-import { getCategories, createCategory, deleteCategory } from '../lib/api';
+import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings } from '../lib/api';
 import type { CategoryType } from '../types';
 
 type MessageTemplate = {
@@ -51,6 +51,10 @@ const Configuracoes = () => {
 
   // Comissão padrão de profissionais (em porcentagem, 0-100)
   const [defaultCommissionPercent, setDefaultCommissionPercent] = useState<number>(50);
+  const [commissionCalcMode, setCommissionCalcMode] = useState<'service' | 'professional'>('professional');
+  const [isLoadingCommissionSettings, setIsLoadingCommissionSettings] = useState(false);
+  const [isSavingCommissionSettings, setIsSavingCommissionSettings] = useState(false);
+  const [commissionSettingsError, setCommissionSettingsError] = useState<string | null>(null);
 
   // Categorias por tipo (serviços/produtos vêm do backend)
   const [serviceCategories, setServiceCategories] = useState<string[]>([]);
@@ -162,16 +166,68 @@ const Configuracoes = () => {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const raw = window.localStorage.getItem('serenna-default-commission');
-    if (!raw) {
-      setDefaultCommissionPercent(50);
-      return;
-    }
-    const parsed = Number(raw);
-    if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
-      setDefaultCommissionPercent(parsed);
-    }
+    let isMounted = true;
+
+    const loadCommissionSettings = async () => {
+      if (typeof window === 'undefined') return;
+
+      try {
+        setIsLoadingCommissionSettings(true);
+        setCommissionSettingsError(null);
+
+        const settings = await getSalonSettings();
+        if (!isMounted) return;
+
+        let percent = 50;
+        if (
+          settings.defaultCommissionRate != null &&
+          Number.isFinite(settings.defaultCommissionRate)
+        ) {
+          percent = Math.round(settings.defaultCommissionRate * 100);
+        } else {
+          const raw = window.localStorage.getItem('serenna-default-commission');
+          const parsed = raw != null ? Number(raw) : NaN;
+          if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
+            percent = parsed;
+          }
+        }
+
+        setDefaultCommissionPercent(percent);
+        const mode =
+          settings.commissionMode === 'service' || settings.commissionMode === 'professional'
+            ? settings.commissionMode
+            : 'professional';
+        setCommissionCalcMode(mode);
+
+        window.localStorage.setItem('serenna-default-commission', String(percent));
+      } catch (error) {
+        console.error('Failed to load commission settings', error);
+        if (!isMounted) return;
+
+        // Fallback para localStorage se disponível
+        if (typeof window !== 'undefined') {
+          const raw = window.localStorage.getItem('serenna-default-commission');
+          const parsed = raw != null ? Number(raw) : NaN;
+          if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
+            setDefaultCommissionPercent(parsed);
+          } else {
+            setDefaultCommissionPercent(50);
+          }
+        }
+
+        setCommissionSettingsError('Falha ao carregar configurações de comissão.');
+      } finally {
+        if (isMounted) {
+          setIsLoadingCommissionSettings(false);
+        }
+      }
+    };
+
+    loadCommissionSettings();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -218,21 +274,82 @@ const Configuracoes = () => {
 
   const handlePlatformNameChange = (value: string) => {
     setAppearanceDraft(prev => (prev ? { ...prev, platformName: value } : prev));
-    setAppearanceApplied(prev => {
-      const next = prev ? { ...prev, platformName: value } : prev;
-      if (next && typeof window !== 'undefined') {
+  };
+
+  const handleSaveSalonName = async () => {
+    if (!appearanceDraft) return;
+
+    const trimmed = appearanceDraft.platformName.trim();
+    const nameToSave = trimmed.length > 0 ? trimmed : 'Serenna';
+
+    try {
+      const updated = await updateSalonSettings({ name: nameToSave });
+
+      const next: AppearanceSettings = {
+        ...(appearanceDraft || {
+          platformName: nameToSave,
+          light: {
+            primaryColor: '#25445A',
+            secondaryColor: '#7AA7D8',
+            accentColor: '#BFA2DB',
+            backgroundColor: '#FFFFFF',
+            textColor: '#0F1724',
+          },
+          dark: {
+            primaryColor: '#4A708A',
+            secondaryColor: '#0F1724',
+            accentColor: '#BFA2DB',
+            backgroundColor: '#0B1220',
+            textColor: '#F8FAFC',
+          },
+        }),
+        platformName: updated.name || nameToSave,
+      };
+
+      setAppearanceDraft(next);
+      setAppearanceApplied(next);
+      applyAppearance(next);
+
+      if (typeof window !== 'undefined') {
         window.localStorage.setItem('serenna-appearance', JSON.stringify(next));
         window.dispatchEvent(new Event('serenna-appearance-changed'));
       }
-      return next;
-    });
+    } catch (error) {
+      console.error('Failed to save salon name', error);
+    }
   };
 
-  const handleSaveDefaultCommission = () => {
+  const handleSaveCommissionSettings = async () => {
     const normalized = Math.max(0, Math.min(100, defaultCommissionPercent || 0));
     setDefaultCommissionPercent(normalized);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('serenna-default-commission', String(normalized));
+
+    setIsSavingCommissionSettings(true);
+    setCommissionSettingsError(null);
+
+    try {
+      const updated = await updateSalonSettings({
+        defaultCommissionRate: normalized / 100,
+        commissionMode: commissionCalcMode,
+      });
+
+      const effectivePercent =
+        updated.defaultCommissionRate != null
+          ? Math.round(updated.defaultCommissionRate * 100)
+          : normalized;
+
+      setDefaultCommissionPercent(effectivePercent);
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(
+          'serenna-default-commission',
+          String(effectivePercent),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to save commission settings', error);
+      setCommissionSettingsError('Falha ao salvar configurações de comissão.');
+    } finally {
+      setIsSavingCommissionSettings(false);
     }
   };
 
@@ -469,11 +586,46 @@ const Configuracoes = () => {
                     className="w-20 px-3 py-2 border border-border rounded-md bg-card text-right text-text focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   <span className="text-sm text-text">%</span>
-                  <Button type="button" size="sm" onClick={handleSaveDefaultCommission}>
-                    Definir
-                  </Button>
                 </div>
               </div>
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium text-text">Como calcular a comissão</p>
+                <div className="flex flex-col gap-2">
+                  <label className="inline-flex items-center gap-2 text-sm text-text">
+                    <input
+                      type="radio"
+                      name="commissionMode"
+                      value="service"
+                      checked={commissionCalcMode === 'service'}
+                      onChange={() => setCommissionCalcMode('service')}
+                    />
+                    <span>Usar comissão definida no serviço</span>
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-text">
+                    <input
+                      type="radio"
+                      name="commissionMode"
+                      value="professional"
+                      checked={commissionCalcMode === 'professional'}
+                      onChange={() => setCommissionCalcMode('professional')}
+                    />
+                    <span>Usar comissão definida no profissional</span>
+                  </label>
+                </div>
+              </div>
+              <div className="flex justify-end pt-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleSaveCommissionSettings}
+                  disabled={isSavingCommissionSettings || isLoadingCommissionSettings}
+                >
+                  Salvar configurações de comissão
+                </Button>
+              </div>
+              {commissionSettingsError && (
+                <p className="mt-2 text-xs text-red-500">{commissionSettingsError}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -769,22 +921,27 @@ const Configuracoes = () => {
         {tab === 'personalizacao' && appearanceDraft && (
           <div className="space-y-8 mt-6">
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-text">Personalização da plataforma</h3>
+              <h3 className="text-lg font-semibold text-text">Personalização do salão</h3>
               <p className="text-sm text-text-muted max-w-2xl">
-                Defina o nome exibido na interface e ajuste separadamente as cores do modo claro e do modo escuro.
+                Defina o nome do salão exibido na interface e ajuste separadamente as cores do modo claro e do modo escuro.
                 As alterações de cor só são salvas após confirmação.
               </p>
             </div>
 
             <div className="bg-card border border-border rounded-xl p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-text">Nome da plataforma</label>
+                <label className="block text-sm font-medium text-text">Nome do salão</label>
                 <input
                   type="text"
                   value={appearanceDraft.platformName}
                   onChange={(e) => handlePlatformNameChange(e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
                 />
+                <div className="flex justify-end mt-3">
+                  <Button type="button" size="sm" onClick={handleSaveSalonName}>
+                    Salvar nome do salão
+                  </Button>
+                </div>
               </div>
             </div>
 

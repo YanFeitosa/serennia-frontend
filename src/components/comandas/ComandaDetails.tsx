@@ -4,6 +4,7 @@ import type { Order } from '../../types';
 import { mockClients } from '../../data/clients';
 import { mockServices } from '../../data/services';
 import { mockProducts } from '../../data/products';
+import { mockCollaborators } from '../../data/collaborators';
 import { addItemToOrder, addProductToOrder, removeItemFromOrder } from '../../data/orders';
 import { Button } from '../ui/Button';
 import SearchableSelectPlain from '../ui/SearchableSelectPlain';
@@ -19,6 +20,7 @@ const ComandaDetails: React.FC<ComandaDetailsProps> = ({ order, onOrderChange, o
 	const [currentOrder, setCurrentOrder] = useState<Order>(order);
 	const [selectedServiceId, setSelectedServiceId] = useState('');
 	const [selectedProductId, setSelectedProductId] = useState('');
+	const [selectedCollaboratorId, setSelectedCollaboratorId] = useState('');
 	const [itemToRemove, setItemToRemove] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -44,11 +46,11 @@ const ComandaDetails: React.FC<ComandaDetailsProps> = ({ order, onOrderChange, o
 	};
 
 	const handleAddService = () => {
-		if (!selectedServiceId) return;
-		const baseCollaboratorId = currentOrder.items[0]?.collaboratorId ?? 'collab-1';
-		const updated = addItemToOrder(currentOrder.id, selectedServiceId, baseCollaboratorId);
+		if (!selectedServiceId || !selectedCollaboratorId) return;
+		const updated = addItemToOrder(currentOrder.id, selectedServiceId, selectedCollaboratorId);
 		handleOrderUpdate(updated);
 		setSelectedServiceId('');
+		setSelectedCollaboratorId('');
 	};
 
 	const handleAddProduct = () => {
@@ -112,13 +114,25 @@ const ComandaDetails: React.FC<ComandaDetailsProps> = ({ order, onOrderChange, o
 						<div className="space-y-2">
 							<label className="block text-sm font-medium text-text">Adicionar serviço</label>
 							<SearchableSelectPlain
+								options={mockCollaborators
+									.filter(collab => collab.status === 'active' && collab.role === 'professional')
+									.map(collab => ({ value: collab.id, label: collab.name }))}
+								value={selectedCollaboratorId}
+								onChange={setSelectedCollaboratorId}
+								placeholder="Selecione o profissional"
+							/>
+							<SearchableSelectPlain
 								options={mockServices.map(service => ({ value: service.id, label: service.name }))}
 								value={selectedServiceId}
 								onChange={setSelectedServiceId}
 								placeholder="Selecione um serviço"
 							/>
 							<div className="flex justify-end pt-2">
-								<Button size="sm" onClick={handleAddService} disabled={!selectedServiceId}>
+								<Button
+									size="sm"
+									onClick={handleAddService}
+									disabled={!selectedServiceId || !selectedCollaboratorId}
+								>
 									Adicionar serviço
 								</Button>
 							</div>

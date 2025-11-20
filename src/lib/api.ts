@@ -1,4 +1,4 @@
-import type { Category, CategoryType, Service, Product } from '../types';
+import type { Category, CategoryType, Service, Product, Client, Collaborator } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -48,6 +48,98 @@ export async function createCategory(input: {
 }): Promise<Category> {
   return request<Category>('/categories', {
     method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export interface CollaboratorPayload {
+  name: string;
+  role: Collaborator['role'];
+  status?: Collaborator['status'];
+  phone?: string;
+  email?: string;
+  commissionRate?: number;
+  serviceCategories?: string[];
+}
+
+export async function getCollaborators(): Promise<Collaborator[]> {
+  return request<Collaborator[]>('/collaborators');
+}
+
+export async function getCollaboratorById(id: string): Promise<Collaborator> {
+  return request<Collaborator>(`/collaborators/${id}`);
+}
+
+export async function createCollaborator(
+  input: CollaboratorPayload,
+): Promise<Collaborator> {
+  return request<Collaborator>('/collaborators', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateCollaborator(
+  id: string,
+  input: Partial<CollaboratorPayload>,
+): Promise<Collaborator> {
+  return request<Collaborator>(`/collaborators/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export interface SalonSettings {
+  id: string;
+  name: string;
+  defaultCommissionRate: number | null;
+  commissionMode: 'service' | 'professional';
+}
+
+export async function getSalonSettings(): Promise<SalonSettings> {
+  return request<SalonSettings>('/salon');
+}
+
+export async function updateSalonSettings(
+  input: Partial<{
+    name: string;
+    defaultCommissionRate: number;
+    commissionMode: 'service' | 'professional';
+  }>,
+): Promise<SalonSettings> {
+  return request<SalonSettings>('/salon', {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function getClients(): Promise<Client[]> {
+  return request<Client[]>('/clients');
+}
+
+export async function getClientById(id: string): Promise<Client> {
+  return request<Client>(`/clients/${id}`);
+}
+
+export interface ClientPayload {
+  name: string;
+  phone: string;
+  email?: string;
+}
+
+export async function createClient(input: ClientPayload): Promise<Client> {
+  return request<Client>('/clients', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateClient(
+  id: string,
+  input: Partial<ClientPayload> & { lastVisit?: string | null },
+): Promise<Client> {
+  return request<Client>(`/clients/${id}`, {
+    method: 'PATCH',
     body: JSON.stringify(input),
   });
 }

@@ -1,27 +1,63 @@
 // src/pages/ClienteProfile.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { mockClients } from '../data/clients';
 import { mockOrders } from '../data/orders';
 import { mockServices } from '../data/services';
 import { mockProducts } from '../data/products';
 import { ArrowLeft, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import type { Order } from '../types';
+import type { Order, Client } from '../types';
+import { getClientById } from '../lib/api';
 
 const ClienteProfile = () => {
   const { id } = useParams<{ id: string }>();
-  const isNew = id === 'novo';
-  const client = mockClients.find(c => c.id === id);
+  const [client, setClient] = useState<Client | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
-  if (!client && !isNew) {
-    return <div>Cliente não encontrado.</div>;
+  useEffect(() => {
+    if (!id) return;
+
+    let isMounted = true;
+
+    const loadClient = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getClientById(id);
+        if (!isMounted) return;
+        setClient(data);
+      } catch (err) {
+        console.error('Failed to load client', err);
+        if (isMounted) {
+          setError('Falha ao carregar cliente.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadClient();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  if (isLoading) {
+    return <div>Carregando cliente...</div>;
   }
 
-  const clientOrders = mockOrders.filter(order => order.clientId === client?.id);
+  if (error || !client) {
+    return <div>{error || 'Cliente não encontrado.'}</div>;
+  }
+
+  const clientOrders = mockOrders.filter(order => order.clientId === client.id);
 
   const servicesById = new Map(mockServices.map(s => [s.id, s]));
   const productsById = new Map(mockProducts.map(p => [p.id, p]));

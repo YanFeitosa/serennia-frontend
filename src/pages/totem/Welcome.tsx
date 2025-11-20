@@ -1,10 +1,29 @@
 // src/pages/totem/Welcome.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { motion } from 'framer-motion';
 
 const Welcome: React.FC = () => {
+  const [salonName, setSalonName] = useState('Serenna');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const stored = window.localStorage.getItem('serenna-appearance');
+      if (!stored) {
+        setSalonName('Serenna');
+        return;
+      }
+      const parsed = JSON.parse(stored) as { platformName?: string };
+      const name = parsed.platformName?.trim();
+      setSalonName(name && name.length > 0 ? name : 'Serenna');
+    } catch {
+      setSalonName('Serenna');
+    }
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] bg-background px-4">
       <motion.div
@@ -13,8 +32,8 @@ const Welcome: React.FC = () => {
         transition={{ duration: 0.4 }}
         className="text-center"
       >
-        <h1 className="text-6xl font-semibold text-primary mb-4">Bem-vindo à Serenna</h1>
-        <p className="text-xl text-text-muted mb-12">Seu momento de beleza começa aqui</p>
+        <h1 className="text-7xl font-semibold text-primary mb-2">{salonName}</h1>
+        <h2 className="text-6xl font-semibold text-primary mb-10">Bem-vindo</h2>
         
         <div className="flex flex-col sm:flex-row gap-6 justify-center">
           <Link to="/totem/login">
