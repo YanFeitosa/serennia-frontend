@@ -2,11 +2,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit } from 'lucide-react';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import type { Collaborator } from '../types';
-import { useAuth } from '../contexts/AuthContext';
-import { getCollaboratorById } from '../lib/api';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import type { Collaborator } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { getCollaboratorById } from '../../lib/api';
 
 const getRoleLabel = (role: Collaborator['role']) => {
   switch (role) {

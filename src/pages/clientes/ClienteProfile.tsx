@@ -1,14 +1,14 @@
 // src/pages/ClienteProfile.tsx
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { mockOrders } from '../data/orders';
-import { mockServices } from '../data/services';
-import { mockProducts } from '../data/products';
+import { mockOrders } from '../../data/orders';
+import { mockServices } from '../../data/services';
+import { mockProducts } from '../../data/products';
 import { ArrowLeft, Edit, ChevronDown, ChevronUp } from 'lucide-react';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import type { Order, Client } from '../types';
-import { getClientById } from '../lib/api';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import type { Order, Client } from '../../types';
+import { getClientById } from '../../lib/api';
 
 const ClienteProfile = () => {
   const { id } = useParams<{ id: string }>();

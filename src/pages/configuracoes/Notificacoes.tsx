@@ -1,8 +1,8 @@
 // src/pages/Notificacoes.tsx
 import React, { useEffect, useState } from 'react';
-import type { Notification } from '../types';
-import { mockNotifications, markAllNotificationsAsRead, markNotificationAsRead } from '../data/notifications';
-import { Button } from '../components/ui/Button';
+import type { Notification } from '../../types';
+import { mockNotifications, markAllNotificationsAsRead, markNotificationAsRead } from '../../data/notifications';
+import { Button } from '../../components/ui/Button';
 
 const Notificacoes: React.FC = () => {
   const [items, setItems] = useState<Notification[]>([...mockNotifications]);

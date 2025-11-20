@@ -4,9 +4,9 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getServiceById, createService, updateService, getCategories } from '../lib/api';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { getServiceById, createService, updateService, getCategories } from '../../lib/api';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 
 const serviceSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),

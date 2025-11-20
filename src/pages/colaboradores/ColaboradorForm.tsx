@@ -4,11 +4,11 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import MultiSelectPlain from '../components/ui/MultiSelectPlain';
-import type { Collaborator } from '../types';
-import { createCollaborator, updateCollaborator, getCollaboratorById, getCategories } from '../lib/api';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import MultiSelectPlain from '../../components/ui/MultiSelectPlain';
+import type { Collaborator } from '../../types';
+import { createCollaborator, updateCollaborator, getCollaboratorById, getCategories } from '../../lib/api';
 
 const collaboratorSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),

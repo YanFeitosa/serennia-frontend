@@ -2,11 +2,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Mail, Phone, Eye } from 'lucide-react';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { useAuth } from '../contexts/AuthContext';
-import type { Collaborator } from '../types';
-import { getCollaborators } from '../lib/api';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { useAuth } from '../../contexts/AuthContext';
+import type { Collaborator } from '../../types';
+import { getCollaborators } from '../../lib/api';
 
 const Colaboradores = () => {
   const [searchTerm, setSearchTerm] = useState('');

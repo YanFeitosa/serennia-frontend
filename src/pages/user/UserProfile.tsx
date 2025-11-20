@@ -1,9 +1,9 @@
 // src/pages/UserProfile.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { useAuth } from '../../contexts/AuthContext';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 
 const UserProfile = () => {
   const { user, loginAs } = useAuth();

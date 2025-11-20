@@ -1,12 +1,12 @@
 // src/pages/Auditoria.tsx
 import { useState } from 'react';
-import { mockAuditLogs } from '../data/audit';
-import { mockUsers } from '../data/users';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import DatePickerPlain from '../components/ui/DatePickerPlain';
-import AuditLogDetails from '../components/auditoria/AuditLogDetails';
-import type { AuditLog } from '../types';
+import { mockAuditLogs } from '../../data/audit';
+import { mockUsers } from '../../data/users';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import DatePickerPlain from '../../components/ui/DatePickerPlain';
+import AuditLogDetails from '../../components/auditoria/AuditLogDetails';
+import type { AuditLog } from '../../types';
 
 const Auditoria = () => {
   const [showFilters, setShowFilters] = useState(false);

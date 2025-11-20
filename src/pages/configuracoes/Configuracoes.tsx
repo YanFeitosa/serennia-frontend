@@ -1,8 +1,8 @@
 // src/pages/Configuracoes.tsx
 import { useState, useEffect } from 'react';
-import { Button } from '../components/ui/Button';
-import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings } from '../lib/api';
-import type { CategoryType } from '../types';
+import { Button } from '../../components/ui/Button';
+import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings } from '../../lib/api';
+import type { CategoryType } from '../../types';
 
 type MessageTemplate = {
   id: string;

@@ -2,13 +2,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CreditCard, DollarSign } from 'lucide-react';
-import { mockOrders } from '../data/orders';
-import { mockClients } from '../data/clients';
-import { mockServices } from '../data/services';
-import { mockProducts } from '../data/products';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import type { Order } from '../types';
+import { mockOrders } from '../../data/orders';
+import { mockClients } from '../../data/clients';
+import { mockServices } from '../../data/services';
+import { mockProducts } from '../../data/products';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import type { Order } from '../../types';
 
 const getStatusLabel = (status: Order['status']) => {
   switch (status) {

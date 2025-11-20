@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
-import { useAuth } from '../contexts/AuthContext';
-import type { Product } from '../types';
-import { getProducts } from '../lib/api';
+import { Button } from '../../components/ui/Button';
+import { useAuth } from '../../contexts/AuthContext';
+import type { Product } from '../../types';
+import { getProducts } from '../../lib/api';
 
 const Produtos = () => {
   const [searchTerm, setSearchTerm] = useState('');

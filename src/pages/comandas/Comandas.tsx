@@ -7,17 +7,17 @@ import {
   createEmptyOrderForClient,
   findOrderById,
   findOpenOrderByClientId,
-} from '../data/orders';
-import { mockClients } from '../data/clients';
-import { mockServices } from '../data/services';
-import { mockProducts } from '../data/products';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { upsertNotification } from '../data/notifications';
-import type { Notification } from '../types';
-import ComandaDetails from '../components/comandas/ComandaDetails';
-import type { Order, OrderItem } from '../types';
-import SearchableSelectPlain from '../components/ui/SearchableSelectPlain';
+} from '../../data/orders';
+import { mockClients } from '../../data/clients';
+import { mockServices } from '../../data/services';
+import { mockProducts } from '../../data/products';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { upsertNotification } from '../../data/notifications';
+import type { Notification } from '../../types';
+import ComandaDetails from '../../components/comandas/ComandaDetails';
+import type { Order, OrderItem } from '../../types';
+import SearchableSelectPlain from '../../components/ui/SearchableSelectPlain';
 
 const Comandas = () => {
   const location = useLocation();

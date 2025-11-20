@@ -2,11 +2,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Phone, Calendar, Eye } from 'lucide-react';
-import { mockOrders } from '../data/orders';
-import type { Order, Client } from '../types';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { getClients } from '../lib/api';
+import { mockOrders } from '../../data/orders';
+import type { Order, Client } from '../../types';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { getClients } from '../../lib/api';
 
 const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState('');

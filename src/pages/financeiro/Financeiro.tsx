@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { mockOrders } from '../data/orders';
-import { Badge } from '../components/ui/Badge';
-import DatePickerPlain from '../components/ui/DatePickerPlain';
-import { Button } from '../components/ui/Button';
-import type { Order, OrderItem } from '../types';
+import { mockOrders } from '../../data/orders';
+import { Badge } from '../../components/ui/Badge';
+import DatePickerPlain from '../../components/ui/DatePickerPlain';
+import { Button } from '../../components/ui/Button';
+import type { Order, OrderItem } from '../../types';
 
 type ChartResolution = 'auto' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 

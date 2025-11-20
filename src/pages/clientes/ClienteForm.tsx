@@ -4,10 +4,10 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import type { Client } from '../types';
-import { createClient, updateClient, getClientById } from '../lib/api';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import type { Client } from '../../types';
+import { createClient, updateClient, getClientById } from '../../lib/api';
 
 const clientSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),

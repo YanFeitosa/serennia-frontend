@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import { Plus, Clock, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
-import { useAuth } from '../contexts/AuthContext';
-import type { Service } from '../types';
-import { getServices } from '../lib/api';
+import { Button } from '../../components/ui/Button';
+import { useAuth } from '../../contexts/AuthContext';
+import type { Service } from '../../types';
+import { getServices } from '../../lib/api';
 
 const Servicos = () => {
   const [searchTerm, setSearchTerm] = useState('');

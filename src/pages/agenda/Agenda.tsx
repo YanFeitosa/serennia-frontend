@@ -1,11 +1,11 @@
 // src/pages/Agenda.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Appointment } from '../types';
-import { Button } from '../components/ui/Button';
-import DailyView from '../components/agenda/DailyView';
-import WeeklyView from '../components/agenda/WeeklyView';
-import MonthlyView from '../components/agenda/MonthlyView';
+import type { Appointment } from '../../types';
+import { Button } from '../../components/ui/Button';
+import DailyView from '../../components/agenda/DailyView';
+import WeeklyView from '../../components/agenda/WeeklyView';
+import MonthlyView from '../../components/agenda/MonthlyView';
 
 const Agenda = () => {
   const navigate = useNavigate();
