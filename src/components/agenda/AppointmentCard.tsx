@@ -15,12 +15,14 @@ interface AppointmentCardProps {
   minHeight?: number;
 }
 
-const getLatestOrderForClient = (clientId: string) => {
-  const ordersForClient = mockOrders.filter(order => order.clientId === clientId);
-  if (ordersForClient.length === 0) return null;
-  return [...ordersForClient].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  )[0];
+const getLinkedOrderForAppointment = (appointment: Appointment) => {
+  if (appointment.orderId) {
+    const byId = mockOrders.find(order => order.id === appointment.orderId);
+    if (byId) return byId;
+  }
+  // Fallback: busca por appointmentId nas comandas (caso tenha sido vinculado apenas no Order)
+  const byAppointmentId = mockOrders.find(order => order.appointmentId === appointment.id);
+  return byAppointmentId ?? null;
 };
 
 const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: AppointmentCardProps) => {
@@ -28,16 +30,16 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
   const [isExpanded, setIsExpanded] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
-  const latestOrder = getLatestOrderForClient(client.id);
+  const linkedOrder = getLinkedOrderForAppointment(appointment);
 
   const todayAtMidnight = new Date();
   todayAtMidnight.setHours(0, 0, 0, 0);
 
-  const hasOpenOrder = latestOrder?.status === 'open';
+  const hasOpenOrder = linkedOrder?.status === 'open';
   const hasOverdueOpenOrder =
-    !!latestOrder &&
-    latestOrder.status === 'open' &&
-    new Date(latestOrder.createdAt).getTime() < todayAtMidnight.getTime();
+    !!linkedOrder &&
+    linkedOrder.status === 'open' &&
+    new Date(linkedOrder.createdAt).getTime() < todayAtMidnight.getTime();
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-status-info)',
@@ -142,12 +144,12 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
           appointment.status === 'completed' ||
           appointment.status === 'not_paid'
         ) {
-          if (latestOrder) {
+          if (linkedOrder) {
             label = 'Acessar comanda';
             onClick = (e) => {
               e.stopPropagation();
               navigate('/comandas', {
-                state: { focusOrderId: latestOrder.id },
+                state: { focusOrderId: linkedOrder.id },
               });
             };
           }

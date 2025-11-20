@@ -8,7 +8,7 @@ import AgendamentoForm from '../pages/AgendamentoForm';
 import Comandas from '../pages/Comandas';
 import PagamentoComanda from '../pages/PagamentoComanda';
 import Clientes from '../pages/Clientes';
-import ClienteForm from '../pages/ClienteForm.tsx';
+import ClienteForm from '../pages/ClienteForm';
 import ClienteProfile from '../pages/ClienteProfile';
 import Servicos from '../pages/Servicos';
 import ServicoForm from '../pages/ServicoForm';

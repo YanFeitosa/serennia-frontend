@@ -53,7 +53,7 @@ export interface Service {
   price: number;
   commission?: number; // commission percentage as fraction (0-1)
   bufferTime?: number; // minutes after service
-  isActive?: boolean;
+  isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

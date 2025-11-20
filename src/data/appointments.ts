@@ -161,3 +161,27 @@ export const upsertMockAppointment = (appointment: Appointment) => {
     appointment,
   ];
 };
+
+export const findAppointmentById = (id: string): Appointment | null => {
+  return mockAppointments.find(a => a.id === id) ?? null;
+};
+
+export const updateAppointmentById = (
+  id: string,
+  updater: (appointment: Appointment) => Appointment,
+): Appointment | null => {
+  let updated: Appointment | null = null;
+  mockAppointments = mockAppointments.map(appt => {
+    if (appt.id !== id) return appt;
+    updated = updater(appt);
+    return updated;
+  });
+  return updated;
+};
+
+export const linkOrderToAppointment = (
+  appointmentId: string,
+  orderId: string,
+): Appointment | null => {
+  return updateAppointmentById(appointmentId, (appt) => ({ ...appt, orderId }));
+};

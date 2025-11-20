@@ -2,6 +2,7 @@
 import type { Appointment, Order, OrderItem } from '../types';
 import { mockServices } from './services';
 import { mockProducts } from './products';
+import { linkOrderToAppointment } from './appointments';
 
 const calcFinalValue = (items: OrderItem[]): number => {
   return items.reduce((sum, item) => sum + item.price, 0);
@@ -171,7 +172,10 @@ export let mockOrders: Order[] = (() => {
 })();
 
 const findOpenOrderForClient = (clientId: string): Order | undefined => {
-  return mockOrders.find(order => order.clientId === clientId && order.status === 'open');
+  // Apenas comandas abertas que ainda não estão ligadas a um agendamento
+  return mockOrders.find(
+    order => order.clientId === clientId && order.status === 'open' && !order.appointmentId,
+  );
 };
 
 export const createEmptyOrderForClient = (clientId: string): Order => {
@@ -260,17 +264,59 @@ export const findOpenOrderByClientId = (clientId: string): Order | null => {
   return findOpenOrderForClient(clientId) ?? null;
 };
 
-// Garante uma comanda aberta para o agendamento informado,
+export const findOrderByAppointmentId = (appointmentId: string): Order | null => {
+  return mockOrders.find(order => order.appointmentId === appointmentId) ?? null;
+};
+
+// Garante uma comanda (única) para o agendamento informado,
 // adicionando os serviços do agendamento como itens (se ainda não existirem)
-// e vinculando o appointmentId na comanda.
+// e mantendo o vínculo 1-para-1 entre Order e Appointment.
 export const ensureOrderForAppointment = (appointment: Appointment): Order => {
-  // Garante uma comanda aberta para o cliente (reutiliza se já existir)
-  const baseOrder = createEmptyOrderForClient(appointment.clientId);
+  // 1) Se já existe comanda vinculada a este agendamento, reutiliza.
+  let currentOrder: Order | null = findOrderByAppointmentId(appointment.id);
 
-  // Adiciona itens de serviço referentes aos serviceIds do agendamento,
+  // 2) Se o agendamento já tem orderId preenchido, tenta usar esta comanda.
+  if (!currentOrder && appointment.orderId) {
+    const byId = findOrderById(appointment.orderId);
+    if (byId) {
+      currentOrder = byId;
+    }
+  }
+
+  // 3) Se ainda não há comanda ligada, tenta reaproveitar uma comanda aberta
+  // do cliente que ainda não esteja vinculada a nenhum agendamento (caso walk-in).
+  if (!currentOrder) {
+    const openForClient = mockOrders.find(
+      order =>
+        order.clientId === appointment.clientId &&
+        order.status === 'open' &&
+        !order.appointmentId,
+    );
+    if (openForClient) {
+      currentOrder = openForClient;
+    }
+  }
+
+  // 4) Se ainda não existe comanda adequada, cria uma nova específica
+  // para este agendamento.
+  if (!currentOrder) {
+    const id = `order-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const createdAt = new Date().toISOString();
+    currentOrder = {
+      id,
+      salonId: appointment.salonId,
+      clientId: appointment.clientId,
+      items: [],
+      status: 'open',
+      finalValue: 0,
+      createdAt,
+      appointmentId: appointment.id,
+    };
+    mockOrders = [...mockOrders, currentOrder];
+  }
+
+  // 5) Adiciona itens de serviço referentes aos serviceIds do agendamento,
   // evitando duplicar itens idênticos (mesmo serviceId e collaboratorId).
-  let currentOrder: Order = baseOrder;
-
   for (const serviceId of appointment.serviceIds) {
     const alreadyHasItem = currentOrder.items.some(
       item =>
@@ -287,7 +333,7 @@ export const ensureOrderForAppointment = (appointment: Appointment): Order => {
     }
   }
 
-  // Garante vínculo com o agendamento
+  // 6) Garante vínculo explícito com o agendamento dos dois lados.
   if (currentOrder.appointmentId !== appointment.id) {
     const updated = updateOrderById(currentOrder.id, (order) => ({
       ...order,
@@ -297,6 +343,7 @@ export const ensureOrderForAppointment = (appointment: Appointment): Order => {
       currentOrder = updated;
     }
   }
+  linkOrderToAppointment(appointment.id, currentOrder.id);
 
   return currentOrder;
 };

@@ -1,0 +1,522 @@
+Backend Specification for Serenna Application
+==========================================
+
+1. Overview
+-----------
+
+This backend design supports the current Serenna frontend (agenda, comandas, financeiro, clientes, colaboradores, serviços/produtos, notificações) and prepara o terreno para uma implementação real (por exemplo, Node/Nest/Express + PostgreSQL). O desenho é agnóstico de tecnologia: pode ser implementado em qualquer stack que ofereça APIs REST e acesso a um banco relacional.
+
+Principais responsabilidades do backend:
+- Autenticação e autorização baseadas em usuários, papéis (roles) e salões.
+- Gestão de clientes, colaboradores, serviços e produtos.
+- Gestão de agenda (agendamentos) com regras de negócio específicas (ex.: apenas pending pode ser editado).
+- Gestão de comandas (orders) e itens (serviços/produtos na comanda).
+- Fluxo de pagamento e consolidação de status financeiro.
+- Geração de registros de comissão, auditoria e notificações.
+- Exposição de endpoints de agregação/analytics (visão diária/semanal/mensal da agenda).
+
+
+2. Data Model (Relational)
+--------------------------
+
+Sugestão: PostgreSQL com chaves primárias uuid. Todos os registros de negócio têm um campo `salon_id` para multi-tenant por salão.
+
+2.1. Authentication and Users
+-----------------------------
+
+Table `salons`
+- id (uuid, PK)
+- name (varchar)
+- document (varchar, optional)
+- created_at (timestamptz)
+- updated_at (timestamptz)
+
+Table `users`
+- id (uuid, PK)
+- salon_id (uuid, FK -> salons.id)
+- name (varchar)
+- email (varchar, unique per salon)
+- password_hash (varchar)
+- phone (varchar, optional)
+- role (enum: 'admin' | 'manager' | 'receptionist' | 'professional')
+- avatar_url (varchar, optional)
+- created_at (timestamptz)
+- updated_at (timestamptz)
+
+
+2.2. Clients and Collaborators
+------------------------------
+
+Table `clients`
+- id (uuid, PK)
+- salon_id (uuid, FK)
+- name (varchar)
+- phone (varchar)
+- email (varchar, optional)
+- last_visit (timestamptz, optional)
+- created_at
+- updated_at
+
+Table `collaborators`
+- id (uuid, PK)
+- salon_id (uuid, FK)
+- user_id (uuid, FK -> users.id, optional)
+- name (varchar)
+- role (enum UserRole, geralmente 'professional')
+- status (enum 'active' | 'inactive')
+- phone (varchar, optional)
+- email (varchar, optional)
+- commission_rate (numeric, 0–1)
+- service_categories (array of varchar) ou tabela pivot separada
+- created_at
+- updated_at
+
+
+2.3. Services and Products
+--------------------------
+
+Table `services`
+- id (uuid, PK)
+- salon_id (uuid, FK)
+- name (varchar)
+- category (varchar, optional)
+- description (text, optional)
+- duration (integer, minutes)
+- price (numeric(10,2))
+- commission (numeric, 0–1, optional)
+- buffer_time (integer, minutes, optional)
+- is_active (boolean)
+- created_at
+- updated_at
+
+Table `products`
+- id (uuid, PK)
+- salon_id (uuid, FK)
+- name (varchar)
+- category (varchar, optional)
+- description (text, optional)
+- price (numeric(10,2))
+- cost_price (numeric(10,2), optional)
+- stock (integer)
+- is_active (boolean)
+- created_at
+- updated_at
+
+
+2.4. Appointments / Scheduling
+------------------------------
+
+Table `appointments`
+- id (uuid, PK)
+- salon_id (uuid, FK)
+- client_id (uuid, FK -> clients.id)
+- collaborator_id (uuid, FK -> collaborators.id)
+- start (timestamptz)
+- end (timestamptz)
+- status (enum: 'pending' | 'in_progress' | 'completed' | 'canceled' | 'no_show' | 'not_paid')
+- origin (enum: 'whatsapp' | 'app' | 'totem' | 'reception')
+- notes (text, optional)
+- order_id (uuid, FK -> orders.id, optional)   -- link para comanda
+- created_at
+- updated_at
+
+Table `appointment_services` (pivot)
+- appointment_id (uuid, PK, FK -> appointments.id)
+- service_id (uuid, PK, FK -> services.id)
+
+Observações de regra:
+- Apenas `pending` pode ser editado (campos de horário, profissional, serviços, etc.).
+- Mudanças de status (in_progress, completed, etc.) devem usar endpoint específico.
+
+
+2.5. Orders (Comandas) and Items
+--------------------------------
+
+Table `orders`
+- id (uuid, PK)
+- salon_id (uuid, FK)
+- client_id (uuid, FK -> clients.id)
+- status (enum: 'open' | 'closed' | 'paid')
+- final_value (numeric(10,2))
+- created_at (timestamptz)
+- closed_at (timestamptz, optional)
+- appointment_id (uuid, FK -> appointments.id, optional)
+- created_by_user_id (uuid, FK -> users.id, optional)
+- updated_at (timestamptz, optional)
+
+Table `order_items`
+- id (uuid, PK)
+- order_id (uuid, FK -> orders.id)
+- salon_id (uuid, FK)
+- type (enum: 'service' | 'product')
+- service_id (uuid, FK -> services.id, optional)
+- product_id (uuid, FK -> products.id, optional)
+- collaborator_id (uuid, FK -> collaborators.id, optional)
+- quantity (integer, default 1)
+- price (numeric(10,2))
+- commission (numeric(10,2))
+- created_at
+
+Regras principais:
+- Há um vínculo conceitualmente 1–para–1 entre `appointments` e `orders` quando se trata do mesmo atendimento:
+  - `appointments.order_id` ↔ `orders.appointment_id`.
+- Entretanto, o modelo permite:
+  - Comandas abertas sem `appointment_id` (caso walk-in: cliente chega sem agendamento e abre comanda diretamente).
+  - Posteriormente, um agendamento pode ser criado e ligado a essa comanda.
+
+
+2.6. Payments
+-------------
+
+Table `payments`
+- id (uuid, PK)
+- order_id (uuid, FK -> orders.id)
+- salon_id (uuid, FK)
+- method (enum: 'cash' | 'card' | 'pix' | 'online')
+- amount (numeric(10,2))
+- status (enum: 'pending' | 'confirmed' | 'failed')
+- transaction_date (timestamptz)
+- received_by_user_id (uuid, FK -> users.id, optional)
+
+Regra típica:
+- Somatório de payments.confirmed para a comanda deve atingir `final_value` para que `order.status` seja marcado como `paid`.
+
+
+2.7. Commissions, Audit, Notifications
+--------------------------------------
+
+Table `commission_records`
+- id (uuid, PK)
+- salon_id (uuid, FK)
+- collaborator_id (uuid, FK -> collaborators.id)
+- order_id (uuid, FK -> orders.id)
+- order_item_id (uuid, FK -> order_items.id, optional)
+- amount (numeric(10,2))
+- paid (boolean)
+- payment_date (timestamptz, optional)
+- period_start (date, optional)
+- period_end (date, optional)
+
+Table `audit_logs`
+- id (uuid, PK)
+- salon_id (uuid, FK)
+- user_id (uuid, FK -> users.id)
+- action (enum: 'INSERT' | 'UPDATE' | 'DELETE')
+- table_name (varchar)
+- record_id (uuid ou varchar)
+- timestamp (timestamptz)
+- old_value (jsonb, optional)
+- new_value (jsonb, optional)
+- ip_address (varchar, optional)
+- user_agent (varchar, optional)
+
+Table `notifications`
+- id (uuid, PK)
+- user_id (uuid, FK -> users.id)
+- salon_id (uuid, FK, optional)
+- message (text)
+- read (boolean)
+- created_at (timestamptz)
+- link (varchar, optional)
+- type (enum: 'info' | 'warning' | 'error', optional)
+
+
+3. REST Endpoints
+-----------------
+
+3.1. Authentication / Current User
+----------------------------------
+
+POST /auth/login
+- Body: { email, password }
+- Response: { accessToken, refreshToken, user }
+
+POST /auth/refresh
+- Body: { refreshToken }
+- Response: { accessToken }
+
+GET /auth/me
+- Returns current user, including role and salonId.
+
+(Optionally) POST /auth/logout
+- To invalidate refresh tokens depending on strategy.
+
+
+3.2. Clients
+------------
+
+GET /clients
+- Query: search, page, pageSize.
+- Returns paginated list of clients for the authenticated salon.
+
+GET /clients/:id
+
+POST /clients
+- Body: { name, phone, email? }
+
+PATCH /clients/:id
+
+(Optionally) DELETE /clients/:id (soft delete recommended).
+
+
+3.3. Collaborators
+------------------
+
+GET /collaborators
+- Query: status, role.
+
+GET /collaborators/:id
+
+POST /collaborators
+
+PATCH /collaborators/:id
+
+(Optionally) endpoints to link/unlink user_id from collaborator.
+
+
+3.4. Services and Products
+--------------------------
+
+Services
+--------
+
+GET /services
+- Query: category, isActive, search.
+
+GET /services/:id
+
+POST /services
+
+PATCH /services/:id
+
+(Optionally) DELETE /services/:id
+
+Products
+--------
+
+GET /products
+
+GET /products/:id
+
+POST /products
+
+PATCH /products/:id
+
+(Optionally) DELETE /products/:id
+
+
+3.5. Appointments / Schedule
+----------------------------
+
+GET /appointments
+- Query:
+  - dateFrom, dateTo (for monthly/weekly/daily views)
+  - collaboratorId? (filter by professional)
+  - status? (optional)
+
+GET /appointments/:id
+
+POST /appointments
+- Body: { clientId, collaboratorId, serviceIds[], start, notes?, origin }
+- Backend responsibilities:
+  - Validate that start is in the future.
+  - Load selected services and calculate total duration (service.duration + bufferTime).
+  - Compute end = start + totalDuration.
+  - Ensure no overlapping appointments for that collaborator.
+  - Set initial status = 'pending'.
+
+PATCH /appointments/:id
+- Only allowed if current status is 'pending'.
+- Same validations as create: overlap, duration, future date, etc.
+
+POST /appointments/:id/status
+- Body: { status }
+- Allowed transitions (exemplo):
+  - pending -> in_progress | canceled | no_show
+  - in_progress -> completed | not_paid
+  - completed -> not_paid (se pagamento falhar) ou ajuste limitado
+- Backend must enforce these transitions.
+
+(Optionally) DELETE /appointments/:id
+- Or treat as status = 'canceled'.
+
+Analytics helper (optional but useful):
+
+GET /analytics/agenda/daily-summary
+- Query: dateFrom, dateTo, collaboratorId?
+- Response: array of
+  { date, totalAppointments, completed, notPaid, noShow, openOrders }
+- Used by the monthly view to avoid fetching all raw records.
+
+
+3.6. Orders (Comandas)
+----------------------
+
+3.6.1. Basic listing and details
+
+GET /orders
+- Query: status? (open|closed|paid), clientId?, dateFrom?, dateTo?, search?
+- search may look at client name and order id.
+
+GET /orders/:id
+- Returns order + items.
+
+
+3.6.2. Creating orders
+
+POST /orders
+- Body:
+  - Required: { clientId }
+  - Optional: { appointmentId, serviceIds[] }
+- Backend behavior:
+  - If appointmentId is provided:
+    - Enforce/ensure the 1–to–1 link between appointment and order.
+    - Optionally reuse existing open, unlinked order for that client (walk-in).
+  - If serviceIds[] is provided, create corresponding order_items with proper price and commission.
+
+
+3.6.3. Updating basic fields
+
+PATCH /orders/:id
+- Can update clientId (before closing), maybe notes or metadata.
+- Must not break referential integrity with appointment.
+
+
+3.6.4. Items management
+
+POST /orders/:id/items
+- Body for service item:
+  { type: 'service', serviceId, collaboratorId, quantity? }
+- Body for product item:
+  { type: 'product', productId, quantity? }
+- Backend responsibilities:
+  - Validate that order is 'open'.
+  - Add one or more order_items.
+  - Recalculate final_value.
+  - Optionally create commission_records for services.
+
+DELETE /orders/:id/items/:itemId
+- Remove item, recalc final_value.
+
+
+3.6.5. Closing an order
+
+POST /orders/:id/close
+- Only allowed if order.status === 'open'.
+- Sets status = 'closed', closed_at = now.
+- Typically called before or during payment creation.
+
+
+3.6.6. Ensure order for an appointment (key link)
+
+POST /appointments/:id/order/ensure
+- Purpose: implement, on the backend, the behavior similar to frontend `ensureOrderForAppointment`.
+- Backend logic:
+  1. Try to find an order where orders.appointment_id == :id.
+  2. If not found, and appointment.order_id is set, try that order.
+  3. If still not found, search for an open order of the same client with no appointment_id (walk-in case) and reuse it.
+  4. If none exists, create a new open order for that client and link to the appointment.
+  5. Ensure that all services of the appointment are present as order_items (no duplicates for same serviceId + collaboratorId).
+  6. Persist both sides of the link: orders.appointment_id and appointments.order_id.
+- Response: the resulting Order object (with items).
+- The frontend, when clicking "Abrir comanda" on a card, will:
+  - Call this endpoint.
+  - Use the returned id to focus the order on the Comandas page.
+
+
+3.7. Payments
+-------------
+
+GET /orders/:id/payments
+- Returns all payments for the order.
+
+POST /orders/:id/payments
+- Body: { method, amount }
+- Backend responsibilities:
+  - Create a payment with status 'confirmed' (or 'pending' if integrated with PSP).
+  - Update the order's financial status:
+    - Sum all confirmed payments.
+    - If sum >= final_value, set order.status = 'paid' and set closed_at if not set.
+  - Optionally generate commission_records.
+
+(Optionally) PATCH /payments/:id
+- To update status from 'pending' to 'confirmed' or 'failed' if using asynchronous payment gateways.
+
+
+3.8. Notifications
+------------------
+
+GET /notifications
+- Returns notifications for current user.
+
+POST /notifications/:id/read
+- Mark notification as read.
+
+Backend cron/job examples (not necessarily REST but useful):
+- Daily job to detect overdue open orders and insert notifications for responsible roles.
+
+
+3.9. Commissions and Audit
+--------------------------
+
+GET /commissions
+- Query: collaboratorId, paid?, periodStart, periodEnd.
+
+POST /commissions/:id/pay
+- Mark a commission record as paid, set payment_date.
+
+GET /audit-logs
+- Restricted to 'admin'/'manager'.
+- Query: tableName, recordId, date range.
+
+
+4. Business Rules Summary
+--------------------------
+
+4.1. Appointment editing
+------------------------
+
+- Only appointments with status 'pending' can be edited (time, collaborator, services, notes).
+- Status transitions must be done through a dedicated endpoint.
+
+4.2. Appointment <-> Order link
+--------------------------------
+
+- Conceptually, 1 appointment relates to 1 main order for that visit.
+- Two-way link:
+  - appointments.order_id <-> orders.appointment_id
+- Walk-in scenario:
+  - It is valid to have an open order without appointment_id.
+  - Later, an appointment may be created and linked to that order via the ensure-order endpoint.
+
+4.3. Status consistency (future refinement)
+------------------------------------------
+
+- When an order becomes 'paid':
+  - Backend may enforce that its linked appointment becomes 'completed' (or at least not 'not_paid').
+- When an appointment is 'not_paid' but the order is 'paid', this should be considered inconsistent.
+
+4.4. Security
+-------------
+
+- All business endpoints require authentication (JWT).
+- Role-based access:
+  - admin/manager: full access, including configuration, services/products, financial reports, audit logs.
+  - receptionist: agenda, clients, orders, payments (maybe without some financial reports).
+  - professional: agenda própria, consulta de clientes atendidos, visualização limitada de comandas.
+- Every query must be scoped by salon_id (taken from the token, not from the request body).
+
+
+5. Implementation Notes / Suggestions
+-------------------------------------
+
+- Use a framework with support for decorators/validation (NestJS, Laravel, etc.) to:
+  - Validate DTOs for create/update endpoints.
+  - Centralize role/permission checks.
+- Use migrations (Prisma, TypeORM, Sequelize, Flyway, etc.) to version the schema.
+- Log all writes (INSERT/UPDATE/DELETE) into audit_logs through a middleware or ORM hooks.
+- Design the API to match closely the frontend flows:
+  - Endpoints para analytics da agenda (resumos diários) evitam trazer muitos registros para o cliente.
+  - Endpoint específico para "ensure order for appointment" simplifica o frontend e garante regras no servidor.
+
+This document describes a complete backend surface for the current Serenna frontend and prepares it for a production-grade implementation with authentication, authorization, consistent data modeling and extendable financial logic.
