@@ -69,10 +69,16 @@ export const DateTimePickerPlain: React.FC<DateTimePickerPlainProps> = ({
   const handleTimeChange = (newHours: string, newMinutes: string) => {
     setHours(newHours);
     setMinutes(newMinutes);
-    if (selectedDate) {
-      const dateStr = formatDateToInput(selectedDate, newHours, newMinutes);
-      onChange(dateStr);
+
+    let baseDate = selectedDate;
+    if (!baseDate) {
+      baseDate = new Date();
+      setSelectedDate(baseDate);
+      setCurrentMonth(baseDate);
     }
+
+    const dateStr = formatDateToInput(baseDate, newHours, newMinutes);
+    onChange(dateStr);
   };
 
   const formatDateToInput = (date: Date, h: string, m: string): string => {

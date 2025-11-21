@@ -89,18 +89,11 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
 
   const onSubmit: SubmitHandler<AppointmentSchema> = (data) => {
     console.log('Appointment data:', data);
-    return new Promise(resolve => {
-      setTimeout(() => {
-        alert(appointment ? 'Agendamento atualizado!' : 'Agendamento criado!');
-        onClose();
-        resolve(void 0);
-      }, 1000);
-    });
+    onClose();
   };
 
   const handleCancelAppointment = () => {
     if (window.confirm('Tem certeza que deseja cancelar este agendamento?')) {
-      alert('Agendamento cancelado!');
       onClose();
     }
   };

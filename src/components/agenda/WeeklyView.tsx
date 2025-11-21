@@ -1,11 +1,8 @@
 // src/components/agenda/WeeklyView.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { mockAppointments } from '../../data/appointments';
-import { mockCollaborators } from '../../data/collaborators';
-import { mockClients } from '../../data/clients';
-import { mockServices } from '../../data/services';
-import type { Appointment, AppointmentStatus } from '../../types';
+import type { Appointment, AppointmentStatus, Client, Collaborator, Service } from '../../types';
+import { getAppointments, getClients, getCollaborators, getServices } from '../../lib/api';
 
 interface WeeklyViewProps {
   date: Date;
@@ -15,7 +12,13 @@ interface WeeklyViewProps {
 const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
   const today = new Date();
   const [selectedCollaboratorId, setSelectedCollaboratorId] = useState<string>('');
-  const activeCollaborators = mockCollaborators.filter(
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const activeCollaborators = collaborators.filter(
     c => c.status === 'active' && c.role === 'professional',
   );
   const dayOfWeek = date.getDay();
@@ -28,7 +31,13 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
     return date;
   });
 
-  const getDateKey = (date: Date) => date.toISOString().slice(0, 10);
+  const getDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const weekdayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
   const getStatusToken = (
@@ -67,19 +76,62 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
     } as CSSProperties;
   };
 
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const start = new Date(date);
+        start.setDate(start.getDate() - start.getDay());
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(start);
+        end.setDate(end.getDate() + 7);
+        end.setHours(23, 59, 59, 999);
+
+        const [appointmentsRes, clientsRes, collaboratorsRes, servicesRes] =
+          await Promise.all([
+            getAppointments({
+              dateFrom: start.toISOString(),
+              dateTo: end.toISOString(),
+              collaboratorId: selectedCollaboratorId || undefined,
+            }),
+            getClients(),
+            getCollaborators(),
+            getServices(),
+          ]);
+
+        setAppointments(appointmentsRes);
+        setClients(clientsRes);
+        setCollaborators(collaboratorsRes);
+        setServices(servicesRes);
+      } catch (err) {
+        console.error('Error loading weekly view data', err);
+        setError('Erro ao carregar agendamentos.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [date, selectedCollaboratorId]);
+
   const groupedByDay = days.map(d => {
     const key = getDateKey(d);
-    const appointments = mockAppointments
+    const appointmentsForDay = appointments
       .filter(
         (appt: Appointment) =>
-          appt.start.slice(0, 10) === key &&
+          getDateKey(new Date(appt.start)) === key &&
+          appt.status !== 'canceled' &&
+          appt.status !== 'no_show' &&
           (!selectedCollaboratorId || appt.collaboratorId === selectedCollaboratorId),
       )
       .sort(
         (a: Appointment, b: Appointment) =>
           new Date(a.start).getTime() - new Date(b.start).getTime(),
       );
-    return { date: d, appointments };
+    return { date: d, appointments: appointmentsForDay };
   });
 
   return (
@@ -102,6 +154,11 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
           </select>
         </div>
       </div>
+      {(isLoading || error) && (
+        <div className="mb-2 text-[11px] text-text-muted">
+          {isLoading ? 'Carregando agendamentos...' : error}
+        </div>
+      )}
       <div className="grid grid-cols-7 gap-2 text-xs mb-2">
         {groupedByDay.map(({ date, appointments }) => {
           const label = `${weekdayLabels[date.getDay()]} ${date
@@ -127,10 +184,13 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
                   <div className="text-[11px] text-text-muted">Sem agendamentos</div>
                 )}
                 {appointments.map((appt: Appointment) => {
-                  const client = mockClients.find(c => c.id === appt.clientId);
-                  const collaborator = mockCollaborators.find(c => c.id === appt.collaboratorId);
-                  const services = mockServices.filter(s => appt.serviceIds.includes(s.id));
-                  if (!client || !collaborator || services.length === 0) return null;
+                  const client = clients.find(c => c.id === appt.clientId);
+                  const collaborator = collaborators.find(c => c.id === appt.collaboratorId);
+                  const servicesForAppointment = services.filter((s) =>
+                    appt.serviceIds.includes(s.id),
+                  );
+                  if (!client || !collaborator || servicesForAppointment.length === 0)
+                    return null;
                   const start = new Date(appt.start);
                   const end = new Date(appt.end);
                   const timeLabel = `${start.toLocaleTimeString([], {
@@ -153,7 +213,7 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
                         {collaborator.name}
                       </div>
                       <div className="text-[10px] text-text-muted">
-                        {services.map(s => s.name).join(', ')}
+                        {servicesForAppointment.map((s) => s.name).join(', ')}
                       </div>
                       <div className="text-[10px] text-text-muted">
                         {timeLabel}

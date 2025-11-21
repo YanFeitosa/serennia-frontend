@@ -2,10 +2,10 @@
 import { useState, useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Appointment, Client, Service } from '../../types';
+import type { Appointment, AppointmentStatus, Client, Service } from '../../types';
 import { Clock, User, Tag, Pencil } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { mockOrders, ensureOrderForAppointment } from '../../data/orders';
+import { updateAppointmentStatus, ensureOrderForAppointment } from '../../lib/api';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -13,60 +13,60 @@ interface AppointmentCardProps {
   services: Service[];
   onEdit: (appointment: Appointment) => void;
   minHeight?: number;
+  onStatusUpdated?: (appointment: Appointment) => void;
+  onBringToFront?: () => void;
+  onAfterAction?: () => void;
 }
 
-const getLinkedOrderForAppointment = (appointment: Appointment) => {
-  if (appointment.orderId) {
-    const byId = mockOrders.find(order => order.id === appointment.orderId);
-    if (byId) return byId;
-  }
-  // Fallback: busca por appointmentId nas comandas (caso tenha sido vinculado apenas no Order)
-  const byAppointmentId = mockOrders.find(order => order.appointmentId === appointment.id);
-  return byAppointmentId ?? null;
-};
-
-const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: AppointmentCardProps) => {
+const AppointmentCard = ({ appointment, client, services, onEdit, minHeight, onStatusUpdated, onBringToFront, onAfterAction }: AppointmentCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
-  const linkedOrder = getLinkedOrderForAppointment(appointment);
 
-  const todayAtMidnight = new Date();
-  todayAtMidnight.setHours(0, 0, 0, 0);
-
-  const hasOpenOrder = linkedOrder?.status === 'open';
-  const hasOverdueOpenOrder =
-    !!linkedOrder &&
-    linkedOrder.status === 'open' &&
-    new Date(linkedOrder.createdAt).getTime() < todayAtMidnight.getTime();
+  const now = new Date();
+  const appointmentStart = new Date(appointment.start);
+  const isBeforeStart = now.getTime() < appointmentStart.getTime();
 
   const cardStyle: CSSProperties = {
     backgroundColor: 'var(--color-status-info)',
     minHeight,
   };
 
-  const appointmentDay = new Date(appointment.start);
-  appointmentDay.setHours(0, 0, 0, 0);
-  const isPastDay = appointmentDay.getTime() < todayAtMidnight.getTime();
-
   if (appointment.status === 'not_paid') {
     cardStyle.backgroundColor = 'var(--color-status-error)';
   } else if (appointment.status === 'pending') {
     cardStyle.backgroundColor = 'var(--color-status-info)';
   } else if (appointment.status === 'in_progress') {
-    if (isPastDay && hasOverdueOpenOrder) {
-      // Agendamento atrasado com comanda aberta em dia anterior
-      cardStyle.backgroundColor = 'var(--color-status-error)';
-    } else {
-      // Em andamento hoje (ou sem comanda aberta atrasada): laranja
-      cardStyle.backgroundColor = 'var(--color-status-warning)';
-    }
+    cardStyle.backgroundColor = 'var(--color-status-warning)';
   } else if (appointment.status === 'completed') {
     cardStyle.backgroundColor = 'var(--color-status-success)';
   } else if (appointment.status === 'no_show') {
     cardStyle.backgroundColor = 'var(--color-status-muted)';
   }
+
+  const changeStatus = async (
+    e: React.MouseEvent,
+    status: AppointmentStatus,
+    confirmText: string,
+  ) => {
+    e.stopPropagation();
+    if (!window.confirm(confirmText)) return;
+
+    try {
+      setIsChangingStatus(true);
+      const updated = await updateAppointmentStatus(appointment.id, status);
+      onStatusUpdated?.(updated);
+      onAfterAction?.();
+    } catch (err) {
+      console.error('Error updating appointment status', err);
+      const message = err instanceof Error ? err.message : 'Erro ao atualizar status do agendamento.';
+      alert(message);
+    } finally {
+      setIsChangingStatus(false);
+    }
+  };
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -86,13 +86,16 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
   return (
     <div 
       ref={cardRef}
-      className={`p-3 rounded-lg shadow-sm text-sm text-text space-y-2 relative h-full cursor-pointer ${
-        isExpanded ? 'overflow-visible' : 'overflow-hidden'
+      className={`p-3 rounded-lg shadow-sm text-sm text-text space-y-2 relative cursor-pointer ${
+        isExpanded ? 'min-h-full overflow-visible' : 'h-full overflow-hidden'
       }`}
       style={cardStyle}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => setIsExpanded(true)}
+      onClick={() => {
+        onBringToFront?.();
+        setIsExpanded(true);
+      }}
     >
       {isHovered && appointment.status === 'pending' && (
         <Button 
@@ -126,53 +129,93 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight }: A
         let label: string | null = null;
         let onClick: ((e: React.MouseEvent) => void) | null = null;
 
-        if (appointment.status === 'pending') {
-          // Cards azuis (pending) nunca mostram "Acessar comanda";
-          // só permitem abrir nova comanda se não houver comanda aberta.
-          if (!hasOpenOrder) {
-            label = 'Abrir comanda';
-            onClick = (e) => {
-              e.stopPropagation();
-              const order = ensureOrderForAppointment(appointment);
-              navigate('/comandas', {
-                state: { focusOrderId: order.id },
-              });
-            };
+        const handleOpenOrder = async (e: React.MouseEvent) => {
+          e.stopPropagation();
+          try {
+            setIsChangingStatus(true);
+            const order = await ensureOrderForAppointment(appointment.id);
+            let updatedAppointment = appointment;
+            if (appointment.status === 'pending') {
+              updatedAppointment = await updateAppointmentStatus(appointment.id, 'in_progress');
+              onStatusUpdated?.(updatedAppointment);
+            }
+            navigate('/comandas', {
+              state: { focusOrderId: order.id },
+            });
+            onAfterAction?.();
+          } catch (err) {
+            console.error('Error ensuring order for appointment', err);
+            const message = err instanceof Error ? err.message : 'Erro ao abrir comanda.';
+            alert(message);
+          } finally {
+            setIsChangingStatus(false);
           }
-        } else if (
+        };
+
+        if (
+          appointment.status === 'pending' ||
           appointment.status === 'in_progress' ||
           appointment.status === 'completed' ||
           appointment.status === 'not_paid'
         ) {
-          if (linkedOrder) {
-            label = 'Acessar comanda';
-            onClick = (e) => {
-              e.stopPropagation();
-              navigate('/comandas', {
-                state: { focusOrderId: linkedOrder.id },
-              });
-            };
+          label = appointment.status === 'pending' ? 'Abrir comanda' : 'Acessar comanda';
+          onClick = handleOpenOrder;
+        }
+
+        let statusLabel: string | null = null;
+        let statusHandler: ((e: React.MouseEvent) => void) | null = null;
+
+        if (appointment.status === 'pending') {
+          if (isBeforeStart) {
+            statusLabel = 'cancelar';
+            statusHandler = (e) =>
+              changeStatus(e, 'canceled', 'Cancelar este agendamento?');
+          } else {
+            statusLabel = 'não apareceu';
+            statusHandler = (e) =>
+              changeStatus(e, 'no_show', 'Marcar este agendamento como "não apareceu"?');
           }
         }
 
-        if (!label || !onClick) return null;
-
         return (
-          <div className="pt-2 flex justify-center">
-            <Button size="sm" variant="secondary" onClick={onClick}>
-              {label}
-            </Button>
+          <div className="pt-2 space-y-2">
+            {statusLabel && statusHandler && (
+              <div className="flex justify-center">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={isChangingStatus}
+                  onClick={statusHandler}
+                >
+                  {statusLabel}
+                </Button>
+              </div>
+            )}
+            {label && onClick && (
+              <div className="flex justify-center">
+                <Button size="sm" variant="secondary" onClick={onClick}>
+                  {label}
+                </Button>
+              </div>
+            )}
           </div>
         );
       })()}
       {!isExpanded && (
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-6"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-6 rounded-b-lg z-10 flex items-end justify-center"
           style={{
-            background:
-              'linear-gradient(to top, color-mix(in srgb, var(--color-background) 85%, transparent), transparent)',
+            background: `linear-gradient(to top, ${cardStyle.backgroundColor}, transparent)`,
           }}
-        />
+        >
+          <span
+            className={`text-xs text-white transition-all duration-150 ${
+              isHovered ? 'opacity-90 translate-y-0' : 'opacity-70 translate-y-0.5'
+            }`}
+          >
+            ▾
+          </span>
+        </div>
       )}
     </div>
   );

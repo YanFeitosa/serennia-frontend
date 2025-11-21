@@ -1,20 +1,23 @@
 // src/pages/AgendamentoForm.tsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import type { Appointment } from '../../types';
+import type { Appointment, Client, Collaborator, Service } from '../../types';
 import { appointmentSchema, type AppointmentSchema } from '../../lib/schemas';
-import { mockAppointments, upsertMockAppointment } from '../../data/appointments';
-import { mockClients } from '../../data/clients';
-import { mockCollaborators } from '../../data/collaborators';
-import { mockServices } from '../../data/services';
 import { Button } from '../../components/ui/Button';
 import SearchableSelectPlain from '../../components/ui/SearchableSelectPlain';
 import MultiSelectPlain from '../../components/ui/MultiSelectPlain';
 import DateTimePickerPlain from '../../components/ui/DateTimePickerPlain';
 import { Textarea } from '../../components/ui/Textarea';
-import { useAuth } from '../../contexts/AuthContext';
+import {
+  getAppointmentById,
+  createAppointment,
+  updateAppointment,
+  getClients,
+  getCollaborators,
+  getServices,
+} from '../../lib/api';
 
 const toDateTimeLocal = (dateStr: string | Date): string => {
   const date = new Date(dateStr);
@@ -40,7 +43,6 @@ const useQuery = () => {
 };
 
 const AgendamentoForm = () => {
-  const { user } = useAuth();
   const location = useLocation();
   const query = useQuery();
   const clientIdFromQuery = query.get('clientId');
@@ -51,7 +53,12 @@ const AgendamentoForm = () => {
   const initialClientId = newClientIdFromState || clientIdFromQuery || '';
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const appointment = id ? mockAppointments.find(a => a.id === id) : null;
+  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -63,6 +70,56 @@ const AgendamentoForm = () => {
   } = useForm<AppointmentSchema>({
     resolver: zodResolver(appointmentSchema),
   });
+
+  useEffect(() => {
+    const loadBaseData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const [clientsRes, collaboratorsRes, servicesRes] = await Promise.all([
+          getClients(),
+          getCollaborators(),
+          getServices(),
+        ]);
+
+        setClients(clientsRes);
+        setCollaborators(collaboratorsRes);
+        setServices(servicesRes);
+      } catch (err) {
+        console.error('Error loading appointment form data', err);
+        setError('Erro ao carregar dados para o agendamento.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadBaseData();
+  }, []);
+
+  useEffect(() => {
+    const loadAppointment = async () => {
+      if (!id || id === 'novo') {
+        setAppointment(null);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getAppointmentById(id);
+        setAppointment(data);
+      } catch (err) {
+        console.error('Error loading appointment', err);
+        setError('Erro ao carregar agendamento.');
+        navigate('/agenda');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAppointment();
+  }, [id, navigate]);
 
   useEffect(() => {
     if (appointment) {
@@ -90,10 +147,10 @@ const AgendamentoForm = () => {
   }, [appointment, navigate]);
 
   const selectedCollaboratorId = watch('collaboratorId');
-  const selectedCollaborator = mockCollaborators.find(c => c.id === selectedCollaboratorId);
+  const selectedCollaborator = collaborators.find(c => c.id === selectedCollaboratorId);
 
   const availableServices = selectedCollaborator
-    ? mockServices.filter(service => {
+    ? services.filter(service => {
         const categories = selectedCollaborator.serviceCategories;
         if (!categories || categories.length === 0) return true;
         if (!service.category) return true;
@@ -106,7 +163,7 @@ const AgendamentoForm = () => {
     setValue('serviceIds', []);
   }, [selectedCollaboratorId, setValue]);
 
-  const onSubmit: SubmitHandler<AppointmentSchema> = (data) => {
+  const onSubmit: SubmitHandler<AppointmentSchema> = async (data) => {
     const startDate = new Date(data.start);
     if (isNaN(startDate.getTime())) {
       alert('Data e hora de início inválidas.');
@@ -118,66 +175,28 @@ const AgendamentoForm = () => {
       alert('Não é possível criar um agendamento no passado.');
       return;
     }
+    try {
+      const payload = {
+        clientId: data.clientId,
+        collaboratorId: data.collaboratorId,
+        serviceIds: data.serviceIds,
+        start: startDate.toISOString(),
+        notes: data.notes,
+        origin: 'reception' as const,
+      };
 
-    const selectedServices = mockServices.filter(service => data.serviceIds.includes(service.id));
-    const totalDurationMinutes = selectedServices.reduce(
-      (acc, service) => acc + service.duration,
-      0
-    );
+      if (appointment) {
+        await updateAppointment(appointment.id, payload);
+      } else {
+        await createAppointment(payload);
+      }
 
-    if (totalDurationMinutes <= 0) {
-      alert('Não foi possível calcular a duração do agendamento.');
-      return;
+      navigate('/agenda');
+    } catch (err) {
+      console.error('Error saving appointment', err);
+      const message = err instanceof Error ? err.message : 'Erro ao salvar agendamento.';
+      alert(message);
     }
-
-    const endDate = new Date(startDate.getTime() + totalDurationMinutes * 60 * 1000);
-
-    const hasOverlap = mockAppointments.some(existing => {
-      if (appointment && existing.id === appointment.id) return false;
-      if (existing.collaboratorId !== data.collaboratorId) return false;
-      const existingStart = new Date(existing.start);
-      const existingEnd = new Date(existing.end);
-      return startDate < existingEnd && endDate > existingStart;
-    });
-
-    if (hasOverlap) {
-      alert('Este profissional já possui um agendamento que conflita com este horário.');
-      return;
-    }
-
-    const baseAppointment: Appointment = appointment
-      ? { ...appointment }
-      : {
-          id: `appt-${Date.now()}`,
-          salonId: user?.salonId ?? 'salon-1',
-          clientId: data.clientId,
-          collaboratorId: data.collaboratorId,
-          serviceIds: data.serviceIds,
-          start: startDate.toISOString(),
-          end: endDate.toISOString(),
-          status: 'pending',
-          origin: 'reception',
-          notes: data.notes,
-        };
-
-    const nextAppointment: Appointment = {
-      ...baseAppointment,
-      clientId: data.clientId,
-      collaboratorId: data.collaboratorId,
-      serviceIds: data.serviceIds,
-      start: startDate.toISOString(),
-      end: endDate.toISOString(),
-      notes: data.notes,
-    };
-
-    return new Promise(resolve => {
-      setTimeout(() => {
-        upsertMockAppointment(nextAppointment);
-        alert(appointment ? 'Agendamento atualizado!' : 'Agendamento criado!');
-        navigate('/agenda');
-        resolve(void 0);
-      }, 1000);
-    });
   };
 
   return (
@@ -186,12 +205,17 @@ const AgendamentoForm = () => {
         <h1 className="text-3xl font-bold text-text">{appointment ? 'Editar Agendamento' : 'Novo Agendamento'}</h1>
         <p className="text-text-muted">{appointment ? 'Altere os detalhes do agendamento.' : 'Preencha os dados para criar um novo agendamento.'}</p>
       </header>
+      {(isLoading || error) && (
+        <div className="text-sm text-text-muted">
+          {isLoading ? 'Carregando dados do agendamento...' : error}
+        </div>
+      )}
       <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-6 rounded-xl shadow-md space-y-4 border border-border">
         <div>
           <label htmlFor="clientId" className="block text-sm font-medium text-text">Cliente</label>
           <SearchableSelectPlain
             options={[
-              ...mockClients.map(client => ({ value: client.id, label: client.name })),
+              ...clients.map(client => ({ value: client.id, label: client.name })),
               { value: '__add_client__', label: '+ adicionar cliente' },
             ]}
             value={watch('clientId')}
@@ -210,7 +234,7 @@ const AgendamentoForm = () => {
         <div>
           <label htmlFor="collaboratorId" className="block text-sm font-medium text-text">Profissional</label>
           <SearchableSelectPlain
-            options={mockCollaborators
+            options={collaborators
               .filter(c => c.status === 'active' && c.role === 'professional')
               .map(collab => ({ value: collab.id, label: collab.name }))}
             value={watch('collaboratorId')}

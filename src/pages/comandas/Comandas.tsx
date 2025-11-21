@@ -1,23 +1,14 @@
 // src/pages/Comandas.tsx
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import {
-  mockOrders,
-  createEmptyOrderForClient,
-  findOrderById,
-  findOpenOrderByClientId,
-} from '../../data/orders';
-import { mockClients } from '../../data/clients';
-import { mockServices } from '../../data/services';
-import { mockProducts } from '../../data/products';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { upsertNotification } from '../../data/notifications';
-import type { Notification } from '../../types';
+import type { Client, Notification, Order, OrderItem, Product, Service } from '../../types';
 import ComandaDetails from '../../components/comandas/ComandaDetails';
-import type { Order, OrderItem } from '../../types';
 import SearchableSelectPlain from '../../components/ui/SearchableSelectPlain';
+import { getOrders, getClients, getServices, getProducts, createOrder, getAppointmentById, updateAppointmentStatus } from '../../lib/api';
 
 const Comandas = () => {
   const location = useLocation();
@@ -28,35 +19,73 @@ const Comandas = () => {
   const focusOrderId = state?.focusOrderId;
   const fromNewClientClientId = state?.fromNewClientClientId;
   const initialNewOrderClientId = state?.newOrderClientId ?? '';
-  const existingOpenForInitialClient = initialNewOrderClientId
-    ? findOpenOrderByClientId(initialNewOrderClientId)
-    : null;
+  // Dados carregados do backend
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Inicializa comanda selecionada a partir do estado de navegação (agenda ou novo cliente)
-  const [selectedComanda, setSelectedComanda] = useState<Order | null>(() => {
-    if (focusOrderId) {
-      return findOrderById(focusOrderId);
-    }
-    if (fromNewClientClientId) {
-      return createEmptyOrderForClient(fromNewClientClientId);
-    }
-    if (existingOpenForInitialClient) {
-      return existingOpenForInitialClient;
-    }
-    return null;
-  });
+  const [selectedComanda, setSelectedComanda] = useState<Order | null>(null);
 
   const detailsRef = useRef<HTMLDivElement | null>(null);
 
   const [filter, setFilter] = useState<'all' | 'open' | 'closed' | 'paid'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedComanda, setExpandedComanda] = useState<string | null>(() => selectedComanda?.id ?? null);
-  const [newOrderClientId, setNewOrderClientId] = useState(
-    existingOpenForInitialClient ? '' : initialNewOrderClientId,
-  );
-  const [showNewOrderPanel, setShowNewOrderPanel] = useState<boolean>(
-    !!initialNewOrderClientId && !existingOpenForInitialClient,
-  );
+  const [newOrderClientId, setNewOrderClientId] = useState(initialNewOrderClientId);
+  const [showNewOrderPanel, setShowNewOrderPanel] = useState<boolean>(!!initialNewOrderClientId);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const [ordersRes, clientsRes, servicesRes, productsRes] = await Promise.all([
+          getOrders(),
+          getClients(),
+          getServices(),
+          getProducts(),
+        ]);
+
+        setOrders(ordersRes);
+        setClients(clientsRes);
+        setServices(servicesRes);
+        setProducts(productsRes);
+      } catch (err) {
+        console.error('Error loading orders page data', err);
+        setError('Erro ao carregar comandas.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Ajusta comanda inicial com base no estado de navegação assim que as comandas forem carregadas
+  useEffect(() => {
+    if (!orders.length) return;
+    if (selectedComanda) return;
+
+    if (focusOrderId) {
+      const found = orders.find((o) => o.id === focusOrderId);
+      if (found) {
+        setSelectedComanda(found);
+        setExpandedComanda(found.id);
+        return;
+      }
+    }
+
+    if (fromNewClientClientId) {
+      // Delega para o painel de nova comanda
+      setNewOrderClientId(fromNewClientClientId);
+      setShowNewOrderPanel(true);
+    }
+  }, [orders, focusOrderId, fromNewClientClientId, selectedComanda]);
 
   const todayAtMidnight = new Date();
   todayAtMidnight.setHours(0, 0, 0, 0);
@@ -78,19 +107,24 @@ const Comandas = () => {
   };
 
   const getClientName = (clientId: string) => {
-    return mockClients.find(c => c.id === clientId)?.name || 'Cliente não encontrado';
+    return clients.find((c) => c.id === clientId)?.name || 'Cliente não encontrado';
   };
+
+  const servicesById = useMemo(
+    () => new Map(services.map((s) => [s.id, s])),
+    [services],
+  );
+  const productsById = useMemo(
+    () => new Map(products.map((p) => [p.id, p])),
+    [products],
+  );
 
   const getItemLabel = (item: OrderItem) => {
     if (item.type === 'service' && item.serviceId) {
-      return (
-        mockServices.find(s => s.id === item.serviceId)?.name || 'Serviço não encontrado'
-      );
+      return servicesById.get(item.serviceId)?.name || 'Serviço não encontrado';
     }
     if (item.type === 'product' && item.productId) {
-      return (
-        mockProducts.find(p => p.id === item.productId)?.name || 'Produto não encontrado'
-      );
+      return productsById.get(item.productId)?.name || 'Produto não encontrado';
     }
     return item.type === 'service' ? 'Serviço não encontrado' : 'Produto não encontrado';
   };
@@ -114,10 +148,28 @@ const Comandas = () => {
     paid: 2,
   };
 
-  const overdueOpenOrders = mockOrders.filter(isOverdueOpenOrder);
+  const overdueOpenOrders = orders.filter(isOverdueOpenOrder);
 
   useEffect(() => {
     if (overdueOpenOrders.length === 0) return;
+
+    // Regra 2: se o agendamento relacionado estiver 'in_progress' e a comanda for de dia anterior,
+    // atualiza o status do agendamento para 'not_paid'.
+    const syncOverdueAppointments = async () => {
+      for (const order of overdueOpenOrders) {
+        if (!order.appointmentId) continue;
+        try {
+          const appt = await getAppointmentById(order.appointmentId);
+          if (appt.status === 'in_progress') {
+            await updateAppointmentStatus(order.appointmentId, 'not_paid');
+          }
+        } catch (err) {
+          console.error('Error updating overdue appointment status', err);
+        }
+      }
+    };
+
+    syncOverdueAppointments();
 
     const message =
       overdueOpenOrders.length === 1
@@ -137,7 +189,7 @@ const Comandas = () => {
     upsertNotification(notification);
   }, [overdueOpenOrders.length]);
 
-  const filteredComandas = mockOrders
+  const filteredComandas = orders
     .filter((comanda: Order) => {
       const clientName = getClientName(comanda.clientId);
       const matchesFilter = filter === 'all' || comanda.status === filter;
@@ -182,7 +234,7 @@ const Comandas = () => {
                 <label className="block text-sm font-medium text-text">Cliente</label>
                 <SearchableSelectPlain
                   options={[
-                    ...mockClients.map(client => ({ value: client.id, label: client.name })),
+                    ...clients.map((client) => ({ value: client.id, label: client.name })),
                     { value: '__add_client__', label: '+ adicionar cliente' },
                   ]}
                   value={newOrderClientId}
@@ -207,13 +259,19 @@ const Comandas = () => {
                   Cancelar
                 </Button>
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
                     if (!newOrderClientId) return;
-                    const order = createEmptyOrderForClient(newOrderClientId);
-                    setSelectedComanda(order);
-                    setExpandedComanda(order.id);
-                    setShowNewOrderPanel(false);
-                    setNewOrderClientId('');
+                    try {
+                      const order = await createOrder({ clientId: newOrderClientId });
+                      setOrders((prev) => [order, ...prev]);
+                      setSelectedComanda(order);
+                      setExpandedComanda(order.id);
+                      setShowNewOrderPanel(false);
+                      setNewOrderClientId('');
+                    } catch (err) {
+                      console.error('Error creating order', err);
+                      alert('Erro ao abrir nova comanda.');
+                    }
                   }}
                   disabled={!newOrderClientId}
                 >
@@ -221,6 +279,12 @@ const Comandas = () => {
                 </Button>
               </div>
             </div>
+          </div>
+        )}
+
+        {(isLoading || error) && (
+          <div className="mt-2 text-sm text-text-muted">
+            {isLoading ? 'Carregando comandas...' : error}
           </div>
         )}
 

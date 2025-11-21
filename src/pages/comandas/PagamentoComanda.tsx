@@ -1,14 +1,11 @@
 // src/pages/PagamentoComanda.tsx
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CreditCard, DollarSign } from 'lucide-react';
-import { mockOrders } from '../../data/orders';
-import { mockClients } from '../../data/clients';
-import { mockServices } from '../../data/services';
-import { mockProducts } from '../../data/products';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import type { Order } from '../../types';
+import type { Client, Order, Product, Service } from '../../types';
+import { getOrderById, getClients, getServices, getProducts, closeOrder, payOrder, getAppointmentById, updateAppointmentStatus } from '../../lib/api';
 
 const getStatusLabel = (status: Order['status']) => {
   switch (status) {
@@ -40,25 +37,72 @@ const PagamentoComanda = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const order = mockOrders.find(o => o.id === id);
-  const client = order ? mockClients.find(c => c.id === order.clientId) : undefined;
-
+  const [order, setOrder] = useState<Order | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [method, setMethod] = useState<'cash' | 'card' | 'pix' | 'online'>('cash');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const [orderRes, clientsRes, servicesRes, productsRes] = await Promise.all([
+          getOrderById(id),
+          getClients(),
+          getServices(),
+          getProducts(),
+        ]);
+
+        setOrder(orderRes);
+        setClients(clientsRes);
+        setServices(servicesRes);
+        setProducts(productsRes);
+      } catch (err) {
+        console.error('Error loading order for payment', err);
+        setError('Erro ao carregar comanda.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id]);
+
+  const servicesById = useMemo(
+    () => new Map(services.map((s) => [s.id, s])),
+    [services],
+  );
+  const productsById = useMemo(
+    () => new Map(products.map((p) => [p.id, p])),
+    [products],
+  );
+
+  if (!order && isLoading) {
+    return <div>Carregando comanda...</div>;
+  }
+
+  if (!order && error) {
+    return <div>{error}</div>;
+  }
 
   if (!order) {
     return <div>Comanda não encontrada.</div>;
   }
 
+  const client = clients.find((c) => c.id === order.clientId);
   const shortId = order.id.slice(0, 6);
-
-  // Agrupa serviços e produtos para exibir nome, quantidade e total
-  const servicesById = new Map(mockServices.map(s => [s.id, s]));
-  const productsById = new Map(mockProducts.map(p => [p.id, p]));
 
   const serviceLines = new Map<string, { name: string; quantity: number; total: number }>();
   const productLines = new Map<string, { name: string; quantity: number; total: number }>();
 
-  order.items.forEach(item => {
+  order.items.forEach((item) => {
     if (item.type === 'service' && item.serviceId) {
       const service = servicesById.get(item.serviceId);
       const key = item.serviceId;
@@ -88,9 +132,38 @@ const PagamentoComanda = () => {
   const serviceSummary = Array.from(serviceLines.values());
   const productSummary = Array.from(productLines.values());
 
-  const handleConfirm = () => {
-    alert('Simulação de pagamento efetuado. Integração com a API será adicionada em breve.');
-    navigate('/comandas');
+  const handleConfirm = async () => {
+    if (!order) return;
+    try {
+      setIsSubmitting(true);
+      let updated = order;
+      if (updated.status === 'open') {
+        updated = await closeOrder(updated.id);
+      }
+      if (updated.status === 'closed') {
+        updated = await payOrder(updated.id);
+      }
+      setOrder(updated);
+      // Se a comanda foi paga, tenta atualizar o agendamento relacionado para 'completed'
+      if (updated.status === 'paid' && updated.appointmentId) {
+        try {
+          const appt = await getAppointmentById(updated.appointmentId);
+          if (appt.status === 'in_progress') {
+            await updateAppointmentStatus(updated.appointmentId, 'completed');
+          }
+        } catch (err) {
+          console.error('Error updating related appointment after payment', err);
+          // Erro aqui não deve bloquear o fluxo de pagamento
+        }
+      }
+      navigate('/comandas');
+    } catch (err) {
+      console.error('Error confirming payment', err);
+      const message = err instanceof Error ? err.message : 'Erro ao confirmar pagamento.';
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -130,7 +203,7 @@ const PagamentoComanda = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {serviceSummary.map(line => (
+                    {serviceSummary.map((line) => (
                       <tr key={line.name} className="border-b border-border/60 last:border-0">
                         <td className="py-1 pr-2">{line.name}</td>
                         <td className="py-1 text-center">{line.quantity}</td>
@@ -157,7 +230,7 @@ const PagamentoComanda = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {productSummary.map(line => (
+                    {productSummary.map((line) => (
                       <tr key={line.name} className="border-b border-border/60 last:border-0">
                         <td className="py-1 pr-2">{line.name}</td>
                         <td className="py-1 text-center">{line.quantity}</td>
@@ -239,7 +312,7 @@ const PagamentoComanda = () => {
             <Button type="button" variant="ghost" onClick={() => navigate('/comandas')}>
               Cancelar
             </Button>
-            <Button type="button" onClick={handleConfirm}>
+            <Button type="button" onClick={handleConfirm} disabled={isSubmitting}>
               Confirmar pagamento
             </Button>
           </div>

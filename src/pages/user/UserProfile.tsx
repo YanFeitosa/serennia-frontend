@@ -38,11 +38,8 @@ const UserProfile = () => {
     if (password.trim()) {
       // Apenas mock: em produção isso chamaria a API de alteração de senha
       // Mantemos o campo para futura integração
-      alert('Senha alterada (simulação). Integração com a API será adicionada.');
       setPassword('');
     }
-
-    alert('Perfil atualizado com sucesso.');
   };
 
   return (

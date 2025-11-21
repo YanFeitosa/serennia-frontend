@@ -1,9 +1,7 @@
 // src/components/agenda/MonthlyView.tsx
-import React, { useState } from 'react';
-import { mockAppointments } from '../../data/appointments';
-import { mockOrders } from '../../data/orders';
-import { mockCollaborators } from '../../data/collaborators';
-import type { AppointmentStatus } from '../../types';
+import React, { useEffect, useState } from 'react';
+import type { Appointment, AppointmentStatus, Collaborator } from '../../types';
+import { getAppointments, getCollaborators } from '../../lib/api';
 
 interface MonthlyViewProps {
 	date: Date;
@@ -15,7 +13,11 @@ const weekdayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 	const today = new Date();
 	const [selectedCollaboratorId, setSelectedCollaboratorId] = useState<string>('');
-	const activeCollaborators = mockCollaborators.filter(
+	const [appointments, setAppointments] = useState<Appointment[]>([]);
+	const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const activeCollaborators = collaborators.filter(
 		c => c.status === 'active' && c.role === 'professional',
 	);
 	const currentMonth = date.getMonth();
@@ -32,7 +34,51 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 		return d;
 	});
 
-	const getDateKey = (d: Date) => d.toISOString().slice(0, 10);
+	const getDateKey = (d: Date) => {
+		const year = d.getFullYear();
+		const month = (d.getMonth() + 1).toString().padStart(2, '0');
+		const day = d.getDate().toString().padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	};
+
+	useEffect(() => {
+		const loadData = async () => {
+			try {
+				setIsLoading(true);
+				setError(null);
+
+				const firstOfMonth = new Date(currentYear, currentMonth, 1);
+				const firstDayOfGrid = new Date(firstOfMonth);
+				const offset = firstOfMonth.getDay();
+				firstDayOfGrid.setDate(firstOfMonth.getDate() - offset);
+
+				const from = new Date(firstDayOfGrid);
+				from.setHours(0, 0, 0, 0);
+				const to = new Date(firstDayOfGrid);
+				to.setDate(to.getDate() + 42);
+				to.setHours(23, 59, 59, 999);
+
+				const [appointmentsRes, collaboratorsRes] = await Promise.all([
+					getAppointments({
+						dateFrom: from.toISOString(),
+						dateTo: to.toISOString(),
+						collaboratorId: selectedCollaboratorId || undefined,
+					}),
+					getCollaborators(),
+				]);
+
+				setAppointments(appointmentsRes);
+				setCollaborators(collaboratorsRes);
+			} catch (err) {
+				console.error('Error loading monthly view data', err);
+				setError('Erro ao carregar agendamentos.');
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		loadData();
+	}, [currentMonth, currentYear, selectedCollaboratorId]);
 
 	const getStatusPriority = (status: AppointmentStatus): number => {
 		switch (status) {
@@ -55,6 +101,8 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 
 	interface DayAggregate {
 		totalAppointments: number;
+		pendingAppointments: number;
+		inProgressAppointments: number;
 		completedAppointments: number;
 		notPaidAppointments: number;
 		openOrders: number;
@@ -66,6 +114,8 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 		if (!map[key]) {
 			map[key] = {
 				totalAppointments: 0,
+				pendingAppointments: 0,
+				inProgressAppointments: 0,
 				completedAppointments: 0,
 				notPaidAppointments: 0,
 				openOrders: 0,
@@ -79,11 +129,18 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 	const aggregatedByDay: Record<string, DayAggregate> = {};
 
 	// Agendamentos
-	for (const appt of mockAppointments) {
+	for (const appt of appointments) {
+		if (appt.status === 'canceled' || appt.status === 'no_show') continue;
 		if (selectedCollaboratorId && appt.collaboratorId !== selectedCollaboratorId) continue;
-		const key = appt.start.slice(0, 10);
+		const key = getDateKey(new Date(appt.start));
 		const aggregate = ensureAggregate(aggregatedByDay, key);
 		aggregate.totalAppointments += 1;
+		if (appt.status === 'pending') {
+			aggregate.pendingAppointments += 1;
+		}
+		if (appt.status === 'in_progress') {
+			aggregate.inProgressAppointments += 1;
+		}
 		if (appt.status === 'completed') {
 			aggregate.completedAppointments += 1;
 		}
@@ -116,24 +173,14 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 		}
 	}
 
-	// Comandas abertas por dia
-	for (const order of mockOrders) {
-		if (order.status !== 'open') continue;
-		const key = order.createdAt.slice(0, 10);
-		const aggregate = ensureAggregate(aggregatedByDay, key);
-		aggregate.openOrders += 1;
-		// Comandas abertas contribuem com cor laranja (warning), mas
-		// não sobrepõem estados mais críticos como "not_paid" (erro).
-		const orderPriority = 3; // similar ao in_progress
-		if (orderPriority > aggregate.priority) {
-			aggregate.priority = orderPriority;
-			aggregate.colorToken = 'warning';
-		}
-	}
-
 	return (
 		<div className="bg-card rounded-xl shadow-md p-4 border border-border">
 			<h2 className="text-xl font-bold mb-4 text-text">Visualização Mensal</h2>
+			{(isLoading || error) && (
+				<div className="mb-2 text-[11px] text-text-muted">
+					{isLoading ? 'Carregando agendamentos...' : error}
+				</div>
+			)}
 			<div className="flex items-center justify-between mb-2 text-sm text-text-muted">
 				<span>
 					{date.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
@@ -167,18 +214,24 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 					const isCurrentMonth = d.getMonth() === currentMonth;
 					const isToday = key === getDateKey(today);
 					const aggregated = aggregatedByDay[key];
-					const totalAppointments = aggregated?.totalAppointments || 0;
+					const pendingAppointments = aggregated?.pendingAppointments || 0;
+					const inProgressAppointments = aggregated?.inProgressAppointments || 0;
 					const completedAppointments = aggregated?.completedAppointments || 0;
 					const notPaidAppointments = aggregated?.notPaidAppointments || 0;
-					const openOrders = aggregated?.openOrders || 0;
-					const token = aggregated?.colorToken || 'info';
+					const tokenForDay = aggregated?.colorToken || 'info';
 					const baseColor = {
 						info: 'var(--color-status-info)',
 						warning: 'var(--color-status-warning)',
 						success: 'var(--color-status-success)',
 						error: 'var(--color-status-error)',
 						muted: 'var(--color-status-muted)',
-					}[token];
+					}[tokenForDay];
+
+					const hasActivity =
+						pendingAppointments +
+						inProgressAppointments +
+						notPaidAppointments +
+						completedAppointments > 0;
 
 					return (
 						<button
@@ -189,10 +242,9 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 								isCurrentMonth ? 'bg-background' : 'bg-muted/40 text-text-muted'
 							}`}
 							style={{
-								backgroundColor:
-									(totalAppointments + openOrders) > 0
-										? `color-mix(in srgb, ${baseColor} 8%, var(--color-background) 92%)`
-										: undefined,
+								backgroundColor: hasActivity
+									? `color-mix(in srgb, ${baseColor} 8%, var(--color-background) 92%)`
+									: undefined,
 								boxShadow: isToday ? `0 0 0 2px ${baseColor}` : undefined,
 							}}
 						>
@@ -202,17 +254,25 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 								</span>
 							</div>
 							<div className="space-y-0.5">
-								{totalAppointments > 0 && (
+								{pendingAppointments > 0 && (
 									<span
 										className="block text-[10px] font-normal"
 										style={{
 											color:
-												token === 'muted'
+												tokenForDay === 'muted'
 													? 'var(--color-status-muted)'
 													: 'var(--color-status-info)',
 										}}
 									>
-										{totalAppointments} agendamento(s)
+										{pendingAppointments} agendamento(s)
+									</span>
+								)}
+								{inProgressAppointments > 0 && (
+									<span
+										className="block text-[10px] font-normal"
+										style={{ color: 'var(--color-status-warning)' }}
+									>
+										{inProgressAppointments} atendimento(s) em progresso
 									</span>
 								)}
 								{notPaidAppointments > 0 && (
@@ -221,14 +281,6 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 										style={{ color: 'var(--color-status-error)' }}
 									>
 										{notPaidAppointments} atendimento(s) não pago(s)
-									</span>
-								)}
-								{openOrders > 0 && (
-									<span
-										className="block text-[10px] font-normal"
-										style={{ color: 'var(--color-status-warning)' }}
-									>
-										{openOrders} comanda(s) aberta(s)
 									</span>
 								)}
 								{completedAppointments > 0 && (
@@ -249,4 +301,3 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 };
 
 export default MonthlyView;
-

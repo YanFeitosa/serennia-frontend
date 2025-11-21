@@ -1,13 +1,10 @@
 // src/components/agenda/DailyView.tsx
-import type { Appointment } from '../../types';
-import { mockAppointments } from '../../data/appointments';
-import { mockCollaborators } from '../../data/collaborators';
-import { mockClients } from '../../data/clients';
-import { mockServices } from '../../data/services';
+import type { Appointment, Client, Collaborator, Service } from '../../types';
 import AppointmentCard from './AppointmentCard';
 import { useNavigate } from 'react-router-dom';
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { getAppointments, getClients, getCollaborators, getServices } from '../../lib/api';
 
 interface DailyViewProps {
   date: Date;
@@ -25,13 +22,21 @@ const toDateTimeLocal = (date: Date): string => {
 
 const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
   const navigate = useNavigate();
-  const activeCollaborators = mockCollaborators.filter(
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [focusedAppointmentId, setFocusedAppointmentId] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const activeCollaborators = collaborators.filter(
     c => c.status === 'active' && c.role === 'professional',
   );
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const START_HOUR = 8;
-  const END_HOUR = 21; // exclusive
+  const START_HOUR = 6;
+  const END_HOUR = 24; // exclusive
   const MINUTES_PER_SLOT = 30;
   const PIXELS_PER_MINUTE = 2; // escala vertical: 120px por hora
   const SLOT_HEIGHT = MINUTES_PER_SLOT * PIXELS_PER_MINUTE;
@@ -40,18 +45,64 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
 
   const COLUMN_WIDTH = 220;
   const HEADER_HEIGHT = 48; // px aproximado do cabeçalho do profissional
-  const MIN_APPOINTMENT_HEIGHT = 80; // px para evitar corte de texto
+  const MIN_APPOINTMENT_HEIGHT = SLOT_HEIGHT; // altura mínima alinhada a 30 minutos
   const columnHeight = TOTAL_MINUTES * PIXELS_PER_MINUTE + HEADER_HEIGHT;
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const [appointmentsRes, clientsRes, collaboratorsRes, servicesRes] =
+          await Promise.all([
+            getAppointments({
+              dateFrom: startOfDay.toISOString(),
+              dateTo: endOfDay.toISOString(),
+            }),
+            getClients(),
+            getCollaborators(),
+            getServices(),
+          ]);
+
+        setAppointments(appointmentsRes);
+        setClients(clientsRes);
+        setCollaborators(collaboratorsRes);
+        setServices(servicesRes);
+      } catch (err) {
+        console.error('Error loading appointments for daily view', err);
+        setError('Erro ao carregar agendamentos.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [date, refreshToken]);
 
   const selectedDateKey = date.toISOString().slice(0, 10);
   const timeSlots = Array.from({ length: TOTAL_SLOTS }, (_, index) => index);
   const now = new Date();
+
+	const handleAfterCardAction = () => {
+		setRefreshToken((prev) => prev + 1);
+	};
 
   return (
     <div
       className="bg-card rounded-xl shadow-md p-4 border border-border"
       style={{ minHeight: columnHeight + 32 }}
     >
+      {(isLoading || error) && (
+        <div className="mb-2 text-[11px] text-text-muted">
+          {isLoading ? 'Carregando agendamentos...' : error}
+        </div>
+      )}
       {/* Controles de rolagem horizontal */}
       <div className="flex justify-end items-center mb-2 gap-2">
         <button
@@ -107,8 +158,12 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
             className="relative flex overflow-x-auto"
           >
             {activeCollaborators.map((collab, index) => {
-              const appointmentsForCollab = mockAppointments.filter(
-                appt => appt.collaboratorId === collab.id && appt.start.slice(0, 10) === selectedDateKey
+              const appointmentsForCollab = appointments.filter(
+                appt =>
+                  appt.collaboratorId === collab.id &&
+                  appt.start.slice(0, 10) === selectedDateKey &&
+                  appt.status !== 'canceled' &&
+                  appt.status !== 'no_show',
               );
 
               return (
@@ -165,29 +220,37 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
 
                   {/* Agendamentos existentes */}
                   {appointmentsForCollab.map(appt => {
-                    const client = mockClients.find(c => c.id === appt.clientId);
-                    const services = mockServices.filter(s => appt.serviceIds.includes(s.id));
-                    if (!client || !services.length) return null;
+                    const client = clients.find(c => c.id === appt.clientId);
+                    const servicesForAppointment = services.filter((s) =>
+                      appt.serviceIds.includes(s.id),
+                    );
+                    if (!client || !servicesForAppointment.length) return null;
 
                     const start = new Date(appt.start);
                     const end = new Date(appt.end);
                     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
                     const minutesFromStartOfDay = (start.getHours() - START_HOUR) * 60 + start.getMinutes();
                     const top = HEADER_HEIGHT + minutesFromStartOfDay * PIXELS_PER_MINUTE;
-                    const height = Math.max(durationMinutes * PIXELS_PER_MINUTE, MIN_APPOINTMENT_HEIGHT);
+                    const VISUAL_GAP = 0; // px para evitar sobreposição visual entre cards adjacentes
+                    const height = Math.max(
+                      durationMinutes * PIXELS_PER_MINUTE - VISUAL_GAP,
+                      MIN_APPOINTMENT_HEIGHT,
+                    );
 
                     return (
                       <div
                         key={appt.id}
-                        className="absolute w-full px-1 z-10"
-                        style={{ top: `${top}px` }}
+                        className="absolute w-full px-1"
+                        style={{ top: `${top}px`, height: `${height}px`, zIndex: focusedAppointmentId === appt.id ? 30 : 10 }}
                       >
                         <AppointmentCard
                           appointment={appt}
                           client={client}
-                          services={services}
+                          services={servicesForAppointment}
                           onEdit={onEditAppointment}
                           minHeight={height}
+                          onBringToFront={() => setFocusedAppointmentId(appt.id)}
+                          onAfterAction={handleAfterCardAction}
                         />
                       </div>
                     );

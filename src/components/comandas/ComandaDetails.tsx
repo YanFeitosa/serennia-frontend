@@ -1,14 +1,10 @@
 // src/components/comandas/ComandaDetails.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import type { Order } from '../../types';
-import { mockClients } from '../../data/clients';
-import { mockServices } from '../../data/services';
-import { mockProducts } from '../../data/products';
-import { mockCollaborators } from '../../data/collaborators';
-import { addItemToOrder, addProductToOrder, removeItemFromOrder } from '../../data/orders';
+import type { Client, Collaborator, Order, Product, Service } from '../../types';
 import { Button } from '../ui/Button';
 import SearchableSelectPlain from '../ui/SearchableSelectPlain';
 import Modal from '../ui/Modal';
+import { getClients, getCollaborators, getProducts, getServices, addOrderItem, removeOrderItem } from '../../lib/api';
 
 interface ComandaDetailsProps {
 	order: Order;
@@ -22,19 +18,53 @@ const ComandaDetails: React.FC<ComandaDetailsProps> = ({ order, onOrderChange, o
 	const [selectedProductId, setSelectedProductId] = useState('');
 	const [selectedCollaboratorId, setSelectedCollaboratorId] = useState('');
 	const [itemToRemove, setItemToRemove] = useState<string | null>(null);
+	const [clients, setClients] = useState<Client[]>([]);
+	const [services, setServices] = useState<Service[]>([]);
+	const [products, setProducts] = useState<Product[]>([]);
+	const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		setCurrentOrder(order);
 	}, [order]);
 
-	const client = mockClients.find(c => c.id === currentOrder.clientId);
+	useEffect(() => {
+		const loadData = async () => {
+			try {
+				setIsLoading(true);
+				setError(null);
+
+				const [clientsRes, collaboratorsRes, servicesRes, productsRes] = await Promise.all([
+					getClients(),
+					getCollaborators(),
+					getServices(),
+					getProducts(),
+				]);
+
+				setClients(clientsRes);
+				setCollaborators(collaboratorsRes);
+				setServices(servicesRes);
+				setProducts(productsRes);
+			} catch (err) {
+				console.error('Error loading comanda details data', err);
+				setError('Erro ao carregar dados da comanda.');
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		loadData();
+	}, []);
+
+	const client = clients.find(c => c.id === currentOrder.clientId);
 	const servicesById = useMemo(
-		() => new Map(mockServices.map(s => [s.id, s])),
-		[]
+		() => new Map(services.map(s => [s.id, s])),
+		[services]
 	);
 	const productsById = useMemo(
-		() => new Map(mockProducts.map(p => [p.id, p])),
-		[]
+		() => new Map(products.map(p => [p.id, p])),
+		[products]
 	);
 
 	const handleOrderUpdate = (updated: Order | null) => {
@@ -45,30 +75,59 @@ const ComandaDetails: React.FC<ComandaDetailsProps> = ({ order, onOrderChange, o
 		}
 	};
 
-	const handleAddService = () => {
+	const handleAddService = async () => {
 		if (!selectedServiceId || !selectedCollaboratorId) return;
-		const updated = addItemToOrder(currentOrder.id, selectedServiceId, selectedCollaboratorId);
-		handleOrderUpdate(updated);
-		setSelectedServiceId('');
-		setSelectedCollaboratorId('');
+		try {
+			const updated = await addOrderItem(currentOrder.id, {
+				type: 'service',
+				serviceId: selectedServiceId,
+				collaboratorId: selectedCollaboratorId,
+				quantity: 1,
+			});
+			handleOrderUpdate(updated);
+			setSelectedServiceId('');
+			setSelectedCollaboratorId('');
+		} catch (err) {
+			console.error('Error adding service to order', err);
+			alert('Erro ao adicionar serviço à comanda.');
+		}
 	};
 
-	const handleAddProduct = () => {
+	const handleAddProduct = async () => {
 		if (!selectedProductId) return;
-		const updated = addProductToOrder(currentOrder.id, selectedProductId);
-		handleOrderUpdate(updated);
-		setSelectedProductId('');
+		try {
+			const updated = await addOrderItem(currentOrder.id, {
+				type: 'product',
+				productId: selectedProductId,
+				quantity: 1,
+			});
+			handleOrderUpdate(updated);
+			setSelectedProductId('');
+		} catch (err) {
+			console.error('Error adding product to order', err);
+			alert('Erro ao adicionar produto à comanda.');
+		}
 	};
 
-	const handleConfirmRemoveItem = () => {
+	const handleConfirmRemoveItem = async () => {
 		if (!itemToRemove) return;
-		const updated = removeItemFromOrder(currentOrder.id, itemToRemove);
-		handleOrderUpdate(updated);
-		setItemToRemove(null);
+		try {
+			const updated = await removeOrderItem(currentOrder.id, itemToRemove);
+			handleOrderUpdate(updated);
+			setItemToRemove(null);
+		} catch (err) {
+			console.error('Error removing item from order', err);
+			alert('Erro ao remover item da comanda.');
+		}
 	};
 
 	return (
 		<div className="space-y-4">
+			{(isLoading || error) && (
+				<div className="text-sm text-text-muted">
+					{isLoading ? 'Carregando dados da comanda...' : error}
+				</div>
+			)}
 			<div>
 				<h3 className="text-lg font-semibold">Cliente</h3>
 				<p>{client?.name || 'Cliente não encontrado'}</p>
@@ -114,15 +173,15 @@ const ComandaDetails: React.FC<ComandaDetailsProps> = ({ order, onOrderChange, o
 						<div className="space-y-2">
 							<label className="block text-sm font-medium text-text">Adicionar serviço</label>
 							<SearchableSelectPlain
-								options={mockCollaborators
-									.filter(collab => collab.status === 'active' && collab.role === 'professional')
-									.map(collab => ({ value: collab.id, label: collab.name }))}
+								options={collaborators
+									.filter((collab) => collab.status === 'active' && collab.role === 'professional')
+									.map((collab) => ({ value: collab.id, label: collab.name }))}
 								value={selectedCollaboratorId}
 								onChange={setSelectedCollaboratorId}
 								placeholder="Selecione o profissional"
 							/>
 							<SearchableSelectPlain
-								options={mockServices.map(service => ({ value: service.id, label: service.name }))}
+								options={services.map((service) => ({ value: service.id, label: service.name }))}
 								value={selectedServiceId}
 								onChange={setSelectedServiceId}
 								placeholder="Selecione um serviço"
@@ -140,7 +199,7 @@ const ComandaDetails: React.FC<ComandaDetailsProps> = ({ order, onOrderChange, o
 						<div className="space-y-2">
 							<label className="block text-sm font-medium text-text">Adicionar produto</label>
 							<SearchableSelectPlain
-								options={mockProducts.map(product => ({ value: product.id, label: product.name }))}
+								options={products.map((product) => ({ value: product.id, label: product.name }))}
 								value={selectedProductId}
 								onChange={setSelectedProductId}
 								placeholder="Selecione um produto"
