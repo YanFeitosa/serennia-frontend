@@ -9,9 +9,14 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  variant?: 'default' | 'glass';
 }
 
-const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
+const Modal = ({ isOpen, onClose, title, children, variant = 'default' }: ModalProps) => {
+  const cardClasses = variant === 'glass' 
+    ? 'glass-card shadow-elevated w-full max-w-lg p-6 relative'
+    : 'bg-card rounded-xl shadow-xl w-full max-w-lg p-6 relative border border-border';
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -26,7 +31,7 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
-            className="bg-card rounded-xl shadow-xl w-full max-w-lg p-6 relative border border-border"
+            className={cardClasses}
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
           >
             <header className="flex items-center justify-between pb-4 border-b border-border">

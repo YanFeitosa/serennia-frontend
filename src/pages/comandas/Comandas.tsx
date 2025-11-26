@@ -208,106 +208,110 @@ const Comandas = () => {
 
   return (
     <div className="space-y-4">
-      <header className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-text">Comandas</h1>
-            <p className="text-text-muted mt-1">Gerencie as comandas dos seus clientes</p>
-          </div>
-          <Button
-            onClick={() => {
-              setSelectedComanda(null);
-              setExpandedComanda(null);
-              setNewOrderClientId('');
-              setShowNewOrderPanel(true);
-            }}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Comanda
-          </Button>
+      {/* Enhanced header with card styling */}
+      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        {/* Gradient accent line at top */}
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        
+        <div className="pt-2">
+          <h1 className="text-3xl font-bold text-primary">Comandas</h1>
+          <p className="text-text-muted mt-1">Gerencie as comandas dos seus clientes</p>
         </div>
+        <Button
+          onClick={() => {
+            setSelectedComanda(null);
+            setExpandedComanda(null);
+            setNewOrderClientId('');
+            setShowNewOrderPanel(true);
+          }}
+          className="mt-2"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Comanda
+        </Button>
+      </header>
 
-        {showNewOrderPanel && (
-          <div className="mt-4 mb-4 bg-card rounded-xl shadow-sm border border-border p-4">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-text">Cliente</label>
-                <SearchableSelectPlain
-                  options={[
-                    ...clients.map((client) => ({ value: client.id, label: client.name })),
-                    { value: '__add_client__', label: '+ adicionar cliente' },
-                  ]}
-                  value={newOrderClientId}
-                  onChange={(value: string) => {
-                    if (value === '__add_client__') {
-                      navigate('/app/clientes/novo', { state: { from: 'comandas' } });
-                      return;
-                    }
-                    setNewOrderClientId(value);
-                  }}
-                  placeholder="Selecione um cliente"
-                />
-              </div>
-              <div className="flex justify-end space-x-2 pt-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => {
+      {showNewOrderPanel && (
+        <div className="bg-card rounded-xl shadow-sm border border-border p-4">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-text">Cliente</label>
+              <SearchableSelectPlain
+                options={[
+                  ...clients.map((client) => ({ value: client.id, label: client.name })),
+                  { value: '__add_client__', label: '+ adicionar cliente' },
+                ]}
+                value={newOrderClientId}
+                onChange={(value: string) => {
+                  if (value === '__add_client__') {
+                    navigate('/app/clientes/novo', { state: { from: 'comandas' } });
+                    return;
+                  }
+                  setNewOrderClientId(value);
+                }}
+                placeholder="Selecione um cliente"
+              />
+            </div>
+            <div className="flex justify-end space-x-2 pt-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowNewOrderPanel(false);
+                  setNewOrderClientId('');
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!newOrderClientId) return;
+                  try {
+                    const order = await createOrder({ clientId: newOrderClientId });
+                    setOrders((prev) => [order, ...prev]);
+                    setSelectedComanda(order);
+                    setExpandedComanda(order.id);
                     setShowNewOrderPanel(false);
                     setNewOrderClientId('');
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={async () => {
-                    if (!newOrderClientId) return;
-                    try {
-                      const order = await createOrder({ clientId: newOrderClientId });
-                      setOrders((prev) => [order, ...prev]);
-                      setSelectedComanda(order);
-                      setExpandedComanda(order.id);
-                      setShowNewOrderPanel(false);
-                      setNewOrderClientId('');
-                    } catch (err) {
-                      console.error('Error creating order', err);
-                      alert('Erro ao abrir nova comanda.');
-                    }
-                  }}
-                  disabled={!newOrderClientId}
-                >
-                  Abrir comanda
-                </Button>
-              </div>
+                  } catch (err) {
+                    console.error('Error creating order', err);
+                    alert('Erro ao abrir nova comanda.');
+                  }
+                }}
+                disabled={!newOrderClientId}
+              >
+                Abrir comanda
+              </Button>
             </div>
           </div>
-        )}
-
-        {(isLoading || error) && (
-          <div className="mt-2 text-sm text-text-muted">
-            {isLoading ? 'Carregando comandas...' : error}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="relative flex-1 max-w-md">
-            <input
-              type="text"
-              placeholder="Buscar por cliente ou comanda..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-border bg-card text-text rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          </div>
-          
-          <div className="flex items-center space-x-2 ml-4">
-            <Button size="sm" variant={filter === 'all' ? 'primary' : 'ghost'} onClick={() => setFilter('all')}>Todas</Button>
-            <Button size="sm" variant={filter === 'open' ? 'primary' : 'ghost'} onClick={() => setFilter('open')}>Abertas</Button>
-            <Button size="sm" variant={filter === 'closed' ? 'primary' : 'ghost'} onClick={() => setFilter('closed')}>Fechadas</Button>
-            <Button size="sm" variant={filter === 'paid' ? 'primary' : 'ghost'} onClick={() => setFilter('paid')}>Pagas</Button>
-          </div>
         </div>
-      </header>
+      )}
+
+      {(isLoading || error) && (
+        <div className="text-sm text-text-muted">
+          {isLoading ? 'Carregando comandas...' : error}
+        </div>
+      )}
+
+      {/* Search and filters */}
+      <div className="flex items-center justify-between bg-card rounded-xl p-4 border border-border">
+        <div className="relative flex-1 max-w-md">
+          <input
+            type="text"
+            placeholder="Buscar por cliente ou comanda..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-border bg-background text-text rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        </div>
+        
+        <div className="flex items-center space-x-2 ml-4">
+          <Button size="sm" variant={filter === 'all' ? 'primary' : 'ghost'} onClick={() => setFilter('all')}>Todas</Button>
+          <Button size="sm" variant={filter === 'open' ? 'primary' : 'ghost'} onClick={() => setFilter('open')}>Abertas</Button>
+          <Button size="sm" variant={filter === 'closed' ? 'primary' : 'ghost'} onClick={() => setFilter('closed')}>Fechadas</Button>
+          <Button size="sm" variant={filter === 'paid' ? 'primary' : 'ghost'} onClick={() => setFilter('paid')}>Pagas</Button>
+        </div>
+      </div>
 
       {selectedComanda && (
         <div

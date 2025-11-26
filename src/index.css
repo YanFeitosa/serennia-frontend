@@ -23,24 +23,60 @@
   --color-text-muted: color-mix(in srgb, var(--color-text) 60%, var(--color-background) 40%);
   --color-border: color-mix(in srgb, var(--color-background) 85%, var(--color-text) 15%);
   --color-card: color-mix(in srgb, var(--color-background) 96%, var(--color-text) 4%);
-  --color-sidebar: color-mix(in srgb, var(--color-background) 94%, var(--color-primary) 6%);    /* Leve variação para o light mode */
+  --color-sidebar: color-mix(in srgb, var(--color-background) 94%, var(--color-primary) 6%);
 
   /* 🎯 Cores de Status (Comandas, etc.) */
-  --color-status-success: #22C55E;     /* Verde para "Paga" */
-  --color-status-warning: #F59E0B;     /* Amarelo para "Fechada" / em andamento */
-  --color-status-info: #3B82F6;        /* Azul para pendente/aberta */
-  --color-status-error: #EF4444;       /* Vermelho para erros / atrasado */
-  --color-status-muted: #6B7280;       /* Cinza para "no_show" */
+  --color-status-success: #22C55E;
+  --color-status-warning: #F59E0B;
+  --color-status-info: #3B82F6;
+  --color-status-error: #EF4444;
+  --color-status-muted: #6B7280;
+
+  /* 🌈 GRADIENT TOKENS - Personalizáveis por salão (Light Mode) */
+  --gradient-primary-secondary: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  --gradient-primary-accent: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  --gradient-secondary-accent: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
+  --gradient-accent-primary: linear-gradient(to right, var(--color-accent), var(--color-primary));
+  --gradient-full: linear-gradient(135deg, var(--color-primary), var(--color-secondary), var(--color-accent));
+  
+  /* Gradientes sutis para backgrounds (light mode - 10-20% opacidade) */
+  --gradient-subtle-primary: linear-gradient(135deg, 
+    color-mix(in srgb, var(--color-primary) 8%, transparent),
+    color-mix(in srgb, var(--color-secondary) 8%, transparent));
+  --gradient-subtle-accent: linear-gradient(135deg,
+    color-mix(in srgb, var(--color-accent) 10%, transparent),
+    color-mix(in srgb, var(--color-primary) 5%, transparent));
+
+  /* 🪟 GLASS-MORPHISM TOKENS */
+  --glass-background: color-mix(in srgb, var(--color-card) 80%, transparent);
+  --glass-border: color-mix(in srgb, var(--color-border) 60%, transparent);
+  --glass-blur: 12px;
+
+  /* ✨ GLOW / SHADOW TOKENS */
+  --shadow-glow-primary: 0 0 20px color-mix(in srgb, var(--color-primary) 30%, transparent),
+                         0 0 40px color-mix(in srgb, var(--color-primary) 15%, transparent);
+  --shadow-glow-accent: 0 0 20px color-mix(in srgb, var(--color-accent) 30%, transparent),
+                        0 0 40px color-mix(in srgb, var(--color-accent) 15%, transparent);
+  --shadow-glow-secondary: 0 0 20px color-mix(in srgb, var(--color-secondary) 25%, transparent);
+  
+  /* Shadow cards elevado */
+  --shadow-elevated: 0 4px 20px color-mix(in srgb, var(--color-primary) 10%, transparent),
+                     0 2px 8px color-mix(in srgb, var(--color-text) 5%, transparent);
+
+  /* 🎭 BLOB ANIMATION COLORS (personalizáveis) */
+  --blob-color-1: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  --blob-color-2: color-mix(in srgb, var(--color-secondary) 20%, transparent);
+  --blob-color-3: color-mix(in srgb, var(--color-accent) 15%, transparent);
 }
 
 /* 🌙 Dark Mode */
 .dark {
-  /* Paleta base — modo escuro (mantém as cores originais) */
-  --color-primary-dark-theme: #4A708A;    /* Azul mais claro para contraste no dark */
-  --color-secondary-dark-theme: #0F1724;  /* Base escura para secundário em dark */
-  --color-accent-dark-theme: #BFA2DB;     /* Lilás mantido (contrasta bem) */
-  --color-text-dark-theme: #F8FAFC;       /* Texto claro */
-  --color-background-dark-theme: #0B1220; /* Fundo escuro neutro */
+  /* Paleta base — modo escuro */
+  --color-primary-dark-theme: #4A708A;
+  --color-secondary-dark-theme: #0F1724;
+  --color-accent-dark-theme: #BFA2DB;
+  --color-text-dark-theme: #F8FAFC;
+  --color-background-dark-theme: #0B1220;
 
   /* Tokens efetivos quando o modo escuro está ativo */
   --color-primary: var(--color-primary-dark-theme);
@@ -57,12 +93,63 @@
   --color-card: color-mix(in srgb, var(--color-background) 80%, var(--color-text) 20%);
   --color-sidebar: color-mix(in srgb, var(--color-background) 78%, var(--color-primary) 22%);
 
-  /* 🎯 Cores de Status (Dark Mode) */
-  --color-status-success: #4ADE80;     /* Verde mais claro */
-  --color-status-warning: #FBBf24;     /* Amarelo mais claro */
-  --color-status-info: #60A5FA;        /* Azul mais claro */
-  --color-status-error: #F87171;       /* Vermelho mais claro */
-  --color-status-muted: #9CA3AF;       /* Cinza claro para "no_show" */
+  /* Status colors (Dark Mode) */
+  --color-status-success: #4ADE80;
+  --color-status-warning: #FBBf24;
+  --color-status-info: #60A5FA;
+  --color-status-error: #F87171;
+  --color-status-muted: #9CA3AF;
+
+  /* Gradientes sutis para backgrounds (dark mode - 15-25% opacidade) */
+  --gradient-subtle-primary: linear-gradient(135deg, 
+    color-mix(in srgb, var(--color-primary) 15%, transparent),
+    color-mix(in srgb, var(--color-secondary) 10%, transparent));
+  --gradient-subtle-accent: linear-gradient(135deg,
+    color-mix(in srgb, var(--color-accent) 15%, transparent),
+    color-mix(in srgb, var(--color-primary) 8%, transparent));
+
+  /* Glass mais escuro no dark mode */
+  --glass-background: color-mix(in srgb, var(--color-card) 60%, transparent);
+  --glass-border: color-mix(in srgb, var(--color-border) 40%, transparent);
+
+  /* Glow mais intenso no dark */
+  --shadow-glow-primary: 0 0 25px color-mix(in srgb, var(--color-primary) 40%, transparent),
+                         0 0 50px color-mix(in srgb, var(--color-primary) 20%, transparent);
+  --shadow-glow-accent: 0 0 25px color-mix(in srgb, var(--color-accent) 40%, transparent),
+                        0 0 50px color-mix(in srgb, var(--color-accent) 20%, transparent);
+
+  /* Blob colors mais intensos no dark */
+  --blob-color-1: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  --blob-color-2: color-mix(in srgb, var(--color-secondary) 30%, transparent);
+  --blob-color-3: color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+/* 🚀 LANDING THEME - Cores fixas para Landing e Login */
+.landing-theme {
+  --landing-bg: #0a0a0f;
+  --landing-text: #ffffff;
+  --landing-text-muted: #9ca3af;
+  
+  /* Gradientes fixos da landing (purple-blue-pink) */
+  --landing-gradient-primary: linear-gradient(to right, #7c3aed, #3b82f6);
+  --landing-gradient-accent: linear-gradient(to right, #7c3aed, #ec4899);
+  --landing-gradient-full: linear-gradient(to right, #7c3aed, #ec4899, #3b82f6);
+  --landing-gradient-text: linear-gradient(to right, #a78bfa, #f472b6, #60a5fa);
+  
+  /* Glass-morphism landing */
+  --landing-glass-bg: rgba(255, 255, 255, 0.05);
+  --landing-glass-border: rgba(255, 255, 255, 0.1);
+  --landing-glass-hover-border: rgba(124, 58, 237, 0.3);
+  
+  /* Glow effects landing */
+  --landing-glow-purple: 0 0 30px rgba(124, 58, 237, 0.3);
+  --landing-glow-blue: 0 0 30px rgba(59, 130, 246, 0.3);
+  --landing-glow-pink: 0 0 30px rgba(236, 72, 153, 0.2);
+  
+  /* Blob colors landing */
+  --landing-blob-purple: rgba(124, 58, 237, 0.2);
+  --landing-blob-blue: rgba(59, 130, 246, 0.2);
+  --landing-blob-pink: rgba(236, 72, 153, 0.1);
 }
 
 body {
@@ -104,6 +191,141 @@ button:not(:disabled):active {
 .animate-slide-up {
   animation: slide-up 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: top;
+}
+
+/* 🎬 ANIMAÇÕES ADICIONAIS */
+@keyframes blob-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-blob {
+  animation: blob-float 7s ease-in-out infinite;
+}
+
+.animate-blob-delayed {
+  animation: blob-float 7s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.animate-blob-delayed-2 {
+  animation: blob-float 7s ease-in-out infinite;
+  animation-delay: 4s;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* 🪟 GLASS CLASSES */
+.glass {
+  background: var(--glass-background);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+.glass-card {
+  background: var(--glass-background);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+}
+
+/* Landing glass específico */
+.landing-theme .landing-glass {
+  background: var(--landing-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--landing-glass-border);
+}
+
+.landing-theme .landing-glass:hover {
+  border-color: var(--landing-glass-hover-border);
+}
+
+/* 🌈 GRADIENT CLASSES */
+.gradient-primary-secondary {
+  background: var(--gradient-primary-secondary);
+}
+
+.gradient-primary-accent {
+  background: var(--gradient-primary-accent);
+}
+
+.gradient-secondary-accent {
+  background: var(--gradient-secondary-accent);
+}
+
+.gradient-full {
+  background: var(--gradient-full);
+}
+
+.gradient-subtle {
+  background: var(--gradient-subtle-primary);
+}
+
+.gradient-text {
+  background: var(--gradient-primary-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Landing gradients */
+.landing-theme .landing-gradient-btn {
+  background: var(--landing-gradient-primary);
+}
+
+.landing-theme .landing-gradient-text {
+  background: var(--landing-gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ✨ GLOW CLASSES */
+.glow-primary {
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.glow-accent {
+  box-shadow: var(--shadow-glow-accent);
+}
+
+.glow-secondary {
+  box-shadow: var(--shadow-glow-secondary);
+}
+
+.shadow-elevated {
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Landing glows */
+.landing-theme .landing-glow-purple {
+  box-shadow: var(--landing-glow-purple);
+}
+
+.landing-theme .landing-glow-btn:hover {
+  box-shadow: 0 0 40px rgba(124, 58, 237, 0.4), 0 0 60px rgba(59, 130, 246, 0.3);
 }
 
 /* 🔧 Classes auxiliares para forçar geração do Tailwind */

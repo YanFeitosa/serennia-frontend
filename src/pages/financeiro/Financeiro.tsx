@@ -317,12 +317,16 @@ const Financeiro = () => {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-text">Financeiro</h1>
+      {/* Enhanced header with card styling */}
+      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        {/* Gradient accent line at top */}
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        
+        <div className="pt-2">
+          <h1 className="text-3xl font-bold text-primary">Financeiro</h1>
           <p className="text-text-muted">Acompanhe a saúde financeira do seu negócio.</p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 pt-2">
           <DatePickerPlain
             date={startDate}
             setDate={setStartDate}

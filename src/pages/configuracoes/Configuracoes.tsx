@@ -671,44 +671,51 @@ const Configuracoes = () => {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold text-text">Configurações</h1>
-        <p className="text-gray-500">Gerencie as configurações do sistema e do salão.</p>
+      {/* Enhanced header with card styling */}
+      <header className="p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        {/* Gradient accent line at top */}
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        
+        <div className="pt-2">
+          <h1 className="text-3xl font-bold text-primary">Configurações</h1>
+          <p className="text-text-muted mt-1">Gerencie as configurações do sistema e do salão</p>
+        </div>
       </header>
 
-      <div className="flex space-x-8 border-b border-gray-200">
+      {/* Tab navigation */}
+      <div className="flex space-x-2 p-1 bg-card rounded-xl border border-border overflow-x-auto">
         <Button
           variant="ghost"
           onClick={() => setTab('geral')}
-          className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'geral' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'geral' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
           Geral
         </Button>
         <Button
           variant="ghost"
           onClick={() => setTab('mensagens')}
-          className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'mensagens' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'mensagens' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
           Mensagens
         </Button>
         <Button
           variant="ghost"
           onClick={() => setTab('integracoes')}
-          className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'integracoes' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'integracoes' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
           Integrações
         </Button>
         <Button
           variant="ghost"
           onClick={() => setTab('personalizacao')}
-          className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'personalizacao' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'personalizacao' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
           Personalização
         </Button>
         <Button
           variant="ghost"
           onClick={() => setTab('permissoes')}
-          className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'permissoes' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'permissoes' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
           Permissões
         </Button>
@@ -717,7 +724,7 @@ const Configuracoes = () => {
       <div>
         {tab === 'geral' && (
           <div className="space-y-6">
-            <div className="bg-card rounded-xl shadow-md border border-border p-4 space-y-3">
+            <div className="bg-card rounded-xl shadow-elevated border border-border p-6 space-y-3">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                   <h3 className="text-lg font-semibold text-text">Comissão padrão dos profissionais</h3>
@@ -740,7 +747,7 @@ const Configuracoes = () => {
                         setDefaultCommissionPercent(value);
                       }
                     }}
-                    className="w-20 px-3 py-2 border border-border rounded-md bg-card text-right text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-20 px-3 py-2 border border-border rounded-lg bg-background text-right text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                   />
                   <span className="text-sm text-text">%</span>
                 </div>

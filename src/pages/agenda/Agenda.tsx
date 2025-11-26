@@ -38,9 +38,10 @@ const Agenda = () => {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
+      {/* Page header with gradient accent */}
+      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border">
         <div>
-          <h1 className="text-3xl font-bold text-text">Agenda</h1>
+          <h1 className="text-3xl font-bold text-primary">Agenda</h1>
           <p className="text-text-muted">Visualize e gerencie seus agendamentos.</p>
           <p className="text-sm text-text-muted mt-1">
             {currentDate.toLocaleDateString(undefined, {
@@ -71,6 +72,9 @@ const Agenda = () => {
           </div>
         </div>
       </header>
+      
+      {/* Decorative gradient line */}
+      <div className="h-1 w-full rounded-full gradient-primary-secondary opacity-60" />
 
       {/* Render the selected view */}
       <div>

@@ -15,8 +15,8 @@ interface SidebarLinkProps {
 }
 
 const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, notification, children }) => {
-  const activeClass = 'bg-secondary text-primary border-r-4 border-primary';
-  const inactiveClass = 'text-text-muted hover:bg-secondary hover:text-primary';
+  const activeClass = 'bg-primary text-white border-r-4 border-accent shadow-md';
+  const inactiveClass = 'text-text hover:bg-secondary/30 hover:text-primary';
 
   return (
     <li className="mb-1">
@@ -152,16 +152,19 @@ const Sidebar = () => {
     .toUpperCase();
 
   return (
-    <aside className="w-64 h-screen bg-sidebar shadow-serennia flex flex-col border-r border-border">
-      <div className="p-6">
+    <aside className="w-64 h-screen bg-sidebar shadow-serennia flex flex-col border-r border-border relative overflow-hidden">
+      {/* Subtle gradient overlay for depth */}
+      <div className="absolute inset-0 gradient-subtle opacity-30 pointer-events-none" />
+      
+      <div className="p-6 relative z-10">
         <h1
-          className={`${titleSizeClass} font-semibold text-primary leading-tight break-words max-w-full`}
+          className={`${titleSizeClass} font-bold text-primary leading-tight break-words max-w-full`}
         >
           {normalizedName}
         </h1>
         <p className="text-xs text-text-muted mt-1">powered by serennia</p>
       </div>
-      <nav className="flex-1 py-4 px-2">
+      <nav className="flex-1 py-4 px-2 relative z-10">
         <ul>
           {canSeeLink('agenda') && (
             <SidebarLink to="/app/agenda" icon={<Calendar />}>Agenda</SidebarLink>
@@ -199,17 +202,18 @@ const Sidebar = () => {
       </nav>
 
       {/* Dark Mode Toggle */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-4 relative z-10">
         <button
           onClick={toggleTheme}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card hover:bg-secondary transition-all duration-200 border border-border"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card hover:bg-secondary/50 transition-all duration-200 border border-border"
           aria-label="Toggle dark mode"
         >
           <span className="text-sm font-medium text-text">
             {theme === 'light' ? 'Modo Claro' : 'Modo Escuro'}
           </span>
-          <div className="relative w-12 h-6 bg-border rounded-full transition-colors">
-            <div className={`absolute top-1 ${theme === 'dark' ? 'right-1' : 'left-1'} w-4 h-4 bg-primary rounded-full transition-all duration-200 flex items-center justify-center`}>
+          <div className="relative w-12 h-6 bg-border rounded-full transition-colors overflow-hidden">
+            <div className={`absolute inset-0 gradient-primary-secondary opacity-30`} />
+            <div className={`absolute top-1 ${theme === 'dark' ? 'right-1' : 'left-1'} w-4 h-4 gradient-primary-secondary rounded-full transition-all duration-200 flex items-center justify-center shadow-sm`}>
               {theme === 'light' ? (
                 <Sun className="w-3 h-3 text-white" />
               ) : (
@@ -221,12 +225,12 @@ const Sidebar = () => {
       </div>
 
       {/* User Profile */}
-      <div className="p-4 relative" ref={profileRef}>
+      <div className="p-4 relative z-10" ref={profileRef}>
         <button
           onClick={() => setShowLogout(!showLogout)}
-          className="w-full flex items-center space-x-3 px-4 py-3 bg-card rounded-xl hover:ring-2 hover:ring-primary transition-all duration-200 border border-border"
+          className="w-full flex items-center space-x-3 px-4 py-3 bg-card rounded-xl hover:ring-2 hover:ring-primary/50 transition-all duration-200 border border-border hover:shadow-elevated"
         >
-          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 gradient-primary-secondary rounded-full flex items-center justify-center shadow-md">
             <span className="text-white font-semibold text-sm">{initials}</span>
           </div>
           <div className="flex-1 text-left">

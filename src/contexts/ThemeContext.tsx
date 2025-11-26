@@ -44,6 +44,24 @@ function applyPaletteToCSS(lightPalette: ThemePalette, darkPalette: ThemePalette
   root.style.setProperty('--color-accent-dark-theme', darkPalette.accentColor);
   root.style.setProperty('--color-background-dark-theme', darkPalette.backgroundColor);
   root.style.setProperty('--color-text-dark-theme', darkPalette.textColor);
+
+  // 🌈 Update gradient tokens dynamically based on current theme mode
+  // These use the --color-primary/secondary/accent which already reference the correct theme
+  // The gradients are automatically recalculated via CSS variables
+  
+  // For blob animations (light mode values - adjust opacity for visual appeal)
+  const lightBlobOpacity = '20%';
+  const darkBlobOpacity = '25%';
+  
+  // Apply blob colors for light theme
+  root.style.setProperty('--blob-color-1-light', `color-mix(in srgb, ${lightPalette.primaryColor} ${lightBlobOpacity}, transparent)`);
+  root.style.setProperty('--blob-color-2-light', `color-mix(in srgb, ${lightPalette.secondaryColor} ${lightBlobOpacity}, transparent)`);
+  root.style.setProperty('--blob-color-3-light', `color-mix(in srgb, ${lightPalette.accentColor} 15%, transparent)`);
+  
+  // Apply blob colors for dark theme
+  root.style.setProperty('--blob-color-1-dark', `color-mix(in srgb, ${darkPalette.primaryColor} ${darkBlobOpacity}, transparent)`);
+  root.style.setProperty('--blob-color-2-dark', `color-mix(in srgb, ${darkPalette.secondaryColor} 30%, transparent)`);
+  root.style.setProperty('--blob-color-3-dark', `color-mix(in srgb, ${darkPalette.accentColor} 20%, transparent)`);
 }
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
