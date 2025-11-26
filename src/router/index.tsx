@@ -24,12 +24,19 @@ import Auditoria from '../pages/configuracoes/Auditoria';
 import Notificacoes from '../pages/configuracoes/Notificacoes';
 import Welcome from '../pages/totem/Welcome';
 import ServiceSelection from '../pages/totem/ServiceSelection';
+import ProfessionalSelection from '../pages/totem/ProfessionalSelection';
+import DateTimeSelection from '../pages/totem/DateTimeSelection';
 import Confirmation from '../pages/totem/Confirmation';
 import Cadastro from '../pages/totem/Cadastro';
 import TotemLogin from '../pages/totem/Login';
 import TotemLayout from '../components/layout/TotemLayout';
+import Landing from '../pages/Landing';
 
 const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Landing />,
+  },
   {
     path: '/login',
     element: <LoginPage />,
@@ -39,21 +46,23 @@ const router = createBrowserRouter([
     element: <TotemLayout />,
     children: [
       { path: '', element: <Welcome />, index: true },
-      { path: 'servicos', element: <ServiceSelection /> },
-      { path: 'confirmacao', element: <Confirmation /> },
-      { path: 'cadastro', element: <Cadastro /> },
       { path: 'login', element: <TotemLogin /> },
+      { path: 'cadastro', element: <Cadastro /> },
+      { path: 'servicos', element: <ServiceSelection /> },
+      { path: 'profissional', element: <ProfessionalSelection /> },
+      { path: 'data-hora', element: <DateTimeSelection /> },
+      { path: 'confirmacao', element: <Confirmation /> },
     ],
   },
   {
-    path: '/',
+    path: '/app',
     element: <App />,
     children: [
       {
-        path: '/',
+        path: '',
         index: true,
         element: (
-          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+          <RoleGuard resourceKey="agenda">
             <Agenda />
           </RoleGuard>
         ),
@@ -61,7 +70,7 @@ const router = createBrowserRouter([
       {
         path: 'agenda',
         element: (
-          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+          <RoleGuard resourceKey="agenda">
             <Agenda />
           </RoleGuard>
         ),
@@ -69,7 +78,7 @@ const router = createBrowserRouter([
       {
         path: 'agenda/novo',
         element: (
-          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+          <RoleGuard resourceKey="agenda">
             <AgendamentoForm />
           </RoleGuard>
         ),
@@ -77,7 +86,7 @@ const router = createBrowserRouter([
       {
         path: 'agenda/editar/:id',
         element: (
-          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+          <RoleGuard resourceKey="agenda">
             <AgendamentoForm />
           </RoleGuard>
         ),
@@ -85,7 +94,7 @@ const router = createBrowserRouter([
       {
         path: 'comandas',
         element: (
-          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+          <RoleGuard resourceKey="comandas">
             <Comandas />
           </RoleGuard>
         ),
@@ -93,7 +102,7 @@ const router = createBrowserRouter([
       {
         path: 'comandas/:id/pagamento',
         element: (
-          <RoleGuard allowed={['admin', 'receptionist', 'professional']}>
+          <RoleGuard resourceKey="comandas">
             <PagamentoComanda />
           </RoleGuard>
         ),
@@ -105,7 +114,7 @@ const router = createBrowserRouter([
             path: '',
             index: true,
             element: (
-              <RoleGuard allowed={['admin', 'receptionist']}>
+              <RoleGuard resourceKey="clientes">
                 <Clientes />
               </RoleGuard>
             ),
@@ -113,7 +122,7 @@ const router = createBrowserRouter([
           {
             path: 'novo',
             element: (
-              <RoleGuard allowed={['admin', 'receptionist']}>
+              <RoleGuard resourceKey="clientes">
                 <ClienteForm />
               </RoleGuard>
             ),
@@ -121,7 +130,7 @@ const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <RoleGuard allowed={['admin', 'receptionist']}>
+              <RoleGuard resourceKey="clientes">
                 <ClienteProfile />
               </RoleGuard>
             ),
@@ -131,7 +140,7 @@ const router = createBrowserRouter([
       {
         path: 'perfil',
         element: (
-          <RoleGuard allowed={['admin', 'manager', 'receptionist', 'professional']}>
+          <RoleGuard allowed={['admin', 'manager', 'receptionist', 'professional', 'super_admin', 'tenant_admin']}>
             <UserProfile />
           </RoleGuard>
         ),
@@ -139,7 +148,7 @@ const router = createBrowserRouter([
       {
         path: 'servicos',
         element: (
-          <RoleGuard allowed={['admin', 'manager', 'receptionist']}>
+          <RoleGuard resourceKey="servicos">
             <Servicos />
           </RoleGuard>
         ),
@@ -147,7 +156,7 @@ const router = createBrowserRouter([
       {
         path: 'servicos/novo',
         element: (
-          <RoleGuard allowed={['admin', 'manager']}>
+          <RoleGuard resourceKey="servicos">
             <ServicoForm />
           </RoleGuard>
         ),
@@ -155,7 +164,7 @@ const router = createBrowserRouter([
       {
         path: 'servicos/:id',
         element: (
-          <RoleGuard allowed={['admin', 'manager']}>
+          <RoleGuard resourceKey="servicos">
             <ServicoForm />
           </RoleGuard>
         ),
@@ -163,7 +172,7 @@ const router = createBrowserRouter([
       {
         path: 'produtos',
         element: (
-          <RoleGuard allowed={['admin', 'manager', 'receptionist']}>
+          <RoleGuard resourceKey="produtos">
             <Produtos />
           </RoleGuard>
         ),
@@ -171,7 +180,7 @@ const router = createBrowserRouter([
       {
         path: 'produtos/novo',
         element: (
-          <RoleGuard allowed={['admin', 'manager']}>
+          <RoleGuard resourceKey="produtos">
             <ProdutoForm />
           </RoleGuard>
         ),
@@ -179,7 +188,7 @@ const router = createBrowserRouter([
       {
         path: 'produtos/:id',
         element: (
-          <RoleGuard allowed={['admin', 'manager']}>
+          <RoleGuard resourceKey="produtos">
             <ProdutoForm />
           </RoleGuard>
         ),
@@ -191,7 +200,7 @@ const router = createBrowserRouter([
             path: '',
             index: true,
             element: (
-              <RoleGuard allowed={['admin', 'manager', 'receptionist']}>
+              <RoleGuard resourceKey="colaboradores">
                 <Colaboradores />
               </RoleGuard>
             ),
@@ -199,7 +208,7 @@ const router = createBrowserRouter([
           {
             path: 'novo',
             element: (
-              <RoleGuard allowed={['admin', 'manager']}>
+              <RoleGuard resourceKey="colaboradores">
                 <ColaboradorForm />
               </RoleGuard>
             ),
@@ -207,7 +216,7 @@ const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <RoleGuard allowed={['admin', 'manager', 'receptionist']}>
+              <RoleGuard resourceKey="colaboradores">
                 <ColaboradorProfile />
               </RoleGuard>
             ),
@@ -217,7 +226,7 @@ const router = createBrowserRouter([
       {
         path: 'financeiro',
         element: (
-          <RoleGuard allowed={['admin', 'manager']}>
+          <RoleGuard resourceKey="financeiro">
             <Financeiro />
           </RoleGuard>
         ),
@@ -225,7 +234,7 @@ const router = createBrowserRouter([
       {
         path: 'configuracoes',
         element: (
-          <RoleGuard allowed={['admin', 'manager']}>
+          <RoleGuard allowed={['admin', 'super_admin', 'tenant_admin']}>
             <Configuracoes />
           </RoleGuard>
         ),
@@ -233,7 +242,7 @@ const router = createBrowserRouter([
       {
         path: 'auditoria',
         element: (
-          <RoleGuard allowed={['admin', 'manager']}>
+          <RoleGuard resourceKey="auditoria">
             <Auditoria />
           </RoleGuard>
         ),
@@ -241,7 +250,7 @@ const router = createBrowserRouter([
       {
         path: 'notificacoes',
         element: (
-          <RoleGuard allowed={['admin', 'receptionist']}>
+          <RoleGuard resourceKey="notificacoes">
             <Notificacoes />
           </RoleGuard>
         ),

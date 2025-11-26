@@ -1,24 +1,12 @@
 // src/pages/Configuracoes.tsx
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/Button';
-import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings } from '../../lib/api';
-import type { CategoryType } from '../../types';
-
-type MessageTemplate = {
-  id: string;
-  name: string;
-  channel: 'whatsapp' | 'sms' | 'email';
-  content: string;
-};
-
-const INITIAL_TEMPLATES: MessageTemplate[] = [
-  {
-    id: 'confirmacao',
-    name: 'Confirmação de Agendamento',
-    channel: 'whatsapp',
-    content: 'Olá {{cliente_nome}}, seu agendamento para {{data}} às {{horario}} foi confirmado!',
-  },
-];
+import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings, getMessageTemplates, createMessageTemplate, updateMessageTemplate, deleteMessageTemplate, type MessageTemplate, type SalonTheme } from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../contexts/PermissionsContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { isAdminLike } from '../../lib/utils';
+import type { CategoryType, UserRole } from '../../types';
 
 const AVAILABLE_VARIABLES = [
   { key: 'cliente_nome', label: 'Nome do cliente' },
@@ -30,7 +18,7 @@ const AVAILABLE_VARIABLES = [
 
 type CategoryGroup = 'services' | 'products' | 'roles';
 
-type SettingsTab = 'geral' | 'mensagens' | 'integracoes' | 'personalizacao';
+type SettingsTab = 'geral' | 'mensagens' | 'integracoes' | 'personalizacao' | 'permissoes';
 
 type ThemePalette = {
   primaryColor: string;
@@ -55,6 +43,7 @@ const Configuracoes = () => {
   const [isLoadingCommissionSettings, setIsLoadingCommissionSettings] = useState(false);
   const [isSavingCommissionSettings, setIsSavingCommissionSettings] = useState(false);
   const [commissionSettingsError, setCommissionSettingsError] = useState<string | null>(null);
+
 
   // Categorias por tipo (serviços/produtos vêm do backend)
   const [serviceCategories, setServiceCategories] = useState<string[]>([]);
@@ -84,10 +73,33 @@ const Configuracoes = () => {
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ group: CategoryGroup; category: string } | null>(null);
 
-  const [templates, setTemplates] = useState<MessageTemplate[]>(INITIAL_TEMPLATES);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('confirmacao');
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
 
-  const selectedTemplate = templates.find(t => t.id === selectedTemplateId) ?? templates[0];
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId) ?? null;
+
+  // Local form state for template editing (to avoid saving on every keystroke)
+  const [templateFormData, setTemplateFormData] = useState<{
+    name: string;
+    channel: MessageTemplate['channel'];
+    content: string;
+  } | null>(null);
+
+  // Sync form data when selected template changes
+  useEffect(() => {
+    if (selectedTemplate) {
+      setTemplateFormData({
+        name: selectedTemplate.name,
+        channel: selectedTemplate.channel,
+        content: selectedTemplate.content,
+      });
+    } else {
+      setTemplateFormData(null);
+    }
+  }, [selectedTemplateId, selectedTemplate?.id]);
 
   const [appearanceDraft, setAppearanceDraft] = useState<AppearanceSettings | null>(null);
   const [appearanceApplied, setAppearanceApplied] = useState<AppearanceSettings | null>(null);
@@ -168,7 +180,7 @@ const Configuracoes = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const loadCommissionSettings = async () => {
+    const loadSettings = async () => {
       if (typeof window === 'undefined') return;
 
       try {
@@ -178,6 +190,7 @@ const Configuracoes = () => {
         const settings = await getSalonSettings();
         if (!isMounted) return;
 
+        // Commission settings
         let percent = 50;
         if (
           settings.defaultCommissionRate != null &&
@@ -199,9 +212,34 @@ const Configuracoes = () => {
             : 'professional';
         setCommissionCalcMode(mode);
 
+        // Load theme from backend if available
+        if (settings.theme) {
+          const themeFromBackend: AppearanceSettings = {
+            platformName: settings.theme.platformName || settings.name || 'Serenna',
+            light: {
+              primaryColor: settings.theme.light?.primaryColor || '#25445A',
+              secondaryColor: settings.theme.light?.secondaryColor || '#7AA7D8',
+              accentColor: settings.theme.light?.accentColor || '#BFA2DB',
+              backgroundColor: settings.theme.light?.backgroundColor || '#FFFFFF',
+              textColor: settings.theme.light?.textColor || '#0F1724',
+            },
+            dark: {
+              primaryColor: settings.theme.dark?.primaryColor || '#4A708A',
+              secondaryColor: settings.theme.dark?.secondaryColor || '#0F1724',
+              accentColor: settings.theme.dark?.accentColor || '#BFA2DB',
+              backgroundColor: settings.theme.dark?.backgroundColor || '#0B1220',
+              textColor: settings.theme.dark?.textColor || '#F8FAFC',
+            },
+          };
+          setAppearanceDraft(themeFromBackend);
+          setAppearanceApplied(themeFromBackend);
+          applyAppearance(themeFromBackend);
+          window.localStorage.setItem('serenna-appearance', JSON.stringify(themeFromBackend));
+        }
+
         window.localStorage.setItem('serenna-default-commission', String(percent));
       } catch (error) {
-        console.error('Failed to load commission settings', error);
+        console.error('Failed to load settings', error);
         if (!isMounted) return;
 
         // Fallback para localStorage se disponível
@@ -215,7 +253,7 @@ const Configuracoes = () => {
           }
         }
 
-        setCommissionSettingsError('Falha ao carregar configurações de comissão.');
+        setCommissionSettingsError('Falha ao carregar configurações.');
       } finally {
         if (isMounted) {
           setIsLoadingCommissionSettings(false);
@@ -223,7 +261,7 @@ const Configuracoes = () => {
       }
     };
 
-    loadCommissionSettings();
+    loadSettings();
 
     return () => {
       isMounted = false;
@@ -271,6 +309,38 @@ const Configuracoes = () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTemplates = async () => {
+      try {
+        setIsLoadingTemplates(true);
+        setTemplatesError(null);
+        const data = await getMessageTemplates();
+        if (!isMounted) return;
+        setTemplates(data);
+        if (data.length > 0 && !selectedTemplateId) {
+          setSelectedTemplateId(data[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to load templates', error);
+        if (isMounted) {
+          setTemplatesError('Falha ao carregar templates.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingTemplates(false);
+        }
+      }
+    };
+
+    loadTemplates();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedTemplateId]);
 
   const handlePlatformNameChange = (value: string) => {
     setAppearanceDraft(prev => (prev ? { ...prev, platformName: value } : prev));
@@ -353,6 +423,7 @@ const Configuracoes = () => {
     }
   };
 
+
   const handlePaletteChange = (
     theme: 'light' | 'dark',
     field: keyof ThemePalette,
@@ -373,13 +444,35 @@ const Configuracoes = () => {
     });
   };
 
-  const handleConfirmPalette = () => {
+  const handleConfirmPalette = async () => {
     if (!appearanceDraft) return;
-    setAppearanceApplied(appearanceDraft);
-    applyAppearance(appearanceDraft);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('serenna-appearance', JSON.stringify(appearanceDraft));
-      window.dispatchEvent(new Event('serenna-appearance-changed'));
+    
+    try {
+      // Save to backend
+      const themePayload: SalonTheme = {
+        platformName: appearanceDraft.platformName,
+        light: appearanceDraft.light,
+        dark: appearanceDraft.dark,
+      };
+      
+      await updateSalonSettings({ theme: themePayload });
+      
+      setAppearanceApplied(appearanceDraft);
+      applyAppearance(appearanceDraft);
+      
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('serenna-appearance', JSON.stringify(appearanceDraft));
+        window.dispatchEvent(new Event('serenna-appearance-changed'));
+      }
+    } catch (error) {
+      console.error('Failed to save theme to backend', error);
+      // Still apply locally even if backend save fails
+      setAppearanceApplied(appearanceDraft);
+      applyAppearance(appearanceDraft);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('serenna-appearance', JSON.stringify(appearanceDraft));
+        window.dispatchEvent(new Event('serenna-appearance-changed'));
+      }
     }
   };
 
@@ -487,36 +580,91 @@ const Configuracoes = () => {
     }
   };
 
-  const handleAddTemplate = () => {
-    const id = `template-${Date.now()}`;
-    const newTemplate: MessageTemplate = {
-      id,
-      name: 'Novo Template',
-      channel: 'whatsapp',
-      content: '',
-    };
-    setTemplates([...templates, newTemplate]);
-    setSelectedTemplateId(id);
+  const handleAddTemplate = async () => {
+    try {
+      setIsSavingTemplate(true);
+      setTemplatesError(null);
+      const newTemplate = await createMessageTemplate({
+        name: 'Novo Template',
+        channel: 'whatsapp',
+        content: 'Olá {{cliente_nome}}, seu agendamento está confirmado para {{data}} às {{horario}}.',
+      });
+      setTemplates([...templates, newTemplate]);
+      setSelectedTemplateId(newTemplate.id);
+    } catch (error) {
+      console.error('Failed to create template', error);
+      setTemplatesError('Falha ao criar template.');
+    } finally {
+      setIsSavingTemplate(false);
+    }
   };
 
-  const handleUpdateTemplate = (updates: Partial<MessageTemplate>) => {
+  const handleUpdateTemplate = async (updates: Partial<MessageTemplate>) => {
     if (!selectedTemplate) return;
-    const updated = templates.map(t => (t.id === selectedTemplate.id ? { ...t, ...updates } : t));
-    setTemplates(updated);
+    try {
+      setIsSavingTemplate(true);
+      setTemplatesError(null);
+      const updated = await updateMessageTemplate(selectedTemplate.id, {
+        name: updates.name,
+        channel: updates.channel,
+        content: updates.content,
+        isActive: updates.isActive,
+      });
+      setTemplates(templates.map(t => (t.id === selectedTemplate.id ? updated : t)));
+    } catch (error) {
+      console.error('Failed to update template', error);
+      setTemplatesError('Falha ao atualizar template.');
+    } finally {
+      setIsSavingTemplate(false);
+    }
   };
 
-  const handleRemoveTemplate = (id: string) => {
-    const filtered = templates.filter(t => t.id !== id);
-    setTemplates(filtered);
-    if (selectedTemplateId === id && filtered.length > 0) {
-      setSelectedTemplateId(filtered[0].id);
+  const handleRemoveTemplate = async (id: string) => {
+    try {
+      setIsSavingTemplate(true);
+      setTemplatesError(null);
+      await deleteMessageTemplate(id);
+      const filtered = templates.filter(t => t.id !== id);
+      setTemplates(filtered);
+      if (selectedTemplateId === id && filtered.length > 0) {
+        setSelectedTemplateId(filtered[0].id);
+      } else if (selectedTemplateId === id) {
+        setSelectedTemplateId(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete template', error);
+      setTemplatesError('Falha ao remover template.');
+    } finally {
+      setIsSavingTemplate(false);
     }
   };
 
   const handleInsertVariable = (key: string) => {
-    if (!selectedTemplate) return;
+    if (!templateFormData) return;
     const placeholder = `{{${key}}}`;
-    handleUpdateTemplate({ content: `${selectedTemplate.content}${selectedTemplate.content ? ' ' : ''}${placeholder}` });
+    setTemplateFormData(prev => prev ? {
+      ...prev,
+      content: `${prev.content}${prev.content ? ' ' : ''}${placeholder}`,
+    } : null);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!selectedTemplate || !templateFormData) return;
+    try {
+      setIsSavingTemplate(true);
+      setTemplatesError(null);
+      const updated = await updateMessageTemplate(selectedTemplate.id, {
+        name: templateFormData.name,
+        channel: templateFormData.channel,
+        content: templateFormData.content,
+      });
+      setTemplates(templates.map(t => (t.id === selectedTemplate.id ? updated : t)));
+    } catch (error) {
+      console.error('Failed to update template', error);
+      setTemplatesError('Falha ao atualizar template.');
+    } finally {
+      setIsSavingTemplate(false);
+    }
   };
 
   return (
@@ -554,6 +702,13 @@ const Configuracoes = () => {
           className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'personalizacao' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Personalização
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => setTab('permissoes')}
+          className={`py-4 px-1 font-medium text-sm rounded-none ${tab === 'permissoes' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          Permissões
         </Button>
       </div>
 
@@ -821,100 +976,141 @@ const Configuracoes = () => {
         )}
 
         {tab === 'mensagens' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-text">Templates</h3>
-                <Button size="sm" variant="ghost" onClick={handleAddTemplate}>Novo</Button>
+          <div className="space-y-4">
+            {templatesError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{templatesError}</p>
               </div>
-              <div className="bg-card rounded-xl shadow-md border border-border divide-y divide-border">
-                {templates.map(template => (
-                  <button
-                    key={template.id}
-                    type="button"
-                    onClick={() => setSelectedTemplateId(template.id)}
-                    className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between ${
-                      selectedTemplateId === template.id ? 'bg-background' : 'hover:bg-background'
-                    }`}
-                  >
-                    <span className="flex-1 truncate">{template.name}</span>
-                    <span className="ml-2 text-xs uppercase text-text-muted">{template.channel}</span>
-                    <button
-                      type="button"
-                      className="ml-2 text-xs text-text-muted hover:text-red-500"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveTemplate(template.id);
-                      }}
+            )}
+
+            {isLoadingTemplates ? (
+              <p className="text-text-muted">Carregando templates...</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-1 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-text">Templates</h3>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleAddTemplate}
+                      disabled={isSavingTemplate}
                     >
-                      Excluir
-                    </button>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="md:col-span-2 space-y-4">
-              {selectedTemplate && (
-                <div className="bg-card rounded-xl shadow-md border border-border p-4 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-text">Nome do template</label>
-                      <input
-                        type="text"
-                        value={selectedTemplate.name}
-                        onChange={(e) => handleUpdateTemplate({ name: e.target.value })}
-                        className="mt-1 block w-full px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-text">Canal</label>
-                      <select
-                        value={selectedTemplate.channel}
-                        onChange={(e) => handleUpdateTemplate({ channel: e.target.value as MessageTemplate['channel'] })}
-                        className="mt-1 block w-full px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="sms">SMS</option>
-                        <option value="email">Email</option>
-                      </select>
-                    </div>
+                      Novo
+                    </Button>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-text mb-2">Mensagem</label>
-                    <textarea
-                      rows={5}
-                      value={selectedTemplate.content}
-                      onChange={(e) => handleUpdateTemplate({ content: e.target.value })}
-                      className="mt-1 block w-full px-3 py-2 text-base border border-border focus:outline-none focus:ring-primary focus:border-primary rounded-md bg-card text-text"
-                    />
-                    <p className="mt-2 text-xs text-text-muted">
-                      Monte a mensagem como ela será enviada. Você pode inserir informações dinâmicas usando os botões de variáveis abaixo.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-text">Variáveis disponíveis</p>
-                    <div className="flex flex-wrap gap-2">
-                      {AVAILABLE_VARIABLES.map(variable => (
+                  <div className="bg-card rounded-xl shadow-md border border-border divide-y divide-border">
+                    {templates.length === 0 ? (
+                      <div className="p-4 text-center text-text-muted text-sm">
+                        Nenhum template cadastrado. Clique em "Novo" para criar um.
+                      </div>
+                    ) : (
+                      templates.map(template => (
                         <button
-                          key={variable.key}
+                          key={template.id}
                           type="button"
-                          className="px-3 py-1 rounded-full bg-background text-text text-xs border border-border hover:bg-border/40"
-                          onClick={() => handleInsertVariable(variable.key)}
+                          onClick={() => setSelectedTemplateId(template.id)}
+                          className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between ${selectedTemplateId === template.id ? 'bg-background' : 'hover:bg-background'
+                            }`}
                         >
-                          {variable.label}
+                          <span className="flex-1 truncate">{template.name}</span>
+                          <span className="ml-2 text-xs uppercase text-text-muted">{template.channel}</span>
+                          <button
+                            type="button"
+                            className="ml-2 text-xs text-text-muted hover:text-red-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveTemplate(template.id);
+                            }}
+                            disabled={isSavingTemplate}
+                          >
+                            Excluir
+                          </button>
                         </button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-text-muted">
-                      Ao clicar em uma variável, ela será adicionada na mensagem no formato {'{{variavel}}'}. O gestor não precisa decorar o código da variável.
-                    </p>
+                      ))
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
+
+                <div className="md:col-span-2 space-y-4">
+                  {selectedTemplate && templateFormData ? (
+                    <div className="bg-card rounded-xl shadow-md border border-border p-4 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-text">Nome do template</label>
+                          <input
+                            type="text"
+                            value={templateFormData.name}
+                            onChange={(e) => setTemplateFormData(prev => prev ? { ...prev, name: e.target.value } : null)}
+                            className="mt-1 block w-full px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-text">Canal</label>
+                          <select
+                            value={templateFormData.channel}
+                            onChange={(e) => setTemplateFormData(prev => prev ? { ...prev, channel: e.target.value as MessageTemplate['channel'] } : null)}
+                            className="mt-1 block w-full px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                          >
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="sms">SMS</option>
+                            <option value="email">Email</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-text mb-2">Mensagem</label>
+                        <textarea
+                          rows={5}
+                          value={templateFormData.content}
+                          onChange={(e) => setTemplateFormData(prev => prev ? { ...prev, content: e.target.value } : null)}
+                          className="mt-1 block w-full px-3 py-2 text-base border border-border focus:outline-none focus:ring-primary focus:border-primary rounded-md bg-card text-text"
+                        />
+                        <p className="mt-2 text-xs text-text-muted">
+                          Monte a mensagem como ela será enviada. Você pode inserir informações dinâmicas usando os botões de variáveis abaixo.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-text">Variáveis disponíveis</p>
+                        <div className="flex flex-wrap gap-2">
+                          {AVAILABLE_VARIABLES.map(variable => (
+                            <button
+                              key={variable.key}
+                              type="button"
+                              className="px-3 py-1 rounded-full bg-background text-text text-xs border border-border hover:bg-border/40"
+                              onClick={() => handleInsertVariable(variable.key)}
+                            >
+                              {variable.label}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-text-muted">
+                          Ao clicar em uma variável, ela será adicionada na mensagem no formato {'{{variavel}}'}. O gestor não precisa decorar o código da variável.
+                        </p>
+                      </div>
+
+                      <div className="flex justify-end pt-3 border-t border-border">
+                        <Button
+                          type="button"
+                          onClick={handleSaveTemplate}
+                          disabled={isSavingTemplate}
+                        >
+                          {isSavingTemplate ? 'Salvando...' : 'Salvar Template'}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-card rounded-xl shadow-md border border-border p-8 text-center">
+                      <p className="text-text-muted">
+                        Selecione um template ou crie um novo para começar.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -955,22 +1151,20 @@ const Configuracoes = () => {
                   <button
                     type="button"
                     onClick={() => setEditingTheme('light')}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                      editingTheme === 'light'
+                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${editingTheme === 'light'
                         ? 'bg-primary text-white'
                         : 'text-text-muted hover:text-text'
-                    }`}
+                      }`}
                   >
                     Modo claro
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditingTheme('dark')}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                      editingTheme === 'dark'
+                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${editingTheme === 'dark'
                         ? 'bg-primary text-white'
                         : 'text-text-muted hover:text-text'
-                    }`}
+                      }`}
                   >
                     Modo escuro
                   </button>
@@ -1060,6 +1254,233 @@ const Configuracoes = () => {
         )}
 
         {tab === 'integracoes' && <div>Conteúdo da aba Integrações</div>}
+
+        {tab === 'permissoes' && <PermissionsTab />}
+      </div>
+    </div>
+  );
+};
+
+const PermissionsTab = () => {
+  const { user } = useAuth();
+  const { permissions, refreshPermissions } = usePermissions();
+  const [localPermissions, setLocalPermissions] = useState<Record<UserRole, string[]>>(permissions);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLocalPermissions(permissions);
+  }, [permissions]);
+
+  if (!isAdminLike(user)) {
+    return (
+      <div className="p-8 text-center text-text-muted">
+        Apenas administradores podem configurar permissões.
+      </div>
+    );
+  }
+
+  const resources: Array<{ key: string; label: string }> = [
+    { key: 'agenda', label: 'Agenda' },
+    { key: 'comandas', label: 'Comandas' },
+    { key: 'clientes', label: 'Clientes' },
+    { key: 'servicos', label: 'Serviços' },
+    { key: 'produtos', label: 'Produtos' },
+    { key: 'colaboradores', label: 'Colaboradores' },
+    { key: 'financeiro', label: 'Financeiro' },
+    { key: 'configuracoes', label: 'Configurações' },
+    { key: 'auditoria', label: 'Auditoria' },
+    { key: 'notificacoes', label: 'Notificações' },
+  ];
+
+  const specificPermissions: Array<{ key: string; label: string }> = [
+    { key: 'editarPerfilProfissionais', label: 'Pode editar perfil dos profissionais' },
+    { key: 'podeEditarProduto', label: 'Pode editar produto' },
+    { key: 'podeEditarServico', label: 'Pode editar serviço' },
+  ];
+
+  const roles: Array<{ key: UserRole; label: string }> = [
+    { key: 'admin', label: 'Administrador' },
+    { key: 'manager', label: 'Gerente' },
+    { key: 'receptionist', label: 'Recepcionista' },
+    { key: 'professional', label: 'Profissional' },
+    { key: 'accountant', label: 'Contador' },
+  ];
+
+  const togglePermission = (role: UserRole, permissionKey: string) => {
+    setLocalPermissions((prev) => {
+      const rolePerms = prev[role] || [];
+      const hasPermission = rolePerms.includes(permissionKey);
+
+      return {
+        ...prev,
+        [role]: hasPermission
+          ? rolePerms.filter((p) => p !== permissionKey)
+          : [...rolePerms, permissionKey],
+      };
+    });
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      await updateSalonSettings({ rolePermissions: localPermissions });
+      await refreshPermissions();
+    } catch (err: any) {
+      console.error('Error saving permissions', err);
+      setError(err.message || 'Erro ao salvar permissões');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReset = () => {
+    const defaultPerms: Record<UserRole, string[]> = {
+      admin: [
+        'agenda',
+        'comandas',
+        'clientes',
+        'servicos',
+        'produtos',
+        'colaboradores',
+        'financeiro',
+        'configuracoes',
+        'auditoria',
+        'notificacoes',
+        'editarPerfilProfissionais',
+        'podeEditarProduto',
+        'podeEditarServico',
+      ],
+      manager: [
+        'servicos',
+        'produtos',
+        'colaboradores',
+        'financeiro',
+        'configuracoes',
+        'auditoria',
+        'podeEditarProduto',
+        'podeEditarServico',
+      ],
+      receptionist: [
+        'agenda',
+        'comandas',
+        'clientes',
+        'servicos',
+        'produtos',
+        'colaboradores',
+        'notificacoes',
+      ],
+      professional: [
+        'agenda',
+        'comandas',
+        'clientes',
+        'notificacoes',
+      ],
+      accountant: [
+        'financeiro',
+      ],
+    };
+    setLocalPermissions(defaultPerms);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-text mb-2">Permissões por Role</h3>
+        <p className="text-sm text-text-muted mb-4">
+          Configure quais recursos cada tipo de usuário pode acessar. Administradores sempre têm acesso total.
+        </p>
+      </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      <div className="bg-card rounded-xl shadow-md border border-border overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-sidebar border-b border-border">
+              <th className="p-4 text-left text-sm font-semibold text-text">Recurso</th>
+              {roles.map((role) => (
+                <th key={role.key} className="p-4 text-center text-sm font-semibold text-text">
+                  {role.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {resources.map((resource) => (
+              <tr key={resource.key} className="border-b border-border hover:bg-background transition-colors">
+                <td className="p-4 text-text">{resource.label}</td>
+                {roles.map((role) => {
+                  const hasPermission = localPermissions[role.key]?.includes(resource.key) ?? false;
+                  const isAdmin = role.key === 'admin';
+                  return (
+                    <td key={role.key} className="p-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isAdmin || hasPermission}
+                        disabled={isAdmin}
+                        onChange={() => !isAdmin && togglePermission(role.key, resource.key)}
+                        className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="bg-card rounded-xl shadow-md border border-border p-4">
+        <h4 className="text-sm font-semibold text-text mb-3">Permissões Específicas</h4>
+        <table className="w-full">
+          <thead>
+            <tr className="bg-sidebar border-b border-border">
+              <th className="p-4 text-left text-sm font-semibold text-text">Permissão</th>
+              {roles.map((role) => (
+                <th key={role.key} className="p-4 text-center text-sm font-semibold text-text">
+                  {role.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {specificPermissions.map((perm) => (
+              <tr key={perm.key} className="border-b border-border hover:bg-background transition-colors">
+                <td className="p-4 text-text">{perm.label}</td>
+                {roles.map((role) => {
+                  const hasPermission = localPermissions[role.key]?.includes(perm.key) ?? false;
+                  const isAdmin = role.key === 'admin';
+                  return (
+                    <td key={role.key} className="p-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isAdmin || hasPermission}
+                        disabled={isAdmin}
+                        onChange={() => !isAdmin && togglePermission(role.key, perm.key)}
+                        className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex justify-end space-x-2">
+        <Button variant="ghost" onClick={handleReset} disabled={isSaving}>
+          Restaurar padrão
+        </Button>
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? 'Salvando...' : 'Salvar permissões'}
+        </Button>
       </div>
     </div>
   );

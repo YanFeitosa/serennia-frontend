@@ -148,7 +148,7 @@ const PagamentoComanda = () => {
       if (updated.status === 'paid' && updated.appointmentId) {
         try {
           const appt = await getAppointmentById(updated.appointmentId);
-          if (appt.status === 'in_progress') {
+          if (appt.status === 'in_progress' || appt.status === 'not_paid') {
             await updateAppointmentStatus(updated.appointmentId, 'completed');
           }
         } catch (err) {
@@ -156,7 +156,7 @@ const PagamentoComanda = () => {
           // Erro aqui não deve bloquear o fluxo de pagamento
         }
       }
-      navigate('/comandas');
+      navigate('/app/comandas');
     } catch (err) {
       console.error('Error confirming payment', err);
       const message = err instanceof Error ? err.message : 'Erro ao confirmar pagamento.';
@@ -309,7 +309,7 @@ const PagamentoComanda = () => {
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="ghost" onClick={() => navigate('/comandas')}>
+            <Button type="button" variant="ghost" onClick={() => navigate('/app/comandas')}>
               Cancelar
             </Button>
             <Button type="button" onClick={handleConfirm} disabled={isSubmitting}>

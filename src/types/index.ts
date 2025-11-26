@@ -1,16 +1,25 @@
 // src/types/index.ts
 
 // 1. Authentication and Users
-export type UserRole = 'admin' | 'manager' | 'receptionist' | 'professional';
+export type PlatformRole = 'super_admin' | 'tenant_admin';
+export type TenantRole = 'manager' | 'receptionist' | 'professional' | 'accountant';
+export type SalonStatus = 'pending' | 'active' | 'suspended';
+
+// UserRole includes admin for permissions (admin = full access)
+// Legacy: 'admin' is treated as having all permissions
+export type UserRole = TenantRole | 'admin' | 'super_admin' | 'tenant_admin';
 
 export interface User {
   id: string;
-  salonId: string;
+  salonId: string | null; // null for super_admin
   name: string;
   email: string;
   phone?: string;
-  role: UserRole;
+  platformRole?: PlatformRole; // 'super_admin' | 'tenant_admin' | null (tenant user)
+  tenantRole?: TenantRole; // null for super_admin and tenant_admin
+  role?: UserRole; // Legacy field for backward compatibility
   avatarUrl?: string;
+  salonName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -33,12 +42,29 @@ export interface Collaborator {
   salonId: string;
   userId?: string;
   name: string;
-  role: UserRole;
+  role: TenantRole; // Collaborators can only have tenant roles
   status: 'active' | 'inactive';
   phone?: string;
   email?: string;
+  cpf?: string;
+  avatarUrl?: string;
   commissionRate: number; // Default commission rate
   serviceCategories?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Salon {
+  id: string;
+  name: string;
+  document?: string;
+  tenantAdminId?: string;
+  status: SalonStatus;
+  defaultCommissionRate?: number;
+  commissionMode?: 'service' | 'professional';
+  fixedCostsMonthly?: number;
+  variableCostRate?: number;
+  rolePermissions?: Record<string, string[]>;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -173,7 +199,21 @@ export interface AuditLog {
   userAgent?: string;
 }
 
-// 6. UI-specific types
+// 6. Expenses
+
+export type ExpenseType = 'FIXED' | 'VARIABLE';
+
+export interface Expense {
+  id: string;
+  salonId: string;
+  name: string;
+  amount: number;
+  type: ExpenseType;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 7. UI-specific types
 
 export interface Notification {
   id: string;

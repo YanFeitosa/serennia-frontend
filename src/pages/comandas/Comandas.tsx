@@ -240,7 +240,7 @@ const Comandas = () => {
                   value={newOrderClientId}
                   onChange={(value: string) => {
                     if (value === '__add_client__') {
-                      navigate('/clientes/novo', { state: { from: 'comandas' } });
+                      navigate('/app/clientes/novo', { state: { from: 'comandas' } });
                       return;
                     }
                     setNewOrderClientId(value);

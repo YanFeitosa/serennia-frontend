@@ -1,16 +1,18 @@
 // src/pages/Login.tsx
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { loginSchema, type LoginSchema } from '../lib/schemas';
 import { Mail, Lock } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { useAuth, findTestUserByEmail, getDefaultPathForRole } from '../contexts/AuthContext';
+import { useAuth, getDefaultPathForRole } from '../contexts/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { loginAs } = useAuth();
+  const { login: loginUser } = useAuth();
+  const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -19,19 +21,31 @@ const LoginPage = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data: LoginSchema) => {
-    const user = findTestUserByEmail(data.email);
-    if (!user) {
-      alert(
-        'Usuário não encontrado. Use um dos e-mails de teste:\n- admin@serenna.com\n- manager@serenna.com\n- reception@serenna.com',
-      );
-      return;
-    }
+  const onSubmit = async (data: LoginSchema) => {
+    try {
+      setError(null);
 
-    loginAs(user);
-    const from = (location.state as any)?.from?.pathname as string | undefined;
-    const target = from || getDefaultPathForRole(user.role);
-    navigate(target, { replace: true });
+      // Get salon_id from URL query params
+      const searchParams = new URLSearchParams(location.search);
+      const salonId = searchParams.get('salon_id');
+
+      await loginUser(data.email, data.password, salonId || undefined);
+      const from = (location.state as any)?.from?.pathname as string | undefined;
+      // Get user role from auth context after login
+      const authData = window.localStorage.getItem('serenna-auth');
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        const user = parsed.user;
+        if (user) {
+          const target = from || getDefaultPathForRole(user.role as any);
+          navigate(target, { replace: true });
+          return;
+        }
+      }
+      navigate('/app/agenda', { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+    }
   };
 
   return (
@@ -71,12 +85,11 @@ const LoginPage = () => {
             </a>
           </div>
 
-          <div className="text-xs text-text-muted space-y-1">
-            <p>Use um dos e-mails de teste para entrar:</p>
-            <p>admin@serenna.com — Administrador</p>
-            <p>manager@serenna.com — Gerente</p>
-            <p>reception@serenna.com — Recepcionista</p>
-          </div>
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+              {error}
+            </div>
+          )}
 
           <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
             {isSubmitting ? 'Entrando...' : 'Entrar'}

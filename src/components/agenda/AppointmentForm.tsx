@@ -1,12 +1,10 @@
 // src/components/agenda/AppointmentForm.tsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { appointmentSchema, type AppointmentSchema } from '../../lib/schemas';
-import type { Appointment } from '../../types';
-import { mockClients } from '../../data/clients';
-import { mockCollaborators } from '../../data/collaborators';
-import { mockServices } from '../../data/services';
+import type { Appointment, Client, Collaborator, Service } from '../../types';
+import { getClients, getCollaborators, getServices, createAppointment, updateAppointment } from '../../lib/api';
 import { Button } from '../ui/Button';
 
 const toDateTimeLocal = (dateStr: string | Date): string => {
@@ -32,9 +30,16 @@ const toDateTimeLocal = (dateStr: string | Date): string => {
 interface AppointmentFormProps {
   onClose: () => void;
   appointment?: Appointment | null;
+  onSuccess?: () => void;
 }
 
-const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
+const AppointmentForm = ({ onClose, appointment, onSuccess }: AppointmentFormProps) => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -50,14 +55,43 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
       serviceIds: [],
       notes: '',
       start: toDateTimeLocal(new Date()),
+      origin: 'reception',
     },
   });
 
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const [clientsData, collaboratorsData, servicesData] = await Promise.all([
+          getClients(),
+          getCollaborators(),
+          getServices(),
+        ]);
+        setClients(clientsData);
+        setCollaborators(collaboratorsData);
+        setServices(servicesData);
+      } catch (err: any) {
+        console.error('Error loading form data', err);
+        setError(err.message || 'Erro ao carregar dados');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  useEffect(() => {
     if (appointment) {
       reset({
-        ...appointment,
+        clientId: appointment.clientId,
+        collaboratorId: appointment.collaboratorId,
+        serviceIds: appointment.serviceIds,
+        notes: appointment.notes || '',
         start: toDateTimeLocal(appointment.start),
+        origin: appointment.origin,
       });
     } else {
       reset({
@@ -66,15 +100,17 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
         serviceIds: [],
         notes: '',
         start: toDateTimeLocal(new Date()),
+        origin: 'reception',
       });
     }
   }, [appointment, reset]);
 
   const selectedCollaboratorId = watch('collaboratorId');
-  const selectedCollaborator = mockCollaborators.find(c => c.id === selectedCollaboratorId);
+  const selectedCollaborator = collaborators.find(c => c.id === selectedCollaboratorId);
 
   const availableServices = selectedCollaborator
-    ? mockServices.filter(service => {
+    ? services.filter(service => {
+        if (!service.isActive) return false;
         const categories = selectedCollaborator.serviceCategories;
         if (!categories || categories.length === 0) return true;
         if (!service.category) return true;
@@ -87,9 +123,34 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
     setValue('serviceIds', []);
   }, [selectedCollaboratorId, setValue]);
 
-  const onSubmit: SubmitHandler<AppointmentSchema> = (data) => {
-    console.log('Appointment data:', data);
-    onClose();
+  const onSubmit: SubmitHandler<AppointmentSchema> = async (data) => {
+    try {
+      setError(null);
+      if (appointment) {
+        await updateAppointment(appointment.id, {
+          clientId: data.clientId,
+          collaboratorId: data.collaboratorId,
+          serviceIds: data.serviceIds,
+          start: data.start,
+          notes: data.notes,
+          origin: data.origin,
+        });
+      } else {
+        await createAppointment({
+          clientId: data.clientId,
+          collaboratorId: data.collaboratorId,
+          serviceIds: data.serviceIds,
+          start: data.start,
+          notes: data.notes,
+          origin: data.origin,
+        });
+      }
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err: any) {
+      console.error('Error saving appointment', err);
+      setError(err.message || 'Erro ao salvar agendamento');
+    }
   };
 
   const handleCancelAppointment = () => {
@@ -98,8 +159,29 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
     }
   };
 
+  if (isLoading) {
+    return <div className="p-4 text-text-muted">Carregando...</div>;
+  }
+
+  if (error && !isSubmitting) {
+    return (
+      <div className="p-4">
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 mb-4">
+          {error}
+        </div>
+        <Button type="button" variant="ghost" onClick={onClose}>Fechar</Button>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          {error}
+        </div>
+      )}
+      
       <div>
         <label htmlFor="clientId" className="block text-sm font-medium text-gray-700">Cliente</label>
         <select 
@@ -108,7 +190,7 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
           className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
         >
           <option value="">Selecione um cliente</option>
-          {mockClients.map(client => (
+          {clients.map(client => (
             <option key={client.id} value={client.id}>{client.name}</option>
           ))}
         </select>
@@ -123,7 +205,7 @@ const AppointmentForm = ({ onClose, appointment }: AppointmentFormProps) => {
           className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
         >
           <option value="">Selecione um profissional</option>
-          {mockCollaborators
+          {collaborators
             .filter(c => c.status === 'active' && c.role === 'professional')
             .map(collab => (
               <option key={collab.id} value={collab.id}>{collab.name}</option>

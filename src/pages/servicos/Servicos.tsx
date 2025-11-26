@@ -4,6 +4,7 @@ import { Plus, Clock, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { isAdminLike, getEffectiveRole } from '../../lib/utils';
 import type { Service } from '../../types';
 import { getServices } from '../../lib/api';
 
@@ -14,8 +15,8 @@ const Servicos = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const role = user?.role ?? 'admin';
-  const canEdit = role === 'admin' || role === 'manager';
+  const role = getEffectiveRole(user);
+  const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
 
   useEffect(() => {
     let isMounted = true;
@@ -55,7 +56,7 @@ const Servicos = () => {
             <p className="text-text-muted mt-1">Gerencie os serviços oferecidos pelo salão</p>
           </div>
           {canEdit && (
-            <Button onClick={() => navigate('/servicos/novo')}>
+            <Button onClick={() => navigate('/app/servicos/novo')}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Serviço
             </Button>
@@ -125,7 +126,7 @@ const Servicos = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => navigate(`/servicos/${service.id}`)}
+                        onClick={() => navigate(`/app/servicos/${service.id}`)}
                       >
                         <Edit2 className="w-4 h-4 mr-1" />
                         Editar

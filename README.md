@@ -1,73 +1,119 @@
-# React + TypeScript + Vite
+# Serenna Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de gestão para salões de beleza - Interface do usuário.
 
-Currently, two official plugins are available:
+## 🛠️ Tecnologias
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** com TypeScript
+- **Vite** para build e desenvolvimento
+- **Tailwind CSS** para estilização
+- **React Router v6** para navegação
+- **React Hook Form + Zod** para validação de formulários
+- **Recharts** para gráficos
+- **Supabase** para autenticação
 
-## React Compiler
+## 📋 Pré-requisitos
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js >= 18
+- npm ou pnpm
+- Backend Serenna rodando (ver [serenna-backend](../serenna-backend/))
 
-## Expanding the ESLint configuration
+## 🚀 Instalação
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. **Clone o repositório e entre na pasta:**
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd serenna-frontend
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. **Instale as dependências:**
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+3. **Configure as variáveis de ambiente:**
+
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+# URL da API do backend
+VITE_API_URL=http://localhost:4000
+
+# Supabase
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-anon-aqui
+```
+
+4. **Inicie o servidor de desenvolvimento:**
+
+```bash
+npm run dev
+```
+
+O frontend estará disponível em `http://localhost:5173`.
+
+## 📜 Scripts Disponíveis
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Inicia o servidor de desenvolvimento |
+| `npm run build` | Gera build de produção |
+| `npm run preview` | Visualiza build de produção localmente |
+| `npm run lint` | Executa ESLint |
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── components/       # Componentes reutilizáveis
+│   ├── ui/          # Componentes base (Button, Input, etc.)
+│   ├── agenda/      # Componentes de agenda
+│   ├── comandas/    # Componentes de comandas
+│   └── landing/     # Componentes da landing page
+├── contexts/        # Contextos React (Auth, Theme, Permissions)
+├── lib/             # Utilitários e APIs
+│   └── api/         # Funções de chamada à API
+├── pages/           # Páginas da aplicação
+│   ├── agenda/
+│   ├── clientes/
+│   ├── colaboradores/
+│   ├── comandas/
+│   ├── configuracoes/
+│   ├── financeiro/
+│   ├── produtos/
+│   ├── servicos/
+│   ├── totem/
+│   └── user/
+├── types/           # Tipos TypeScript
+└── router.tsx       # Configuração de rotas
+```
+
+## 🎨 Funcionalidades
+
+- **Agenda**: Visualização e gerenciamento de agendamentos
+- **Clientes**: Cadastro e histórico de clientes
+- **Colaboradores**: Gestão de profissionais com CPF e comissões
+- **Comandas**: Atendimentos e pagamentos
+- **Financeiro**: Dashboard com receitas, custos e ponto de equilíbrio
+- **Serviços e Produtos**: Catálogo completo
+- **Totem**: Interface para autoatendimento
+- **Configurações**: Personalização de cores, templates de mensagens e permissões
+
+## 🔐 Autenticação
+
+A autenticação é feita via Supabase Auth. Os usuários são criados pelo backend e recebem um email de boas-vindas com link para definir a senha.
+
+## 🌐 Deploy
+
+Para produção, gere o build e sirva os arquivos estáticos:
+
+```bash
+npm run build
+```
+
+Os arquivos estarão na pasta `dist/`.
+
+## 📄 Licença
+
+Projeto proprietário - Todos os direitos reservados.

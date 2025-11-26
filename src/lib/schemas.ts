@@ -17,3 +17,17 @@ export const appointmentSchema = z.object({
 });
 
 export type AppointmentSchema = z.infer<typeof appointmentSchema>;
+
+export const registerSchema = z.object({
+  salonName: z.string().min(2, { message: 'Nome do salão deve ter no mínimo 2 caracteres' }),
+  name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres' }),
+  email: z.string().email({ message: 'E-mail inválido' }),
+  phone: z.string().min(10, { message: 'Telefone inválido' }),
+  password: z.string().min(8, { message: 'A senha deve ter no mínimo 8 caracteres' }),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'As senhas não coincidem',
+  path: ['confirmPassword'],
+});
+
+export type RegisterSchema = z.infer<typeof registerSchema>;

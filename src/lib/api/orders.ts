@@ -90,7 +90,7 @@ export async function payOrder(id: string): Promise<Order> {
 }
 
 export async function ensureOrderForAppointment(appointmentId: string): Promise<Order> {
-  return request<Order>(`/orders/appointments/${appointmentId}/order/ensure`, {
+  return request<Order>(`/appointments/${appointmentId}/order/ensure`, {
     method: 'POST',
   });
 }

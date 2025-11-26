@@ -20,6 +20,13 @@ const toDateTimeLocal = (date: Date): string => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
+const getDateKey = (d: Date) => {
+	const year = d.getFullYear();
+	const month = (d.getMonth() + 1).toString().padStart(2, '0');
+	const day = d.getDate().toString().padStart(2, '0');
+	return `${year}-${month}-${day}`;
+};
+
 const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -85,7 +92,7 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
     loadData();
   }, [date, refreshToken]);
 
-  const selectedDateKey = date.toISOString().slice(0, 10);
+  const selectedDateKey = getDateKey(date);
   const timeSlots = Array.from({ length: TOTAL_SLOTS }, (_, index) => index);
   const now = new Date();
 
@@ -161,7 +168,7 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
               const appointmentsForCollab = appointments.filter(
                 appt =>
                   appt.collaboratorId === collab.id &&
-                  appt.start.slice(0, 10) === selectedDateKey &&
+                  getDateKey(new Date(appt.start)) === selectedDateKey &&
                   appt.status !== 'canceled' &&
                   appt.status !== 'no_show',
               );
@@ -208,7 +215,7 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
                         className="absolute left-0 w-full px-1 group z-0"
                         style={{ top: `${top}px`, height: `${SLOT_HEIGHT}px` }}
                         onClick={() => {
-                          navigate(`/agenda/novo?start=${encodeURIComponent(startStr)}&collaboratorId=${encodeURIComponent(collab.id)}`);
+                          navigate(`/app/agenda/novo?start=${encodeURIComponent(startStr)}&collaboratorId=${encodeURIComponent(collab.id)}`);
                         }}
                       >
                         <div className="h-full w-full flex items-center justify-center text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-150">

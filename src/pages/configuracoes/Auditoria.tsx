@@ -1,12 +1,11 @@
 // src/pages/Auditoria.tsx
-import { useState } from 'react';
-import { mockAuditLogs } from '../../data/audit';
-import { mockUsers } from '../../data/users';
+import { useState, useEffect } from 'react';
+import { getAuditLogs, getCollaborators } from '../../lib/api';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import DatePickerPlain from '../../components/ui/DatePickerPlain';
 import AuditLogDetails from '../../components/auditoria/AuditLogDetails';
-import type { AuditLog } from '../../types';
+import type { AuditLog, Collaborator } from '../../types';
 
 const Auditoria = () => {
   const [showFilters, setShowFilters] = useState(false);
@@ -14,6 +13,10 @@ const Auditoria = () => {
   const [selectedAction, setSelectedAction] = useState<AuditLog['action'] | ''>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const getActionVariant = (action: AuditLog['action']) => {
     switch (action) {
@@ -31,27 +34,36 @@ const Auditoria = () => {
     setEndDate('');
   };
 
-  const startDateObj = startDate ? new Date(startDate + 'T00:00:00') : undefined;
-  const endDateObj = endDate ? new Date(endDate + 'T00:00:00') : undefined;
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const [logsData, collaboratorsData] = await Promise.all([
+          getAuditLogs({
+            dateFrom: startDate || undefined,
+            dateTo: endDate || undefined,
+            userId: selectedUserId || undefined,
+            tableName: undefined,
+          }),
+          getCollaborators(),
+        ]);
+        let filtered = logsData;
+        if (selectedAction) {
+          filtered = filtered.filter(log => log.action === selectedAction);
+        }
+        setLogs(filtered);
+        setCollaborators(collaboratorsData);
+      } catch (err: any) {
+        console.error('Error loading audit logs', err);
+        setError(err.message || 'Erro ao carregar logs de auditoria');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const filteredLogs = mockAuditLogs.filter(log => {
-    if (selectedUserId && log.userId !== selectedUserId) return false;
-    if (selectedAction && log.action !== selectedAction) return false;
-
-    const logTime = new Date(log.timestamp).getTime();
-
-    if (startDate) {
-      const start = new Date(startDate + 'T00:00:00').getTime();
-      if (logTime < start) return false;
-    }
-
-    if (endDate) {
-      const end = new Date(endDate + 'T23:59:59.999').getTime();
-      if (logTime > end) return false;
-    }
-
-    return true;
-  });
+    loadData();
+  }, [startDate, endDate, selectedUserId, selectedAction]);
 
   return (
     <div className="space-y-4">
@@ -82,9 +94,9 @@ const Auditoria = () => {
                 className="mt-1 block w-full px-3 py-2 border border-border rounded-md bg-card text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Todos</option>
-                {mockUsers.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.name}
+                {collaborators.map(collab => (
+                  <option key={collab.id} value={collab.id}>
+                    {collab.name}
                   </option>
                 ))}
               </select>
@@ -108,7 +120,7 @@ const Auditoria = () => {
               <div>
                 <label className="block text-sm font-medium text-text mb-1">De</label>
                 <DatePickerPlain
-                  date={startDateObj}
+                  date={startDate ? new Date(startDate) : undefined}
                   setDate={(date) =>
                     setStartDate(date ? date.toISOString().slice(0, 10) : '')
                   }
@@ -119,7 +131,7 @@ const Auditoria = () => {
               <div>
                 <label className="block text-sm font-medium text-text mb-1">Até</label>
                 <DatePickerPlain
-                  date={endDateObj}
+                  date={endDate ? new Date(endDate) : undefined}
                   setDate={(date) =>
                     setEndDate(date ? date.toISOString().slice(0, 10) : '')
                   }
@@ -138,35 +150,51 @@ const Auditoria = () => {
         </div>
       )}
 
-      <div className="bg-card rounded-xl shadow-md border border-border">
-        <table className="w-full text-left">
-          <thead className="border-b border-border">
-            <tr>
-              <th className="p-4 text-text">Usuário</th>
-              <th className="p-4 text-text">Ação</th>
-              <th className="p-4 text-text">Item</th>
-              <th className="p-4 text-text">Data</th>
-              <th className="p-4 text-text">Detalhes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredLogs.map(log => {
-              const user = mockUsers.find(u => u.id === log.userId);
-              return (
-                <tr key={log.id} className="border-b border-border hover:bg-background transition-colors">
-                  <td className="p-4 text-text">{user?.name || 'Sistema'}</td>
-                  <td className="p-4">
-                    <Badge variant={getActionVariant(log.action)}>{log.action}</Badge>
+      {isLoading && (
+        <div className="text-center p-8 text-text-muted">Carregando logs de auditoria...</div>
+      )}
+      {error && (
+        <div className="text-center p-8 text-red-600">{error}</div>
+      )}
+      {!isLoading && !error && (
+        <div className="bg-card rounded-xl shadow-md border border-border">
+          <table className="w-full text-left">
+            <thead className="border-b border-border">
+              <tr>
+                <th className="p-4 text-text">Usuário</th>
+                <th className="p-4 text-text">Ação</th>
+                <th className="p-4 text-text">Item</th>
+                <th className="p-4 text-text">Data</th>
+                <th className="p-4 text-text">Detalhes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-text-muted">
+                    Nenhum log de auditoria encontrado
                   </td>
-                  <td className="p-4 capitalize text-text">{log.tableName.slice(0, -1)} #{log.recordId.slice(0, 6)}</td>
-                  <td className="p-4 text-text">{new Date(log.timestamp).toLocaleString('pt-BR')}</td>
-                  <td className="p-4"><AuditLogDetails log={log} /></td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                logs.map(log => {
+                  const collaborator = collaborators.find(c => c.id === log.userId);
+                  return (
+                    <tr key={log.id} className="border-b border-border hover:bg-background transition-colors">
+                      <td className="p-4 text-text">{collaborator?.name || log.userId.slice(0, 8)}</td>
+                      <td className="p-4">
+                        <Badge variant={getActionVariant(log.action)}>{log.action}</Badge>
+                      </td>
+                      <td className="p-4 capitalize text-text">{log.tableName.slice(0, -1)} #{log.recordId.slice(0, 6)}</td>
+                      <td className="p-4 text-text">{new Date(log.timestamp).toLocaleString('pt-BR')}</td>
+                      <td className="p-4"><AuditLogDetails log={log} /></td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,12 +1,15 @@
 // src/pages/Financeiro.tsx
-import { useState } from 'react';
-import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Info, Plus, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { mockOrders } from '../../data/orders';
+import { getOrders, getSalonSettings, getExpenses, createExpense, deleteExpense } from '../../lib/api';
 import { Badge } from '../../components/ui/Badge';
 import DatePickerPlain from '../../components/ui/DatePickerPlain';
 import { Button } from '../../components/ui/Button';
-import type { Order, OrderItem } from '../../types';
+import { Input } from '../../components/ui/Input';
+import type { Order, OrderItem, Expense, ExpenseType } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { isAdminLike } from '../../lib/utils';
 
 type ChartResolution = 'auto' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -37,19 +40,55 @@ const getStatusVariant = (status: Order['status']) => {
 };
 
 const Financeiro = () => {
+  const { user } = useAuth();
+  const canEditCosts = isAdminLike(user) || user?.tenantRole === 'manager' || user?.tenantRole === 'accountant';
+
   const [startDate, setStartDate] = useState<Date | undefined>(() => {
     const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return new Date(today.getFullYear(), today.getMonth(), 1); // First day of month
   });
   const [endDate, setEndDate] = useState<Date | undefined>(() => {
     const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of month
   });
   const [chartResolution, setChartResolution] = useState<ChartResolution>('auto');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filtrar apenas comandas pagas
-  const filteredOrders = mockOrders.filter((order: Order) => {
-    // Primeiro filtro: apenas comandas pagas
+  // Expenses state
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expensesError, setExpensesError] = useState<string | null>(null);
+  const [newExpenseName, setNewExpenseName] = useState('');
+  const [newExpenseAmount, setNewExpenseAmount] = useState<number>(0);
+  const [newExpenseType, setNewExpenseType] = useState<ExpenseType>('FIXED');
+  const [isSavingExpense, setIsSavingExpense] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const [ordersData, , expensesData] = await Promise.all([
+          getOrders({ status: 'paid' }),
+          getSalonSettings(),
+          getExpenses(),
+        ]);
+        setOrders(ordersData);
+        setExpenses(expensesData);
+      } catch (err: any) {
+        console.error('Error loading financial data', err);
+        setError(err.message || 'Erro ao carregar dados financeiros');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Filtrar apenas comandas pagas no período
+  const filteredOrders = orders.filter((order: Order) => {
     if (order.status !== 'paid') return false;
 
     const orderDate = new Date(order.createdAt);
@@ -65,11 +104,9 @@ const Financeiro = () => {
       const endDay = normalizeDay(endDate);
 
       if (startDay.getTime() === endDay.getTime()) {
-        // Mesmo dia selecionado nos dois campos: considerar apenas esse dia
         return orderDay.getTime() === startDay.getTime();
       }
 
-      // Intervalo inclusivo: do primeiro até o último dia selecionado
       return orderDay >= startDay && orderDay <= endDay;
     }
     if (startDate) {
@@ -239,15 +276,43 @@ const Financeiro = () => {
     (acc: number, order: Order) => acc + order.finalValue,
     0,
   );
-  const totalComissao = filteredOrders.reduce(
-    (acc: number, order: Order) =>
-      acc +
-      order.items.reduce(
-        (itemAcc: number, item: OrderItem) => itemAcc + item.commission,
-        0,
-      ),
-    0,
-  );
+
+  // Cálculos financeiros
+  const diasNoPeriodo = startDate && endDate
+    ? Math.max(1, Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1)
+    : 30;
+
+  // Calculate totals from expenses
+  const fixedExpenses = expenses.filter(e => e.type === 'FIXED');
+  const variableExpenses = expenses.filter(e => e.type === 'VARIABLE');
+  const totalFixedMonthly = fixedExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalVariableMonthly = variableExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+  const gastosFixosPeriodo = totalFixedMonthly * (diasNoPeriodo / 30);
+  const custosVariaveisPeriodo = totalVariableMonthly * (diasNoPeriodo / 30);
+  const totalCustosPeriodo = gastosFixosPeriodo + custosVariaveisPeriodo;
+  
+  // Ponto de equilíbrio: considerando custos variáveis como valor fixo mensal também
+  const pontoEquilibrioReceita = totalCustosPeriodo;
+  const resultadoPeriodo = totalFaturado - totalCustosPeriodo;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-text">Financeiro</h1>
+        <p className="text-text-muted">Carregando dados financeiros...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-text">Financeiro</h1>
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -273,18 +338,19 @@ const Financeiro = () => {
             variant="ghost"
             onClick={() => {
               const today = new Date();
-              const sameDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-              setStartDate(sameDay);
-              setEndDate(sameDay);
+              const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+              const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+              setStartDate(firstDay);
+              setEndDate(lastDay);
             }}
           >
-            Limpar Filtro
+            Este Mês
           </Button>
         </div>
       </header>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
           <div className="p-3 bg-primary bg-opacity-20 rounded-full">
             <DollarSign className="w-6 h-6 text-primary" />
@@ -295,24 +361,110 @@ const Financeiro = () => {
           </div>
         </div>
         <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
-          <div className="p-3 bg-primary bg-opacity-20 rounded-full">
-            <TrendingUp className="w-6 h-6 text-primary" />
+          <div className="p-3 bg-accent bg-opacity-20 rounded-full">
+            <TrendingDown className="w-6 h-6 text-accent" />
           </div>
-          <div>
-            <p className="text-sm text-text-muted">Lucro Estimado</p>
-            <p className="text-2xl font-bold text-text">{(totalFaturado - totalComissao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-text-muted">Gastos Fixos (pro rata)</p>
+              <div className="group relative">
+                <Info className="w-3 h-3 text-text-muted cursor-help" />
+                <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-sidebar border border-border rounded-lg text-xs text-text opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  Gastos fixos são custos que não variam com a receita (aluguel, salários fixos, etc.). O valor mostrado é proporcional ao período selecionado.
+                </div>
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-text">{gastosFixosPeriodo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-xs text-text-muted mt-1">Custos fixos mensais: {totalFixedMonthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ({fixedExpenses.length} itens)</p>
           </div>
         </div>
         <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
           <div className="p-3 bg-accent bg-opacity-20 rounded-full">
             <TrendingDown className="w-6 h-6 text-accent" />
           </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-text-muted">Custos Variáveis (pro rata)</p>
+              <div className="group relative">
+                <Info className="w-3 h-3 text-text-muted cursor-help" />
+                <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-sidebar border border-border rounded-lg text-xs text-text opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  Custos variáveis são despesas mensais que variam (materiais, comissões extras, etc.). O valor mostrado é proporcional ao período selecionado.
+                </div>
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-text">{custosVariaveisPeriodo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-xs text-text-muted mt-1">Custos variáveis mensais: {totalVariableMonthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ({variableExpenses.length} itens)</p>
+          </div>
+        </div>
+        <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
+          <div className={`p-3 rounded-full ${resultadoPeriodo >= 0 ? 'bg-green-500 bg-opacity-20' : 'bg-red-500 bg-opacity-20'}`}>
+            {resultadoPeriodo >= 0 ? (
+              <TrendingUp className={`w-6 h-6 ${resultadoPeriodo >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+            ) : (
+              <TrendingDown className="w-6 h-6 text-red-500" />
+            )}
+          </div>
           <div>
-            <p className="text-sm text-text-muted">Comissões a Pagar</p>
-            <p className="text-2xl font-bold text-text">{totalComissao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-sm text-text-muted">Resultado (Lucro/Prejuízo)</p>
+            <p className={`text-2xl font-bold ${resultadoPeriodo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {resultadoPeriodo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </p>
           </div>
         </div>
       </div>
+
+      {/* Ponto de Equilíbrio Card */}
+      {pontoEquilibrioReceita !== null && (
+        <div className="bg-card p-6 rounded-xl shadow-md border border-border">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-4">
+              <div className="p-3 bg-blue-500 bg-opacity-20 rounded-full">
+                <Info className="w-6 h-6 text-blue-500" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-semibold text-text">Ponto de Equilíbrio</h3>
+                  <div className="group relative">
+                    <Info className="w-4 h-4 text-text-muted cursor-help" />
+                    <div className="absolute left-0 bottom-full mb-2 w-64 p-2 bg-sidebar border border-border rounded-lg text-xs text-text opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                      O ponto de equilíbrio é a receita mínima necessária para cobrir todos os custos (fixos + variáveis) no período. Se a receita for maior que este valor, há lucro; caso contrário, há prejuízo.
+                    </div>
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-text mb-2">
+                  {pontoEquilibrioReceita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </p>
+                <p className="text-sm text-text-muted mb-2">
+                  Receita necessária para cobrir todos os custos no período
+                </p>
+                <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${totalFaturado >= pontoEquilibrioReceita
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                  }`}>
+                  {totalFaturado >= pontoEquilibrioReceita ? (
+                    <>
+                      <AlertCircle className="w-4 h-4" />
+                      <span>Meta atingida</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-4 h-4" />
+                      <span>Meta não atingida</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-text-muted">Diferença</p>
+              <p className={`text-xl font-bold ${totalFaturado >= pontoEquilibrioReceita ? 'text-green-500' : 'text-red-500'
+                }`}>
+                {(totalFaturado - pontoEquilibrioReceita).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recent Transactions */}
       <div className="bg-card rounded-xl shadow-md border border-border">
@@ -352,21 +504,20 @@ const Financeiro = () => {
                 key === 'daily'
                   ? 'Diária'
                   : key === 'weekly'
-                  ? 'Semanal'
-                  : key === 'monthly'
-                  ? 'Mensal'
-                  : 'Anual';
+                    ? 'Semanal'
+                    : key === 'monthly'
+                      ? 'Mensal'
+                      : 'Anual';
               const isActive = chartResolution !== 'auto' && chartResolution === key;
               return (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setChartResolution(key)}
-                  className={`px-3 py-1 rounded-full transition-colors ${
-                    isActive
+                  className={`px-3 py-1 rounded-full transition-colors ${isActive
                       ? 'bg-primary text-white shadow-sm'
                       : 'text-text-muted hover:text-text'
-                  }`}
+                    }`}
                 >
                   {label}
                 </button>
@@ -386,6 +537,182 @@ const Financeiro = () => {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Expense Management Section */}
+      {canEditCosts && (
+        <div className="bg-card rounded-xl shadow-md border border-border p-6 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-text mb-2">Gestão de Custos</h3>
+            <p className="text-sm text-text-muted max-w-xl mb-4">
+              Adicione e gerencie seus custos fixos e variáveis mensais. Os valores são usados para calcular o ponto de equilíbrio e o resultado financeiro.
+            </p>
+          </div>
+
+          {expensesError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{expensesError}</p>
+            </div>
+          )}
+
+          {/* Add new expense form */}
+          <div className="bg-background p-4 rounded-lg border border-border space-y-3">
+            <h4 className="text-sm font-medium text-text">Adicionar novo custo</h4>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="md:col-span-1">
+                <label className="block text-xs font-medium text-text-muted mb-1">Nome</label>
+                <Input
+                  type="text"
+                  value={newExpenseName}
+                  onChange={(e) => setNewExpenseName(e.target.value)}
+                  placeholder="Ex: Aluguel, Energia"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-muted mb-1">Valor Mensal (R$)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={newExpenseAmount || ''}
+                  onChange={(e) => setNewExpenseAmount(Number(e.target.value) || 0)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-muted mb-1">Tipo</label>
+                <select
+                  value={newExpenseType}
+                  onChange={(e) => setNewExpenseType(e.target.value as ExpenseType)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="FIXED">Fixo</option>
+                  <option value="VARIABLE">Variável</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    if (!newExpenseName.trim() || newExpenseAmount <= 0) {
+                      setExpensesError('Preencha o nome e o valor do custo.');
+                      return;
+                    }
+                    setIsSavingExpense(true);
+                    setExpensesError(null);
+                    try {
+                      const created = await createExpense({
+                        name: newExpenseName.trim(),
+                        amount: newExpenseAmount,
+                        type: newExpenseType,
+                      });
+                      setExpenses(prev => [...prev, created]);
+                      setNewExpenseName('');
+                      setNewExpenseAmount(0);
+                    } catch (err: any) {
+                      console.error('Failed to create expense', err);
+                      setExpensesError(err.message || 'Falha ao criar custo.');
+                    } finally {
+                      setIsSavingExpense(false);
+                    }
+                  }}
+                  disabled={isSavingExpense}
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Expense lists */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Fixed Expenses */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-text flex items-center gap-2">
+                Custos Fixos
+                <Badge variant="secondary">{fixedExpenses.length}</Badge>
+              </h4>
+              <div className="bg-background rounded-lg border border-border divide-y divide-border">
+                {fixedExpenses.length === 0 ? (
+                  <p className="p-3 text-sm text-text-muted text-center">Nenhum custo fixo cadastrado.</p>
+                ) : (
+                  fixedExpenses.map(expense => (
+                    <div key={expense.id} className="flex items-center justify-between p-3">
+                      <div>
+                        <p className="text-sm font-medium text-text">{expense.name}</p>
+                        <p className="text-xs text-text-muted">
+                          {expense.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="p-1 text-text-muted hover:text-red-500 transition-colors"
+                        onClick={async () => {
+                          try {
+                            await deleteExpense(expense.id);
+                            setExpenses(prev => prev.filter(e => e.id !== expense.id));
+                          } catch (err: any) {
+                            console.error('Failed to delete expense', err);
+                            setExpensesError(err.message || 'Falha ao remover custo.');
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <p className="text-xs text-text-muted text-right">
+                Total: {totalFixedMonthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês
+              </p>
+            </div>
+
+            {/* Variable Expenses */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-text flex items-center gap-2">
+                Custos Variáveis
+                <Badge variant="secondary">{variableExpenses.length}</Badge>
+              </h4>
+              <div className="bg-background rounded-lg border border-border divide-y divide-border">
+                {variableExpenses.length === 0 ? (
+                  <p className="p-3 text-sm text-text-muted text-center">Nenhum custo variável cadastrado.</p>
+                ) : (
+                  variableExpenses.map(expense => (
+                    <div key={expense.id} className="flex items-center justify-between p-3">
+                      <div>
+                        <p className="text-sm font-medium text-text">{expense.name}</p>
+                        <p className="text-xs text-text-muted">
+                          {expense.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="p-1 text-text-muted hover:text-red-500 transition-colors"
+                        onClick={async () => {
+                          try {
+                            await deleteExpense(expense.id);
+                            setExpenses(prev => prev.filter(e => e.id !== expense.id));
+                          } catch (err: any) {
+                            console.error('Failed to delete expense', err);
+                            setExpensesError(err.message || 'Falha ao remover custo.');
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <p className="text-xs text-text-muted text-right">
+                Total: {totalVariableMonthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

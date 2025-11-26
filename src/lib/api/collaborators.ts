@@ -7,6 +7,8 @@ export interface CollaboratorPayload {
   status?: Collaborator['status'];
   phone?: string;
   email?: string;
+  cpf?: string;
+  avatarUrl?: string;
   commissionRate?: number;
   serviceCategories?: string[];
 }

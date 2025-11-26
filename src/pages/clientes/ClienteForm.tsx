@@ -95,20 +95,20 @@ const ClienteForm = () => {
       const id = client.id;
 
       if (from === 'agendamento') {
-        navigate('/agenda/novo', {
+        navigate('/app/agenda/novo', {
           state: { newClientId: id },
         });
         return;
       }
 
       if (from === 'comandas') {
-        navigate('/comandas', {
+        navigate('/app/comandas', {
           state: { fromNewClientClientId: id },
         });
         return;
       }
 
-      navigate(`/clientes/${id}`);
+      navigate(`/app/clientes/${id}`);
     } catch (err) {
       console.error('Failed to save client', err);
       setSaveError('Falha ao salvar cliente.');
@@ -153,7 +153,7 @@ const ClienteForm = () => {
           <Button
             type="button"
             variant="ghost"
-            onClick={() => navigate(isEditing && editingClient ? `/clientes/${editingClient.id}` : '/clientes')}
+            onClick={() => navigate(isEditing && editingClient ? `/app/clientes/${editingClient.id}` : '/app/clientes')}
           >
             Cancelar
           </Button>

@@ -13,7 +13,11 @@ const Agenda = () => {
   const [currentDate, setCurrentDate] = useState(() => new Date());
 
   const handleEditAppointment = (appointment: Appointment | null) => {
-    navigate(`/agenda/editar/${appointment?.id ?? 'novo'}`);
+    if (appointment?.id) {
+      navigate(`/app/agenda/editar/${appointment.id}`);
+    } else {
+      navigate('/app/agenda/novo');
+    }
   };
 
   const goToToday = () => {

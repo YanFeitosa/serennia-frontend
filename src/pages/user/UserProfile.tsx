@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { changePassword } from '../../lib/api';
 
 const UserProfile = () => {
   const { user, loginAs } = useAuth();
@@ -21,9 +22,14 @@ const UserProfile = () => {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [phone, setPhone] = useState(user.phone ?? '');
-  const [password, setPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const updatedUser = {
@@ -35,10 +41,38 @@ const UserProfile = () => {
 
     loginAs(updatedUser);
 
-    if (password.trim()) {
-      // Apenas mock: em produção isso chamaria a API de alteração de senha
-      // Mantemos o campo para futura integração
-      setPassword('');
+    // Handle password change if provided
+    if (newPassword.trim()) {
+      if (newPassword.length < 8) {
+        setPasswordError('A nova senha deve ter pelo menos 8 caracteres');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setPasswordError('As senhas não coincidem');
+        return;
+      }
+      if (!currentPassword) {
+        setPasswordError('Digite a senha atual');
+        return;
+      }
+
+      try {
+        setIsChangingPassword(true);
+        setPasswordError(null);
+        await changePassword({
+          currentPassword,
+          newPassword,
+        });
+        setPasswordSuccess(true);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setPasswordSuccess(false), 3000);
+      } catch (err: any) {
+        setPasswordError(err.message || 'Erro ao alterar senha');
+      } finally {
+        setIsChangingPassword(false);
+      }
     }
   };
 
@@ -85,23 +119,49 @@ const UserProfile = () => {
         </div>
 
         <div className="pt-2 border-t border-border mt-2 space-y-2">
-          <label className="block text-sm font-medium text-text mb-1">Nova senha</label>
-          <Input
-            type="password"
-            placeholder="Digite uma nova senha (opcional)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <p className="text-xs text-text-muted">
-            Este campo é apenas para simulação no front-end. A senha será de fato alterada quando a integração com a API estiver disponível.
-          </p>
+          <h3 className="text-sm font-medium text-text mb-2">Alterar senha</h3>
+          <div>
+            <label className="block text-sm font-medium text-text mb-1">Senha atual</label>
+            <Input
+              type="password"
+              placeholder="Digite sua senha atual"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text mb-1">Nova senha</label>
+            <Input
+              type="password"
+              placeholder="Digite uma nova senha (mínimo 8 caracteres)"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text mb-1">Confirmar nova senha</label>
+            <Input
+              type="password"
+              placeholder="Confirme a nova senha"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+          {passwordError && (
+            <p className="text-xs text-red-600">{passwordError}</p>
+          )}
+          {passwordSuccess && (
+            <p className="text-xs text-green-600">Senha alterada com sucesso!</p>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
             Cancelar
           </Button>
-          <Button type="submit">Salvar alterações</Button>
+          <Button type="submit" disabled={isChangingPassword}>
+            {isChangingPassword ? 'Salvando...' : 'Salvar alterações'}
+          </Button>
         </div>
       </form>
     </div>

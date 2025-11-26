@@ -2,11 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Phone, Calendar, Eye } from 'lucide-react';
-import { mockOrders } from '../../data/orders';
-import type { Order, Client } from '../../types';
+import type { Client } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { getClients } from '../../lib/api';
+import { getClients, getOrders } from '../../lib/api';
 
 const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,9 +13,22 @@ const Clientes = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [orders, setOrders] = useState<any[]>([]);
 
   const getVisitCount = (clientId: string) =>
-    mockOrders.filter((order: Order) => order.clientId === clientId).length;
+    orders.filter((order: any) => order.clientId === clientId).length;
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const ordersData = await getOrders();
+        setOrders(ordersData);
+      } catch (err) {
+        console.error('Error loading orders for visit count', err);
+      }
+    };
+    loadOrders();
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -55,7 +67,7 @@ const Clientes = () => {
             <h1 className="text-3xl font-bold text-text">Clientes</h1>
             <p className="text-text-muted mt-1">Gerencie sua base de clientes</p>
           </div>
-          <Button onClick={() => navigate('/clientes/novo')}>
+          <Button onClick={() => navigate('/app/clientes/novo')}>
             <Plus className="w-4 h-4 mr-2" />
             Novo Cliente
           </Button>
@@ -116,11 +128,11 @@ const Clientes = () => {
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end space-x-2">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/clientes/${client.id}`)}>
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/app/clientes/${client.id}`)}>
                       <Eye className="w-4 h-4 mr-1" />
                       Ver Perfil
                     </Button>
-                    <Button size="sm" onClick={() => navigate(`/agenda/novo?clientId=${client.id}`)}>Agendar</Button>
+                    <Button size="sm" onClick={() => navigate(`/app/agenda/novo?clientId=${client.id}`)}>Agendar</Button>
                   </div>
                 </td>
               </tr>

@@ -124,7 +124,7 @@ const ProdutoForm = () => {
         await createProduct(payload);
       }
 
-      navigate('/produtos');
+      navigate('/app/produtos');
     } catch (err) {
       console.error('Failed to save product', err);
       setSaveError('Falha ao salvar produto. Verifique os dados e tente novamente.');
@@ -232,7 +232,7 @@ const ProdutoForm = () => {
         </div>
 
         <div className="flex justify-end space-x-4 pt-4">
-          <Button type="button" variant="ghost" onClick={() => navigate('/produtos')}>
+          <Button type="button" variant="ghost" onClick={() => navigate('/app/produtos')}>
             Cancelar
           </Button>
           <Button type="submit" disabled={isLoading}>

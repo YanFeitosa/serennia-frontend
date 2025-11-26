@@ -4,7 +4,8 @@ import { Calendar, ShoppingCart, Users, Scissors, Briefcase, TrendingUp, Setting
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { getUnreadNotifications } from '../../data/notifications';
+import { usePermissions } from '../../contexts/PermissionsContext';
+import { getNotifications } from '../../lib/api';
 
 interface SidebarLinkProps {
   to: string;
@@ -83,19 +84,18 @@ const Sidebar = () => {
   }, []);
 
   useEffect(() => {
-    const updateNotifications = () => {
+    const updateNotifications = async () => {
       try {
-        setHasUnreadNotifications(getUnreadNotifications().length > 0);
+        const notifications = await getNotifications();
+        setHasUnreadNotifications(notifications.filter(n => !n.read).length > 0);
       } catch {
         setHasUnreadNotifications(false);
       }
     };
 
     updateNotifications();
-
-    if (typeof window === 'undefined') return;
-    window.addEventListener('serenna-notifications-changed', updateNotifications);
-    return () => window.removeEventListener('serenna-notifications-changed', updateNotifications);
+    const interval = setInterval(updateNotifications, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
 	const normalizedName = platformName.trim();
@@ -106,25 +106,40 @@ const Sidebar = () => {
 	if (titleLength > 26) titleSizeClass = 'text-xl';
 	if (titleLength > 34) titleSizeClass = 'text-lg';
 
-	const handleLogout = () => {
+  const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const role = user?.role ?? 'admin';
+  // Map user role to UserRole type for permissions
+  // Super admin and tenant admin should have admin-level access
+  const getRoleForPermissions = (): 'admin' | 'manager' | 'receptionist' | 'professional' | 'accountant' => {
+    if (!user) return 'admin';
+    
+    // If user has platformRole (super_admin or tenant_admin), treat as admin
+    if (user.platformRole === 'super_admin' || user.platformRole === 'tenant_admin') {
+      return 'admin';
+    }
+    
+    // Use tenantRole if available
+    if (user.tenantRole) {
+      return user.tenantRole;
+    }
+    
+    // Fallback: if role is set (legacy), use it
+    if (user.role) {
+      return user.role;
+    }
+    
+    // Default to admin for safety
+    return 'admin';
+  };
+
+  const role = getRoleForPermissions();
+  const { canAccessRoute } = usePermissions();
 
   const canSeeLink = (key: 'agenda' | 'comandas' | 'clientes' | 'servicos' | 'produtos' | 'colaboradores' | 'financeiro' | 'configuracoes' | 'auditoria' | 'notificacoes') => {
-    if (role === 'admin') return true;
-    if (role === 'manager') {
-      return ['servicos', 'produtos', 'colaboradores', 'financeiro', 'configuracoes', 'auditoria'].includes(key);
-    }
-    if (role === 'receptionist') {
-      return ['agenda', 'comandas', 'clientes', 'servicos', 'produtos', 'colaboradores', 'notificacoes'].includes(key);
-    }
-    if (role === 'professional') {
-      return ['agenda', 'comandas', 'clientes', 'notificacoes'].includes(key);
-    }
-    return false;
+    return canAccessRoute(role, key);
   };
 
   const displayName = user?.name ?? 'Usuário';
@@ -149,34 +164,34 @@ const Sidebar = () => {
       <nav className="flex-1 py-4 px-2">
         <ul>
           {canSeeLink('agenda') && (
-            <SidebarLink to="/agenda" icon={<Calendar />}>Agenda</SidebarLink>
+            <SidebarLink to="/app/agenda" icon={<Calendar />}>Agenda</SidebarLink>
           )}
           {canSeeLink('comandas') && (
-            <SidebarLink to="/comandas" icon={<ShoppingCart />}>Comandas</SidebarLink>
+            <SidebarLink to="/app/comandas" icon={<ShoppingCart />}>Comandas</SidebarLink>
           )}
           {canSeeLink('clientes') && (
-            <SidebarLink to="/clientes" icon={<Users />}>Clientes</SidebarLink>
+            <SidebarLink to="/app/clientes" icon={<Users />}>Clientes</SidebarLink>
           )}
           {canSeeLink('servicos') && (
-            <SidebarLink to="/servicos" icon={<Scissors />}>Serviços</SidebarLink>
+            <SidebarLink to="/app/servicos" icon={<Scissors />}>Serviços</SidebarLink>
           )}
           {canSeeLink('produtos') && (
-            <SidebarLink to="/produtos" icon={<Package />}>Produtos</SidebarLink>
+            <SidebarLink to="/app/produtos" icon={<Package />}>Produtos</SidebarLink>
           )}
           {canSeeLink('colaboradores') && (
-            <SidebarLink to="/colaboradores" icon={<Briefcase />}>Colaboradores</SidebarLink>
+            <SidebarLink to="/app/colaboradores" icon={<Briefcase />}>Colaboradores</SidebarLink>
           )}
           {canSeeLink('financeiro') && (
-            <SidebarLink to="/financeiro" icon={<TrendingUp />}>Financeiro</SidebarLink>
+            <SidebarLink to="/app/financeiro" icon={<TrendingUp />}>Financeiro</SidebarLink>
           )}
           {canSeeLink('configuracoes') && (
-            <SidebarLink to="/configuracoes" icon={<Settings />}>Configurações</SidebarLink>
+            <SidebarLink to="/app/configuracoes" icon={<Settings />}>Configurações</SidebarLink>
           )}
           {canSeeLink('auditoria') && (
-            <SidebarLink to="/auditoria" icon={<Shield />}>Auditoria</SidebarLink>
+            <SidebarLink to="/app/auditoria" icon={<Shield />}>Auditoria</SidebarLink>
           )}
           {canSeeLink('notificacoes') && (
-            <SidebarLink to="/notificacoes" icon={<Bell />} notification={hasUnreadNotifications}>
+            <SidebarLink to="/app/notificacoes" icon={<Bell />} notification={hasUnreadNotifications}>
               Notificações
             </SidebarLink>
           )}
@@ -230,7 +245,7 @@ const Sidebar = () => {
             <button
               onClick={() => {
                 setShowLogout(false);
-                navigate('/perfil');
+                navigate('/app/perfil');
               }}
               className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-secondary transition-colors text-left border-b border-border"
             >

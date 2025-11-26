@@ -5,6 +5,7 @@ import { Plus, Mail, Phone, Eye } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useAuth } from '../../contexts/AuthContext';
+import { isAdminLike, getEffectiveRole } from '../../lib/utils';
 import type { Collaborator } from '../../types';
 import { getCollaborators } from '../../lib/api';
 
@@ -15,8 +16,8 @@ const Colaboradores = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const role = user?.role ?? 'admin';
-  const canCreate = role === 'admin' || role === 'manager';
+  const role = getEffectiveRole(user);
+  const canCreate = isAdminLike(user) || user?.tenantRole === 'manager';
 
   useEffect(() => {
     let isMounted = true;
@@ -56,7 +57,7 @@ const Colaboradores = () => {
             <p className="text-text-muted mt-1">Gerencie sua equipe de profissionais</p>
           </div>
           {canCreate && (
-            <Button onClick={() => navigate('/colaboradores/novo')}>
+            <Button onClick={() => navigate('/app/colaboradores/novo')}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Colaborador
             </Button>
@@ -89,9 +90,12 @@ const Colaboradores = () => {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <img 
-                  src={`https://i.pravatar.cc/150?u=${collab.id}`}
+                  src={collab.avatarUrl || `https://i.pravatar.cc/150?u=${collab.id}`}
                   alt={collab.name}
                   className="w-16 h-16 rounded-full object-cover ring-2 ring-border"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = `https://i.pravatar.cc/150?u=${collab.id}`;
+                  }}
                 />
                 <div>
                   <h3 className="text-lg font-semibold text-text">{collab.name}</h3>
@@ -123,7 +127,7 @@ const Colaboradores = () => {
                 variant="ghost"
                 size="sm"
                 className="w-full"
-                onClick={() => navigate(`/colaboradores/${collab.id}`)}
+                onClick={() => navigate(`/app/colaboradores/${collab.id}`)}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 Ver Detalhes

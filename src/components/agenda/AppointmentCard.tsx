@@ -3,9 +3,10 @@ import { useState, useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Appointment, AppointmentStatus, Client, Service } from '../../types';
-import { Clock, User, Tag, Pencil } from 'lucide-react';
+import { Clock, User, Tag, Pencil, MessageCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { updateAppointmentStatus, ensureOrderForAppointment } from '../../lib/api';
+import { updateAppointmentStatus, ensureOrderForAppointment, sendAppointmentConfirmation, getMessageTemplates, type MessageTemplate } from '../../lib/api';
+import Modal from '../ui/Modal';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -22,6 +23,11 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight, onS
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
@@ -83,6 +89,43 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight, onS
     };
   }, [isExpanded]);
 
+  useEffect(() => {
+    if (showWhatsAppModal) {
+      const loadTemplates = async () => {
+        try {
+          const data = await getMessageTemplates(true);
+          setTemplates(data.filter(t => t.channel === 'whatsapp' && t.isActive));
+          if (data.length > 0) {
+            setSelectedTemplateId(data[0].id);
+          }
+        } catch (error) {
+          console.error('Failed to load templates', error);
+        }
+      };
+      loadTemplates();
+    }
+  }, [showWhatsAppModal]);
+
+  const handleSendWhatsApp = async () => {
+    if (!selectedTemplateId) {
+      setSendError('Selecione um template');
+      return;
+    }
+
+    setIsSending(true);
+    setSendError(null);
+
+    try {
+      await sendAppointmentConfirmation(appointment.id, selectedTemplateId);
+      setShowWhatsAppModal(false);
+      alert('Mensagem enviada com sucesso!');
+    } catch (err: any) {
+      setSendError(err.message || 'Erro ao enviar mensagem');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <div 
       ref={cardRef}
@@ -139,7 +182,7 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight, onS
               updatedAppointment = await updateAppointmentStatus(appointment.id, 'in_progress');
               onStatusUpdated?.(updatedAppointment);
             }
-            navigate('/comandas', {
+            navigate('/app/comandas', {
               state: { focusOrderId: order.id },
             });
             onAfterAction?.();
@@ -198,9 +241,83 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight, onS
                 </Button>
               </div>
             )}
+            {client.phone && (
+              <div className="flex justify-center">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowWhatsAppModal(true);
+                  }}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Enviar WhatsApp
+                </Button>
+              </div>
+            )}
           </div>
         );
       })()}
+      
+      <Modal
+        isOpen={showWhatsAppModal}
+        onClose={() => {
+          setShowWhatsAppModal(false);
+          setSendError(null);
+        }}
+        title="Enviar Mensagem WhatsApp"
+      >
+        <div className="space-y-4">
+          {sendError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{sendError}</p>
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-text mb-2">
+              Selecione o template
+            </label>
+            {templates.length === 0 ? (
+              <p className="text-sm text-text-muted">
+                Nenhum template WhatsApp ativo encontrado. Crie um template em Configurações.
+              </p>
+            ) : (
+              <select
+                value={selectedTemplateId || ''}
+                onChange={(e) => setSelectedTemplateId(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {templates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowWhatsAppModal(false);
+                setSendError(null);
+              }}
+              disabled={isSending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSendWhatsApp}
+              disabled={isSending || !selectedTemplateId || templates.length === 0}
+            >
+              {isSending ? 'Enviando...' : 'Enviar'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
       {!isExpanded && (
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-6 rounded-b-lg z-10 flex items-end justify-center"

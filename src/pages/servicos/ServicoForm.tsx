@@ -132,7 +132,7 @@ const ServicoForm = () => {
         await createService(payload);
       }
 
-      navigate('/servicos');
+      navigate('/app/servicos');
     } catch (err) {
       console.error('Failed to save service', err);
       setSaveError('Falha ao salvar serviço. Verifique os dados e tente novamente.');
@@ -259,7 +259,7 @@ const ServicoForm = () => {
         {/* Campo de bufferTime removido: não estamos mais usando tempo de buffer por serviço. */}
 
         <div className="flex justify-end space-x-4 pt-4">
-          <Button type="button" variant="ghost" onClick={() => navigate('/servicos')}>
+          <Button type="button" variant="ghost" onClick={() => navigate('/app/servicos')}>
             Cancelar
           </Button>
           <Button type="submit" disabled={isLoading}>

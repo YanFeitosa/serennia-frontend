@@ -1,0 +1,53 @@
+import { request } from '../request';
+import type { User } from '../../types';
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  user: User;
+}
+
+export interface MeResponse {
+  id: string;
+  salonId: string | null;
+  name: string;
+  email: string;
+  platformRole?: 'super_admin' | 'tenant_admin';
+  tenantRole?: 'manager' | 'receptionist' | 'professional';
+  role?: string; // Legacy field for backward compatibility
+  avatarUrl?: string;
+  salonName?: string;
+}
+
+export async function login(input: LoginPayload): Promise<LoginResponse> {
+  return request<LoginResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function getMe(): Promise<MeResponse> {
+  return request<MeResponse>('/auth/me');
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export async function changePassword(input: ChangePasswordPayload): Promise<ChangePasswordResponse> {
+  return request<ChangePasswordResponse>('/auth/password', {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+

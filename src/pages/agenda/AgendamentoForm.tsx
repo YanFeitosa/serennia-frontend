@@ -112,7 +112,7 @@ const AgendamentoForm = () => {
       } catch (err) {
         console.error('Error loading appointment', err);
         setError('Erro ao carregar agendamento.');
-        navigate('/agenda');
+        navigate('/app/agenda');
       } finally {
         setIsLoading(false);
       }
@@ -142,7 +142,7 @@ const AgendamentoForm = () => {
   useEffect(() => {
     if (appointment && appointment.status !== 'pending') {
       alert('Apenas agendamentos com status pendente podem ser editados.');
-      navigate('/agenda');
+      navigate('/app/agenda');
     }
   }, [appointment, navigate]);
 
@@ -191,7 +191,7 @@ const AgendamentoForm = () => {
         await createAppointment(payload);
       }
 
-      navigate('/agenda');
+      navigate('/app/agenda');
     } catch (err) {
       console.error('Error saving appointment', err);
       const message = err instanceof Error ? err.message : 'Erro ao salvar agendamento.';
@@ -221,7 +221,7 @@ const AgendamentoForm = () => {
             value={watch('clientId')}
             onChange={(value: string) => {
               if (value === '__add_client__') {
-                navigate('/clientes/novo', { state: { from: 'agendamento' } });
+                navigate('/app/clientes/novo', { state: { from: 'agendamento' } });
                 return;
               }
               setValue('clientId', value);
@@ -281,7 +281,7 @@ const AgendamentoForm = () => {
         </div>
 
         <div className="flex justify-end space-x-4 pt-4">
-          <Button type="button" variant="ghost" onClick={() => navigate('/agenda')}>Cancelar</Button>
+          <Button type="button" variant="ghost" onClick={() => navigate('/app/agenda')}>Cancelar</Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Salvando...' : (appointment ? 'Salvar Alterações' : 'Criar Agendamento')}
           </Button>

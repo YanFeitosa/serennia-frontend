@@ -1,18 +1,18 @@
 // src/pages/ClienteProfile.tsx
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { mockOrders } from '../../data/orders';
-import { mockServices } from '../../data/services';
-import { mockProducts } from '../../data/products';
 import { ArrowLeft, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import type { Order, Client } from '../../types';
-import { getClientById } from '../../lib/api';
+import { getClientById, getOrders, getServices, getProducts } from '../../lib/api';
+import type { Client, Order, Service, Product } from '../../types';
 
 const ClienteProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [client, setClient] = useState<Client | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -23,17 +23,25 @@ const ClienteProfile = () => {
 
     let isMounted = true;
 
-    const loadClient = async () => {
+    const loadData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await getClientById(id);
+        const [clientData, ordersData, servicesData, productsData] = await Promise.all([
+          getClientById(id),
+          getOrders({ clientId: id }),
+          getServices(),
+          getProducts(),
+        ]);
         if (!isMounted) return;
-        setClient(data);
+        setClient(clientData);
+        setOrders(ordersData);
+        setServices(servicesData);
+        setProducts(productsData);
       } catch (err) {
-        console.error('Failed to load client', err);
+        console.error('Failed to load client data', err);
         if (isMounted) {
-          setError('Falha ao carregar cliente.');
+          setError('Falha ao carregar dados do cliente.');
         }
       } finally {
         if (isMounted) {
@@ -42,7 +50,7 @@ const ClienteProfile = () => {
       }
     };
 
-    loadClient();
+    loadData();
 
     return () => {
       isMounted = false;
@@ -57,10 +65,8 @@ const ClienteProfile = () => {
     return <div>{error || 'Cliente não encontrado.'}</div>;
   }
 
-  const clientOrders = mockOrders.filter(order => order.clientId === client.id);
-
-  const servicesById = new Map(mockServices.map(s => [s.id, s]));
-  const productsById = new Map(mockProducts.map(p => [p.id, p]));
+  const servicesById = new Map(services.map(s => [s.id, s]));
+  const productsById = new Map(products.map(p => [p.id, p]));
 
   const getStatusLabel = (status: Order['status']) => {
     switch (status) {
@@ -90,18 +96,15 @@ const ClienteProfile = () => {
 
   return (
     <div className="space-y-6">
-      <Link to="/clientes" className="flex items-center space-x-2 text-sm text-text-muted hover:text-primary transition-colors">
+      <Link to="/app/clientes" className="flex items-center space-x-2 text-sm text-text-muted hover:text-primary transition-colors">
         <ArrowLeft className="w-4 h-4" />
         <span>Voltar para Clientes</span>
       </Link>
 
       <header className="flex items-start justify-between">
-        <div className="flex items-center space-x-4">
-          <img src={`https://i.pravatar.cc/150?u=${client?.id}`} alt={client?.name} className="w-24 h-24 rounded-full" />
-          <div>
-            <h1 className="text-3xl font-bold text-text">{client?.name || 'Novo Cliente'}</h1>
-            <p className="text-text-muted">{client?.email}</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-text">{client?.name || 'Novo Cliente'}</h1>
+          <p className="text-text-muted">{client?.email || client?.phone}</p>
         </div>
         <Button
           variant="ghost"
@@ -109,7 +112,7 @@ const ClienteProfile = () => {
           className="p-2 rounded-full"
           onClick={() => {
             if (!client) return;
-            navigate('/clientes/novo', { state: { editClientId: client.id } });
+            navigate('/app/clientes/novo', { state: { editClientId: client.id } });
           }}
         >
           <Edit className="w-5 h-5 text-text" />
@@ -120,7 +123,12 @@ const ClienteProfile = () => {
         <h3 className="text-lg font-semibold text-text mb-4">Histórico de Comandas</h3>
         <div className="bg-card rounded-xl shadow-md border border-border">
           <ul className="divide-y divide-border">
-            {clientOrders.map(order => {
+            {orders.length === 0 && (
+              <li className="p-4 text-center text-text-muted">
+                Nenhuma comanda encontrada para este cliente.
+              </li>
+            )}
+            {orders.map(order => {
               const isExpanded = expandedOrderId === order.id;
               const serviceItems = order.items.filter(item => item.type === 'service' && item.serviceId);
               const productItems = order.items.filter(item => item.type === 'product' && item.productId);

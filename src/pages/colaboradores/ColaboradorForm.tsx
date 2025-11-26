@@ -10,11 +10,50 @@ import MultiSelectPlain from '../../components/ui/MultiSelectPlain';
 import type { Collaborator } from '../../types';
 import { createCollaborator, updateCollaborator, getCollaboratorById, getCategories } from '../../lib/api';
 
+// CPF validation helper
+const validateCPF = (cpf: string): boolean => {
+  const cleaned = cpf.replace(/\D/g, '');
+  if (cleaned.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cleaned)) return false;
+  
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleaned.charAt(i)) * (10 - i);
+  }
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleaned.charAt(9))) return false;
+  
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleaned.charAt(i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleaned.charAt(10))) return false;
+  
+  return true;
+};
+
+// CPF mask helper
+const formatCPF = (value: string): string => {
+  const cleaned = value.replace(/\D/g, '').slice(0, 11);
+  if (cleaned.length <= 3) return cleaned;
+  if (cleaned.length <= 6) return `${cleaned.slice(0, 3)}.${cleaned.slice(3)}`;
+  if (cleaned.length <= 9) return `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6)}`;
+  return `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6, 9)}-${cleaned.slice(9)}`;
+};
+
 const collaboratorSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
   role: z.string().min(1, 'O cargo é obrigatório'),
-  phone: z.string().min(1, 'O telefone é obrigatório'),
-  email: z.string().email('Email inválido').optional(),
+  cpf: z.string().min(1, 'O CPF é obrigatório').refine((val) => {
+    const cleaned = val.replace(/\D/g, '');
+    return cleaned.length === 11 && validateCPF(cleaned);
+  }, 'CPF inválido'),
+  phone: z.string().optional().or(z.literal('')),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  avatarUrl: z.string().url('URL inválida').optional().or(z.literal('')),
   // Categorias de serviço só fazem sentido para profissionais; para outros roles manteremos o array vazio por padrão via defaultValues.
   serviceCategories: z.array(z.string()),
   commission: z
@@ -22,6 +61,12 @@ const collaboratorSchema = z.object({
     .min(0, 'Comissão deve ser pelo menos 0%')
     .max(100, 'Use um valor entre 0 e 100')
     .optional(),
+}).refine((data) => {
+  // Pelo menos telefone ou email deve ser fornecido
+  return (data.phone && data.phone.trim().length > 0) || (data.email && data.email.trim().length > 0);
+}, {
+  message: 'Telefone ou email deve ser fornecido',
+  path: ['phone'],
 });
 
 type CollaboratorSchema = z.infer<typeof collaboratorSchema>;
@@ -53,6 +98,7 @@ const ColaboradorForm = () => {
     defaultValues: {
       name: '',
       role: 'professional',
+      cpf: '',
       phone: '',
       email: '',
       serviceCategories: [],
@@ -75,8 +121,10 @@ const ColaboradorForm = () => {
         reset({
           name: collaborator.name,
           role: collaborator.role,
+          cpf: collaborator.cpf ? formatCPF(collaborator.cpf) : '',
           phone: collaborator.phone ?? '',
           email: collaborator.email ?? '',
+          avatarUrl: collaborator.avatarUrl ?? '',
           serviceCategories: collaborator.serviceCategories ?? [],
           commission: Math.round((collaborator.commissionRate ?? getDefaultCommissionRate()) * 100),
         });
@@ -169,8 +217,10 @@ const ColaboradorForm = () => {
           name: data.name,
           role: data.role as any,
           status: editingCollaborator.status,
-          phone: data.phone,
-          email: data.email,
+          cpf: data.cpf.replace(/\D/g, ''),
+          phone: data.phone && data.phone.trim().length > 0 ? data.phone : undefined,
+          email: data.email && data.email.trim().length > 0 ? data.email : undefined,
+          avatarUrl: data.avatarUrl && data.avatarUrl.trim().length > 0 ? data.avatarUrl : undefined,
           commissionRate,
           serviceCategories: isProfessional ? data.serviceCategories : [],
         });
@@ -189,14 +239,16 @@ const ColaboradorForm = () => {
           name: data.name,
           role: data.role as any,
           status: 'active',
-          phone: data.phone,
-          email: data.email,
+          cpf: data.cpf.replace(/\D/g, ''),
+          phone: data.phone && data.phone.trim().length > 0 ? data.phone : undefined,
+          email: data.email && data.email.trim().length > 0 ? data.email : undefined,
+          avatarUrl: data.avatarUrl && data.avatarUrl.trim().length > 0 ? data.avatarUrl : undefined,
           commissionRate,
           serviceCategories: isProfessional ? data.serviceCategories : [],
         });
       }
 
-      navigate('/colaboradores');
+      navigate('/app/colaboradores');
     } catch (err) {
       console.error('Failed to save collaborator', err);
       setSaveError('Falha ao salvar colaborador.');
@@ -240,6 +292,20 @@ const ColaboradorForm = () => {
           {errors.role && <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>}
         </div>
         <div>
+          <label htmlFor="cpf" className="block text-sm font-medium text-text">CPF *</label>
+          <Input 
+            id="cpf" 
+            {...register('cpf')}
+            placeholder="000.000.000-00"
+            onChange={(e) => {
+              const formatted = formatCPF(e.target.value);
+              setValue('cpf', formatted);
+            }}
+          />
+          <p className="mt-1 text-xs text-text-muted">A senha inicial será o primeiro nome em minúsculo + 4 últimos dígitos do CPF</p>
+          {errors.cpf && <p className="mt-1 text-sm text-red-600">{errors.cpf.message}</p>}
+        </div>
+        <div>
           <label htmlFor="phone" className="block text-sm font-medium text-text">Telefone</label>
           <Input id="phone" {...register('phone')} />
           {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
@@ -248,6 +314,17 @@ const ColaboradorForm = () => {
           <label htmlFor="email" className="block text-sm font-medium text-text">Email</label>
           <Input id="email" {...register('email')} />
           {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+        </div>
+        <div>
+          <label htmlFor="avatarUrl" className="block text-sm font-medium text-text">URL da Foto</label>
+          <Input 
+            id="avatarUrl" 
+            {...register('avatarUrl')} 
+            placeholder="https://exemplo.com/foto.jpg"
+            type="url"
+          />
+          <p className="mt-1 text-xs text-text-muted">Cole a URL da foto do colaborador (máximo 5MB recomendado)</p>
+          {errors.avatarUrl && <p className="mt-1 text-sm text-red-600">{errors.avatarUrl.message}</p>}
         </div>
         {showServiceCategoriesField && (
           <div>
@@ -298,7 +375,7 @@ const ColaboradorForm = () => {
           </div>
         )}
         <div className="flex justify-end space-x-4 pt-4">
-          <Button type="button" variant="ghost" onClick={() => navigate('/colaboradores')}>Cancelar</Button>
+          <Button type="button" variant="ghost" onClick={() => navigate('/app/colaboradores')}>Cancelar</Button>
           <Button type="submit" disabled={isLoading}>Salvar</Button>
         </div>
       </form>

@@ -4,6 +4,7 @@ import { Plus, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { isAdminLike, getEffectiveRole } from '../../lib/utils';
 import type { Product } from '../../types';
 import { getProducts } from '../../lib/api';
 
@@ -14,8 +15,8 @@ const Produtos = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const role = user?.role ?? 'admin';
-  const canEdit = role === 'admin' || role === 'manager';
+  const role = getEffectiveRole(user);
+  const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
 
   useEffect(() => {
     let isMounted = true;
@@ -63,7 +64,7 @@ const Produtos = () => {
             <p className="text-text-muted mt-1">Gerencie os produtos de venda do salão</p>
           </div>
           {canEdit && (
-            <Button onClick={() => navigate('/produtos/novo')}>
+            <Button onClick={() => navigate('/app/produtos/novo')}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Produto
             </Button>
@@ -133,7 +134,7 @@ const Produtos = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate(`/produtos/${product.id}`)}
+                      onClick={() => navigate(`/app/produtos/${product.id}`)}
                     >
                       <Edit2 className="w-4 h-4 mr-1" />
                       Editar
