@@ -1,4 +1,4 @@
-# Serenna Frontend
+# Serennia Frontend
 
 Sistema de gestão para salões de beleza - Interface do usuário.
 
@@ -16,14 +16,14 @@ Sistema de gestão para salões de beleza - Interface do usuário.
 
 - Node.js >= 18
 - npm ou pnpm
-- Backend Serenna rodando (ver [serenna-backend](../serenna-backend/))
+- Backend Serennia rodando (ver [serennia-backend](../serennia-backend/))
 
 ## 🚀 Instalação
 
 1. **Clone o repositório e entre na pasta:**
 
 ```bash
-cd serenna-frontend
+cd serennia-frontend
 ```
 
 2. **Instale as dependências:**

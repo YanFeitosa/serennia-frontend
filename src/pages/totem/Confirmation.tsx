@@ -91,7 +91,7 @@ const Confirmation: React.FC = () => {
           transition={{ duration: 0.4 }}
           className="w-full max-w-2xl text-center"
         >
-          <div className="bg-card p-8 rounded-xl shadow-serenna">
+          <div className="bg-card p-8 rounded-xl shadow-serennia">
             <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
             <h1 className="text-4xl font-semibold text-primary mb-4">
               Agendamento Confirmado!

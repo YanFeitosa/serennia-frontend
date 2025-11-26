@@ -62,10 +62,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Update appearance if salonName is present
           if (userData.salonName) {
-            window.localStorage.setItem('serenna-appearance', JSON.stringify({
+            window.localStorage.setItem('serennia-appearance', JSON.stringify({
               platformName: userData.salonName
             }));
-            window.dispatchEvent(new Event('serenna-appearance-changed'));
+            window.dispatchEvent(new Event('serennia-appearance-changed'));
           }
 
           setUser({
@@ -120,10 +120,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (isMounted) {
               // Update appearance if salonName is present
               if (userData.salonName) {
-                window.localStorage.setItem('serenna-appearance', JSON.stringify({
+                window.localStorage.setItem('serennia-appearance', JSON.stringify({
                   platformName: userData.salonName
                 }));
-                window.dispatchEvent(new Event('serenna-appearance-changed'));
+                window.dispatchEvent(new Event('serennia-appearance-changed'));
               }
 
               setUser({
@@ -164,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Set salonId in localStorage if provided (for Super Admin context)
       if (salonId) {
-        window.localStorage.setItem('serenna-salon-id', salonId);
+        window.localStorage.setItem('serennia-salon-id', salonId);
       } else {
         // If not provided, we might want to clear it to avoid stale context, 
         // OR keep it if we want persistence. 
@@ -173,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Safest is to NOT clear it here if we want persistence across reloads, 
         // but if the user logs in explicitly without it, maybe they want default context?
         // Let's clear it if it's a fresh login without salonId to be safe and avoid confusion.
-        window.localStorage.removeItem('serenna-salon-id');
+        window.localStorage.removeItem('serennia-salon-id');
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -195,10 +195,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Update appearance if salonName is present
         if (userData.salonName) {
-          window.localStorage.setItem('serenna-appearance', JSON.stringify({
+          window.localStorage.setItem('serennia-appearance', JSON.stringify({
             platformName: userData.salonName
           }));
-          window.dispatchEvent(new Event('serenna-appearance-changed'));
+          window.dispatchEvent(new Event('serennia-appearance-changed'));
         }
 
         setUser({
@@ -225,7 +225,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await supabase.auth.signOut();
-    window.localStorage.removeItem('serenna-salon-id'); // Clear salon context on logout
+    window.localStorage.removeItem('serennia-salon-id'); // Clear salon context on logout
     setUser(null);
     setAccessToken(null);
   };

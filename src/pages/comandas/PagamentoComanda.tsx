@@ -168,7 +168,7 @@ const PagamentoComanda = () => {
 
   return (
     <div className="space-y-6">
-      <Link to="/comandas" className="flex items-center space-x-2 text-sm text-text-muted hover:text-primary transition-colors">
+      <Link to="/app/comandas" className="flex items-center space-x-2 text-sm text-text-muted hover:text-primary transition-colors">
         <ArrowLeft className="w-4 h-4" />
         <span>Voltar para Comandas</span>
       </Link>

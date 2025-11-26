@@ -6,7 +6,7 @@ module.exports = {
     './src/**/*.{js,ts,jsx,tsx}',
   ],
   safelist: [
-    // 🔒 Força geração das classes de cores do Serenna
+    // 🔒 Força geração das classes de cores do Serennia
     'bg-primary',
     'bg-primary-light',
     'bg-primary-dark',
@@ -26,7 +26,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // 🎨 Serenna UI System - Cores principais
+        // 🎨 Serennia UI System - Cores principais
         primary: {
           DEFAULT: 'var(--color-primary)',
           light: 'var(--color-primary-light)',
@@ -76,12 +76,12 @@ module.exports = {
         sans: ['Inter', 'sans-serif'],
       },
       borderRadius: {
-        'xl': '0.75rem',   // Padrão Serenna
+        'xl': '0.75rem',   // Padrão Serennia
         '2xl': '1rem',
       },
       boxShadow: {
         'md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-        'serenna': '0 2px 8px -1px rgb(90 111 142 / 0.1), 0 1px 4px -1px rgb(90 111 142 / 0.06)',
+        'serennia': '0 2px 8px -1px rgb(90 111 142 / 0.1), 0 1px 4px -1px rgb(90 111 142 / 0.06)',
       },
       keyframes: {
         'accordion-down': {

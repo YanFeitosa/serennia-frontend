@@ -7,12 +7,14 @@ import { loginSchema, type LoginSchema } from '../lib/schemas';
 import { Mail, Lock } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth, getDefaultPathForRole } from '../contexts/AuthContext';
+import ForgotPasswordModal from '../components/auth/ForgotPasswordModal';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login: loginUser } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -32,7 +34,7 @@ const LoginPage = () => {
       await loginUser(data.email, data.password, salonId || undefined);
       const from = (location.state as any)?.from?.pathname as string | undefined;
       // Get user role from auth context after login
-      const authData = window.localStorage.getItem('serenna-auth');
+      const authData = window.localStorage.getItem('serennia-auth');
       if (authData) {
         const parsed = JSON.parse(authData);
         const user = parsed.user;
@@ -50,9 +52,9 @@ const LoginPage = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-xl shadow-serenna">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-xl shadow-serennia">
         <div className="text-center">
-          <h1 className="text-4xl font-semibold text-primary">Serenna</h1>
+          <h1 className="text-4xl font-semibold text-primary">Serennia</h1>
           <p className="mt-2 text-text-muted">Bem-vindo(a) de volta!</p>
         </div>
 
@@ -80,9 +82,13 @@ const LoginPage = () => {
           </div>
 
           <div className="text-sm text-right">
-            <a href="#" className="font-medium text-primary hover:text-primary-dark transition-colors">
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className="font-medium text-primary hover:text-primary-dark transition-colors"
+            >
               Esqueceu a senha?
-            </a>
+            </button>
           </div>
 
           {error && (
@@ -96,6 +102,12 @@ const LoginPage = () => {
           </Button>
         </form>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+      />
     </div>
   );
 };

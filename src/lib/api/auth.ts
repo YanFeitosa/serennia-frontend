@@ -51,3 +51,19 @@ export async function changePassword(input: ChangePasswordPayload): Promise<Chan
   });
 }
 
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export async function forgotPassword(input: ForgotPasswordPayload): Promise<ForgotPasswordResponse> {
+  return request<ForgotPasswordResponse>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+

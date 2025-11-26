@@ -5,22 +5,22 @@ import { Button } from '../../components/ui/Button';
 import { motion } from 'framer-motion';
 
 const Welcome: React.FC = () => {
-  const [salonName, setSalonName] = useState('Serenna');
+  const [salonName, setSalonName] = useState('Serennia');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     try {
-      const stored = window.localStorage.getItem('serenna-appearance');
+      const stored = window.localStorage.getItem('serennia-appearance');
       if (!stored) {
-        setSalonName('Serenna');
+        setSalonName('Serennia');
         return;
       }
       const parsed = JSON.parse(stored) as { platformName?: string };
       const name = parsed.platformName?.trim();
-      setSalonName(name && name.length > 0 ? name : 'Serenna');
+      setSalonName(name && name.length > 0 ? name : 'Serennia');
     } catch {
-      setSalonName('Serenna');
+      setSalonName('Serennia');
     }
   }, []);
 
@@ -37,12 +37,12 @@ const Welcome: React.FC = () => {
         
         <div className="flex flex-col sm:flex-row gap-6 justify-center">
           <Link to="/totem/login">
-            <Button size="lg" className="py-6 px-12 text-xl w-full sm:w-80 shadow-serenna">
+            <Button size="lg" className="py-6 px-12 text-xl w-full sm:w-80 shadow-serennia">
               Já sou cliente
             </Button>
           </Link>
           <Link to="/totem/cadastro">
-            <Button variant="outline" size="lg" className="py-6 px-12 text-xl w-full sm:w-80 shadow-serenna">
+            <Button variant="outline" size="lg" className="py-6 px-12 text-xl w-full sm:w-80 shadow-serennia">
               Fazer cadastro
             </Button>
           </Link>

@@ -62,13 +62,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const dark = { ...DEFAULT_DARK_PALETTE, ...settings.theme.dark };
         applyPaletteToCSS(light, dark);
         // Also save to localStorage for faster initial load
-        localStorage.setItem('serenna-appearance', JSON.stringify(settings.theme));
+        localStorage.setItem('serennia-appearance', JSON.stringify(settings.theme));
       }
     } catch (error) {
       // Silently fail - user might not be authenticated yet
       console.debug('Could not load salon theme:', error);
       // Try to load from localStorage as fallback
-      const stored = localStorage.getItem('serenna-appearance');
+      const stored = localStorage.getItem('serennia-appearance');
       if (stored) {
         try {
           const parsed = JSON.parse(stored) as SalonTheme;
@@ -103,9 +103,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const handleAppearanceChange = () => {
       refreshSalonTheme();
     };
-    window.addEventListener('serenna-appearance-changed', handleAppearanceChange);
+    window.addEventListener('serennia-appearance-changed', handleAppearanceChange);
     return () => {
-      window.removeEventListener('serenna-appearance-changed', handleAppearanceChange);
+      window.removeEventListener('serennia-appearance-changed', handleAppearanceChange);
     };
   }, [refreshSalonTheme]);
 

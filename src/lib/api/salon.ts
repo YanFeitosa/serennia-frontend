@@ -23,6 +23,18 @@ export interface SalonSettings {
   variableCostRate?: number | null;
   rolePermissions?: Record<string, any> | null;
   theme?: SalonTheme | null;
+  // WhatsApp Integration
+  whatsappApiUrl?: string | null;
+  whatsappApiKey?: string | null;
+  whatsappInstanceId?: string | null;
+  whatsappPhone?: string | null;
+  whatsappConnected?: boolean;
+  // Payment Integration
+  paymentProvider?: 'mercadopago' | 'stripe' | null;
+  mpAccessToken?: string | null;
+  mpPublicKey?: string | null;
+  stripeSecretKey?: string | null;
+  stripePublishableKey?: string | null;
 }
 
 export async function getSalonSettings(): Promise<SalonSettings> {
@@ -38,10 +50,36 @@ export async function updateSalonSettings(
     variableCostRate: number;
     rolePermissions: Record<string, any> | null;
     theme: SalonTheme | null;
+    // WhatsApp Integration
+    whatsappApiUrl: string | null;
+    whatsappApiKey: string | null;
+    whatsappInstanceId: string | null;
+    whatsappPhone: string | null;
+    whatsappConnected: boolean;
+    // Payment Integration
+    paymentProvider: 'mercadopago' | 'stripe' | null;
+    mpAccessToken: string | null;
+    mpPublicKey: string | null;
+    stripeSecretKey: string | null;
+    stripePublishableKey: string | null;
   }>,
 ): Promise<SalonSettings> {
   return request<SalonSettings>('/salon', {
     method: 'PATCH',
     body: JSON.stringify(input),
+  });
+}
+
+// Test WhatsApp connection
+export async function testWhatsAppConnection(): Promise<{ success: boolean; error?: string }> {
+  return request<{ success: boolean; error?: string }>('/salon/test-whatsapp', {
+    method: 'POST',
+  });
+}
+
+// Test Payment connection
+export async function testPaymentConnection(): Promise<{ success: boolean; error?: string }> {
+  return request<{ success: boolean; error?: string }>('/salon/test-payment', {
+    method: 'POST',
   });
 }

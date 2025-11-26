@@ -5,22 +5,22 @@ import { motion } from 'framer-motion';
 import { TotemProvider } from '../../contexts/TotemContext';
 
 const TotemLayout: React.FC = () => {
-  const [salonName, setSalonName] = useState('Serenna');
+  const [salonName, setSalonName] = useState('Serennia');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     try {
-      const stored = window.localStorage.getItem('serenna-appearance');
+      const stored = window.localStorage.getItem('serennia-appearance');
       if (!stored) {
-        setSalonName('Serenna');
+        setSalonName('Serennia');
         return;
       }
       const parsed = JSON.parse(stored) as { platformName?: string };
       const name = parsed.platformName?.trim();
-      setSalonName(name && name.length > 0 ? name : 'Serenna');
+      setSalonName(name && name.length > 0 ? name : 'Serennia');
     } catch {
-      setSalonName('Serenna');
+      setSalonName('Serennia');
     }
   }, []);
 

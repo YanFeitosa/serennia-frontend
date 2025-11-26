@@ -24,7 +24,7 @@ interface TotemContextType {
 
 const TotemContext = createContext<TotemContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'serenna-totem-state';
+const STORAGE_KEY = 'serennia-totem-state';
 
 const defaultState: TotemState = {
   client: null,

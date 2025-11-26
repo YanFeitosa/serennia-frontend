@@ -31,6 +31,11 @@ import Cadastro from '../pages/totem/Cadastro';
 import TotemLogin from '../pages/totem/Login';
 import TotemLayout from '../components/layout/TotemLayout';
 import Landing from '../pages/Landing';
+// Static pages
+import About from '../pages/static/About';
+import Contact from '../pages/static/Contact';
+import Terms from '../pages/static/Terms';
+import Privacy from '../pages/static/Privacy';
 
 const router = createBrowserRouter([
   {
@@ -40,6 +45,23 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  // Static pages
+  {
+    path: '/about',
+    element: <About />,
+  },
+  {
+    path: '/contact',
+    element: <Contact />,
+  },
+  {
+    path: '/terms',
+    element: <Terms />,
+  },
+  {
+    path: '/privacy',
+    element: <Privacy />,
   },
   {
     path: '/totem',

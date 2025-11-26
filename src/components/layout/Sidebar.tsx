@@ -20,9 +20,9 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, notification, child
 
   return (
     <li className="mb-1">
-      <NavLink 
-        to={to} 
-        className={({ isActive }) => 
+      <NavLink
+        to={to}
+        className={({ isActive }) =>
           `flex items-center justify-between px-4 py-3 rounded-l-xl transition-all duration-200 ${isActive ? activeClass : inactiveClass}`
         }
       >
@@ -42,7 +42,7 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
   const [showLogout, setShowLogout] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
-  const [platformName, setPlatformName] = useState('Serenna');
+  const [platformName, setPlatformName] = useState('Serennia');
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   useEffect(() => {
@@ -60,27 +60,27 @@ const Sidebar = () => {
   useEffect(() => {
     const loadAppearanceName = () => {
       try {
-        const stored = window.localStorage.getItem('serenna-appearance');
+        const stored = window.localStorage.getItem('serennia-appearance');
         if (!stored) {
-          setPlatformName('Serenna');
+          setPlatformName('Serennia');
           return;
         }
         const parsed = JSON.parse(stored) as { platformName?: string };
         if (parsed.platformName && parsed.platformName.trim().length > 0) {
           setPlatformName(parsed.platformName.trim());
         } else {
-          setPlatformName('Serenna');
+          setPlatformName('Serennia');
         }
       } catch {
-        setPlatformName('Serenna');
+        setPlatformName('Serennia');
       }
     };
 
     loadAppearanceName();
 
     const handler = () => loadAppearanceName();
-    window.addEventListener('serenna-appearance-changed', handler);
-    return () => window.removeEventListener('serenna-appearance-changed', handler);
+    window.addEventListener('serennia-appearance-changed', handler);
+    return () => window.removeEventListener('serennia-appearance-changed', handler);
   }, []);
 
   useEffect(() => {
@@ -98,13 +98,13 @@ const Sidebar = () => {
     return () => clearInterval(interval);
   }, []);
 
-	const normalizedName = platformName.trim();
-	const titleLength = normalizedName.length;
+  const normalizedName = platformName.trim();
+  const titleLength = normalizedName.length;
 
-	let titleSizeClass = 'text-3xl';
-	if (titleLength > 18) titleSizeClass = 'text-2xl';
-	if (titleLength > 26) titleSizeClass = 'text-xl';
-	if (titleLength > 34) titleSizeClass = 'text-lg';
+  let titleSizeClass = 'text-3xl';
+  if (titleLength > 18) titleSizeClass = 'text-2xl';
+  if (titleLength > 26) titleSizeClass = 'text-xl';
+  if (titleLength > 34) titleSizeClass = 'text-lg';
 
   const handleLogout = () => {
     logout();
@@ -115,22 +115,22 @@ const Sidebar = () => {
   // Super admin and tenant admin should have admin-level access
   const getRoleForPermissions = (): 'admin' | 'manager' | 'receptionist' | 'professional' | 'accountant' => {
     if (!user) return 'admin';
-    
+
     // If user has platformRole (super_admin or tenant_admin), treat as admin
     if (user.platformRole === 'super_admin' || user.platformRole === 'tenant_admin') {
       return 'admin';
     }
-    
+
     // Use tenantRole if available
     if (user.tenantRole) {
       return user.tenantRole;
     }
-    
+
     // Fallback: if role is set (legacy), use it
     if (user.role) {
       return user.role;
     }
-    
+
     // Default to admin for safety
     return 'admin';
   };
@@ -152,14 +152,14 @@ const Sidebar = () => {
     .toUpperCase();
 
   return (
-    <aside className="w-64 h-screen bg-sidebar shadow-serenna flex flex-col border-r border-border">
+    <aside className="w-64 h-screen bg-sidebar shadow-serennia flex flex-col border-r border-border">
       <div className="p-6">
         <h1
           className={`${titleSizeClass} font-semibold text-primary leading-tight break-words max-w-full`}
         >
           {normalizedName}
         </h1>
-        <p className="text-xs text-text-muted mt-1">powered by serenna</p>
+        <p className="text-xs text-text-muted mt-1">powered by serennia</p>
       </div>
       <nav className="flex-1 py-4 px-2">
         <ul>
@@ -197,7 +197,7 @@ const Sidebar = () => {
           )}
         </ul>
       </nav>
-      
+
       {/* Dark Mode Toggle */}
       <div className="px-4 pb-4">
         <button
@@ -236,10 +236,10 @@ const Sidebar = () => {
             )}
           </div>
         </button>
-        
+
         {/* Dropdown Perfil / Logout */}
         {showLogout && (
-          <div 
+          <div
             className="absolute bottom-full left-4 right-4 mb-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-slide-up"
           >
             <button

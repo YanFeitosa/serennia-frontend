@@ -1,12 +1,14 @@
 // src/pages/Configuracoes.tsx
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/Button';
-import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings, getMessageTemplates, createMessageTemplate, updateMessageTemplate, deleteMessageTemplate, type MessageTemplate, type SalonTheme } from '../../lib/api';
+import { Input } from '../../components/ui/Input';
+import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings, getMessageTemplates, createMessageTemplate, updateMessageTemplate, deleteMessageTemplate, testWhatsAppConnection, testPaymentConnection, type MessageTemplate, type SalonTheme, type SalonSettings } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../contexts/PermissionsContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { isAdminLike } from '../../lib/utils';
 import type { CategoryType, UserRole } from '../../types';
+import { MessageCircle, CreditCard, CheckCircle, XCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 
 const AVAILABLE_VARIABLES = [
   { key: 'cliente_nome', label: 'Nome do cliente' },
@@ -128,7 +130,7 @@ const Configuracoes = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const base: AppearanceSettings = {
-      platformName: 'Serenna',
+      platformName: 'Serennia',
       light: {
         primaryColor: '#25445A',
         secondaryColor: '#7AA7D8',
@@ -145,7 +147,7 @@ const Configuracoes = () => {
       },
     };
 
-    const stored = window.localStorage.getItem('serenna-appearance');
+    const stored = window.localStorage.getItem('serennia-appearance');
     let initial = base;
     if (stored) {
       try {
@@ -198,7 +200,7 @@ const Configuracoes = () => {
         ) {
           percent = Math.round(settings.defaultCommissionRate * 100);
         } else {
-          const raw = window.localStorage.getItem('serenna-default-commission');
+          const raw = window.localStorage.getItem('serennia-default-commission');
           const parsed = raw != null ? Number(raw) : NaN;
           if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
             percent = parsed;
@@ -215,7 +217,7 @@ const Configuracoes = () => {
         // Load theme from backend if available
         if (settings.theme) {
           const themeFromBackend: AppearanceSettings = {
-            platformName: settings.theme.platformName || settings.name || 'Serenna',
+            platformName: settings.theme.platformName || settings.name || 'Serennia',
             light: {
               primaryColor: settings.theme.light?.primaryColor || '#25445A',
               secondaryColor: settings.theme.light?.secondaryColor || '#7AA7D8',
@@ -234,17 +236,17 @@ const Configuracoes = () => {
           setAppearanceDraft(themeFromBackend);
           setAppearanceApplied(themeFromBackend);
           applyAppearance(themeFromBackend);
-          window.localStorage.setItem('serenna-appearance', JSON.stringify(themeFromBackend));
+          window.localStorage.setItem('serennia-appearance', JSON.stringify(themeFromBackend));
         }
 
-        window.localStorage.setItem('serenna-default-commission', String(percent));
+        window.localStorage.setItem('serennia-default-commission', String(percent));
       } catch (error) {
         console.error('Failed to load settings', error);
         if (!isMounted) return;
 
         // Fallback para localStorage se disponível
         if (typeof window !== 'undefined') {
-          const raw = window.localStorage.getItem('serenna-default-commission');
+          const raw = window.localStorage.getItem('serennia-default-commission');
           const parsed = raw != null ? Number(raw) : NaN;
           if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
             setDefaultCommissionPercent(parsed);
@@ -350,7 +352,7 @@ const Configuracoes = () => {
     if (!appearanceDraft) return;
 
     const trimmed = appearanceDraft.platformName.trim();
-    const nameToSave = trimmed.length > 0 ? trimmed : 'Serenna';
+    const nameToSave = trimmed.length > 0 ? trimmed : 'Serennia';
 
     try {
       const updated = await updateSalonSettings({ name: nameToSave });
@@ -381,8 +383,8 @@ const Configuracoes = () => {
       applyAppearance(next);
 
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('serenna-appearance', JSON.stringify(next));
-        window.dispatchEvent(new Event('serenna-appearance-changed'));
+        window.localStorage.setItem('serennia-appearance', JSON.stringify(next));
+        window.dispatchEvent(new Event('serennia-appearance-changed'));
       }
     } catch (error) {
       console.error('Failed to save salon name', error);
@@ -411,7 +413,7 @@ const Configuracoes = () => {
 
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(
-          'serenna-default-commission',
+          'serennia-default-commission',
           String(effectivePercent),
         );
       }
@@ -457,12 +459,12 @@ const Configuracoes = () => {
       
       await updateSalonSettings({ theme: themePayload });
       
-      setAppearanceApplied(appearanceDraft);
-      applyAppearance(appearanceDraft);
+    setAppearanceApplied(appearanceDraft);
+    applyAppearance(appearanceDraft);
       
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('serenna-appearance', JSON.stringify(appearanceDraft));
-        window.dispatchEvent(new Event('serenna-appearance-changed'));
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('serennia-appearance', JSON.stringify(appearanceDraft));
+      window.dispatchEvent(new Event('serennia-appearance-changed'));
       }
     } catch (error) {
       console.error('Failed to save theme to backend', error);
@@ -470,8 +472,8 @@ const Configuracoes = () => {
       setAppearanceApplied(appearanceDraft);
       applyAppearance(appearanceDraft);
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('serenna-appearance', JSON.stringify(appearanceDraft));
-        window.dispatchEvent(new Event('serenna-appearance-changed'));
+        window.localStorage.setItem('serennia-appearance', JSON.stringify(appearanceDraft));
+        window.dispatchEvent(new Event('serennia-appearance-changed'));
       }
     }
   };
@@ -1253,9 +1255,426 @@ const Configuracoes = () => {
           </div>
         )}
 
-        {tab === 'integracoes' && <div>Conteúdo da aba Integrações</div>}
+        {tab === 'integracoes' && <IntegrationsTab />}
 
         {tab === 'permissoes' && <PermissionsTab />}
+      </div>
+    </div>
+  );
+};
+
+// Integrations Tab Component
+const IntegrationsTab = () => {
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<SalonSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // WhatsApp state
+  const [whatsappApiUrl, setWhatsappApiUrl] = useState('');
+  const [whatsappApiKey, setWhatsappApiKey] = useState('');
+  const [whatsappInstanceId, setWhatsappInstanceId] = useState('');
+  const [whatsappPhone, setWhatsappPhone] = useState('');
+  const [whatsappConnected, setWhatsappConnected] = useState(false);
+  const [isTestingWhatsApp, setIsTestingWhatsApp] = useState(false);
+  const [showWhatsAppKey, setShowWhatsAppKey] = useState(false);
+
+  // Payment state
+  const [paymentProvider, setPaymentProvider] = useState<'mercadopago' | 'stripe' | null>(null);
+  const [mpAccessToken, setMpAccessToken] = useState('');
+  const [mpPublicKey, setMpPublicKey] = useState('');
+  const [stripeSecretKey, setStripeSecretKey] = useState('');
+  const [stripePublishableKey, setStripePublishableKey] = useState('');
+  const [isTestingPayment, setIsTestingPayment] = useState(false);
+  const [showPaymentKeys, setShowPaymentKeys] = useState(false);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getSalonSettings();
+        setSettings(data);
+        // WhatsApp
+        setWhatsappApiUrl(data.whatsappApiUrl || '');
+        setWhatsappApiKey(data.whatsappApiKey || '');
+        setWhatsappInstanceId(data.whatsappInstanceId || '');
+        setWhatsappPhone(data.whatsappPhone || '');
+        setWhatsappConnected(data.whatsappConnected || false);
+        // Payment
+        setPaymentProvider(data.paymentProvider || null);
+        setMpAccessToken(data.mpAccessToken || '');
+        setMpPublicKey(data.mpPublicKey || '');
+        setStripeSecretKey(data.stripeSecretKey || '');
+        setStripePublishableKey(data.stripePublishableKey || '');
+      } catch (err: any) {
+        console.error('Error loading settings', err);
+        setError(err.message || 'Erro ao carregar configurações');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  const handleSaveWhatsApp = async () => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      await updateSalonSettings({
+        whatsappApiUrl: whatsappApiUrl || null,
+        whatsappApiKey: whatsappApiKey || null,
+        whatsappInstanceId: whatsappInstanceId || null,
+        whatsappPhone: whatsappPhone || null,
+      });
+      setSuccessMessage('Configurações do WhatsApp salvas!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao salvar configurações');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestWhatsApp = async () => {
+    try {
+      setIsTestingWhatsApp(true);
+      setError(null);
+      const result = await testWhatsAppConnection();
+      setWhatsappConnected(result.success);
+      if (result.success) {
+        setSuccessMessage('WhatsApp conectado com sucesso!');
+      } else {
+        setError(result.error || 'Falha ao conectar');
+      }
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao testar conexão');
+      setWhatsappConnected(false);
+    } finally {
+      setIsTestingWhatsApp(false);
+    }
+  };
+
+  const handleSavePayment = async () => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      await updateSalonSettings({
+        paymentProvider,
+        mpAccessToken: mpAccessToken || null,
+        mpPublicKey: mpPublicKey || null,
+        stripeSecretKey: stripeSecretKey || null,
+        stripePublishableKey: stripePublishableKey || null,
+      });
+      setSuccessMessage('Configurações de pagamento salvas!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao salvar configurações');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestPayment = async () => {
+    try {
+      setIsTestingPayment(true);
+      setError(null);
+      const result = await testPaymentConnection();
+      if (result.success) {
+        setSuccessMessage('Conexão de pagamento validada!');
+      } else {
+        setError(result.error || 'Falha ao validar conexão');
+      }
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao testar conexão');
+    } finally {
+      setIsTestingPayment(false);
+    }
+  };
+
+  if (!isAdminLike(user)) {
+    return (
+      <div className="p-8 text-center text-text-muted">
+        Apenas administradores podem configurar integrações.
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-text-muted">
+        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+        Carregando configurações...
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Success/Error Messages */}
+      {successMessage && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-600 flex items-center gap-2">
+          <CheckCircle className="w-4 h-4" />
+          {successMessage}
+        </div>
+      )}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center gap-2">
+          <XCircle className="w-4 h-4" />
+          {error}
+        </div>
+      )}
+
+      {/* WhatsApp Integration */}
+      <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <MessageCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-text">WhatsApp (Evolution API)</h3>
+              <p className="text-sm text-text-muted">Configure a integração para enviar mensagens automáticas</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {whatsappConnected ? (
+              <span className="flex items-center gap-1 text-sm text-green-600">
+                <CheckCircle className="w-4 h-4" />
+                Conectado
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-sm text-text-muted">
+                <XCircle className="w-4 h-4" />
+                Desconectado
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-text mb-1">URL da API</label>
+            <Input
+              value={whatsappApiUrl}
+              onChange={(e) => setWhatsappApiUrl(e.target.value)}
+              placeholder="https://api.evolution.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text mb-1">Instance ID</label>
+            <Input
+              value={whatsappInstanceId}
+              onChange={(e) => setWhatsappInstanceId(e.target.value)}
+              placeholder="minha-instancia"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text mb-1">API Key</label>
+            <div className="relative">
+              <Input
+                type={showWhatsAppKey ? 'text' : 'password'}
+                value={whatsappApiKey}
+                onChange={(e) => setWhatsappApiKey(e.target.value)}
+                placeholder="Sua API Key"
+              />
+              <button
+                type="button"
+                onClick={() => setShowWhatsAppKey(!showWhatsAppKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+              >
+                {showWhatsAppKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text mb-1">Número do WhatsApp</label>
+            <Input
+              value={whatsappPhone}
+              onChange={(e) => setWhatsappPhone(e.target.value)}
+              placeholder="5511999999999"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <Button onClick={handleSaveWhatsApp} disabled={isSaving}>
+            {isSaving ? 'Salvando...' : 'Salvar Configurações'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleTestWhatsApp}
+            disabled={isTestingWhatsApp || !whatsappApiUrl || !whatsappApiKey || !whatsappInstanceId}
+          >
+            {isTestingWhatsApp ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Testando...
+              </>
+            ) : (
+              'Testar Conexão'
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Payment Integration */}
+      <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <CreditCard className="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-text">Pagamentos</h3>
+            <p className="text-sm text-text-muted">Configure PIX e cartão para receber pagamentos online</p>
+          </div>
+        </div>
+
+        {/* Provider Selection */}
+        <div>
+          <label className="block text-sm font-medium text-text mb-2">Provedor de Pagamento</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPaymentProvider('mercadopago')}
+              className={`px-4 py-2 rounded-lg border transition-colors ${
+                paymentProvider === 'mercadopago'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-text-muted hover:border-primary'
+              }`}
+            >
+              Mercado Pago
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentProvider('stripe')}
+              className={`px-4 py-2 rounded-lg border transition-colors ${
+                paymentProvider === 'stripe'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-text-muted hover:border-primary'
+              }`}
+            >
+              Stripe
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentProvider(null)}
+              className={`px-4 py-2 rounded-lg border transition-colors ${
+                paymentProvider === null
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-text-muted hover:border-primary'
+              }`}
+            >
+              Nenhum
+            </button>
+          </div>
+        </div>
+
+        {/* Mercado Pago Fields */}
+        {paymentProvider === 'mercadopago' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-text mb-1">Access Token</label>
+              <div className="relative">
+                <Input
+                  type={showPaymentKeys ? 'text' : 'password'}
+                  value={mpAccessToken}
+                  onChange={(e) => setMpAccessToken(e.target.value)}
+                  placeholder="APP_USR-..."
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentKeys(!showPaymentKeys)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+                >
+                  {showPaymentKeys ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text mb-1">Public Key</label>
+              <Input
+                value={mpPublicKey}
+                onChange={(e) => setMpPublicKey(e.target.value)}
+                placeholder="APP_USR-..."
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Stripe Fields */}
+        {paymentProvider === 'stripe' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-text mb-1">Secret Key</label>
+              <div className="relative">
+                <Input
+                  type={showPaymentKeys ? 'text' : 'password'}
+                  value={stripeSecretKey}
+                  onChange={(e) => setStripeSecretKey(e.target.value)}
+                  placeholder="sk_live_..."
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentKeys(!showPaymentKeys)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+                >
+                  {showPaymentKeys ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text mb-1">Publishable Key</label>
+              <Input
+                value={stripePublishableKey}
+                onChange={(e) => setStripePublishableKey(e.target.value)}
+                placeholder="pk_live_..."
+              />
+            </div>
+          </div>
+        )}
+
+        {paymentProvider && (
+          <div className="flex gap-2 pt-2">
+            <Button onClick={handleSavePayment} disabled={isSaving}>
+              {isSaving ? 'Salvando...' : 'Salvar Configurações'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleTestPayment}
+              disabled={isTestingPayment}
+            >
+              {isTestingPayment ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Testando...
+                </>
+              ) : (
+                'Testar Conexão'
+              )}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Help Section */}
+      <div className="bg-background rounded-xl border border-border p-6">
+        <h4 className="font-semibold text-text mb-3">Precisa de ajuda?</h4>
+        <div className="space-y-2 text-sm text-text-muted">
+          <p>
+            <strong>WhatsApp (Evolution API):</strong> Você precisa de uma instância da Evolution API rodando.
+            Acesse <a href="https://doc.evolution-api.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">doc.evolution-api.com</a> para mais informações.
+          </p>
+          <p>
+            <strong>Mercado Pago:</strong> Obtenha suas credenciais em <a href="https://www.mercadopago.com.br/developers" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">mercadopago.com.br/developers</a>
+          </p>
+          <p>
+            <strong>Stripe:</strong> Obtenha suas credenciais em <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">dashboard.stripe.com/apikeys</a>
+          </p>
+        </div>
       </div>
     </div>
   );

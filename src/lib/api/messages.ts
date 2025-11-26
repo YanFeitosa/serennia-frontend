@@ -147,7 +147,7 @@ export async function testMessage(payload: TestMessagePayload): Promise<{
 }
 
 // POST /messages/test-connection
-export async function testWhatsAppConnection(
+export async function testWhatsAppMessageConnection(
   payload: TestConnectionPayload
 ): Promise<{
   success: boolean;

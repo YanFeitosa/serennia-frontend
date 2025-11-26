@@ -5,7 +5,7 @@ export let mockNotifications: Notification[] = [];
 
 const notifyChange = () => {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('serenna-notifications-changed'));
+    window.dispatchEvent(new Event('serennia-notifications-changed'));
   }
 };
 

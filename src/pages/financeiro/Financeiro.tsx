@@ -1,6 +1,6 @@
 // src/pages/Financeiro.tsx
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Info, Plus, Trash2 } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Info, Plus, Trash2, Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getOrders, getSalonSettings, getExpenses, createExpense, deleteExpense } from '../../lib/api';
 import { Badge } from '../../components/ui/Badge';
@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input';
 import type { Order, OrderItem, Expense, ExpenseType } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAdminLike } from '../../lib/utils';
+import { exportToCSV, exportToPDF, formatCurrency, formatDateTime } from '../../lib/export';
 
 type ChartResolution = 'auto' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -468,7 +469,58 @@ const Financeiro = () => {
 
       {/* Recent Transactions */}
       <div className="bg-card rounded-xl shadow-md border border-border">
-        <h3 className="text-lg font-semibold text-text p-4 border-b border-border">Transações Recentes</h3>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="text-lg font-semibold text-text">Transações Recentes</h3>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const exportData = filteredOrders.map(order => ({
+                  comanda: `#${order.id.slice(0, 6)}`,
+                  data: formatDateTime(order.createdAt),
+                  valor: order.finalValue,
+                  status: getStatusLabel(order.status),
+                }));
+                exportToCSV(exportData, `faturamento_${new Date().toISOString().split('T')[0]}`, {
+                  comanda: 'Comanda',
+                  data: 'Data',
+                  valor: 'Valor (R$)',
+                  status: 'Status',
+                });
+              }}
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-1" />
+              Excel
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const exportData = filteredOrders.map(order => ({
+                  comanda: `#${order.id.slice(0, 6)}`,
+                  data: formatDateTime(order.createdAt),
+                  valor: order.finalValue,
+                  status: getStatusLabel(order.status),
+                }));
+                exportToPDF(
+                  'Relatório de Faturamento',
+                  exportData,
+                  [
+                    { key: 'comanda', header: 'Comanda' },
+                    { key: 'data', header: 'Data' },
+                    { key: 'valor', header: 'Valor (R$)' },
+                    { key: 'status', header: 'Status' },
+                  ],
+                  `faturamento_${new Date().toISOString().split('T')[0]}`
+                );
+              }}
+            >
+              <FileText className="w-4 h-4 mr-1" />
+              PDF
+            </Button>
+          </div>
+        </div>
         <table className="w-full text-left">
           <thead className="border-b border-border">
             <tr>

@@ -73,7 +73,7 @@ type CollaboratorSchema = z.infer<typeof collaboratorSchema>;
 
 const getDefaultCommissionRate = (): number => {
   if (typeof window === 'undefined') return 0.5;
-  const raw = window.localStorage.getItem('serenna-default-commission');
+  const raw = window.localStorage.getItem('serennia-default-commission');
   const percent = Number(raw);
   if (!Number.isFinite(percent)) return 0.5;
   const clamped = Math.max(0, Math.min(100, percent));
