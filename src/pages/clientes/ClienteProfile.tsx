@@ -101,15 +101,16 @@ const ClienteProfile = () => {
         <span>Voltar para Clientes</span>
       </Link>
 
-      <header className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-text">{client?.name || 'Novo Cliente'}</h1>
-          <p className="text-text-muted">{client?.email || client?.phone}</p>
+      <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        <div className="pt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">{client?.name || 'Novo Cliente'}</h1>
+          <p className="text-text-muted text-sm md:text-base">{client?.email || client?.phone}</p>
         </div>
         <Button
           variant="ghost"
           size="sm"
-          className="p-2 rounded-full"
+          className="p-2 rounded-full self-end sm:self-auto"
           onClick={() => {
             if (!client) return;
             navigate('/app/clientes/novo', { state: { editClientId: client.id } });
@@ -121,7 +122,7 @@ const ClienteProfile = () => {
 
       <div>
         <h3 className="text-lg font-semibold text-text mb-4">Histórico de Comandas</h3>
-        <div className="bg-card rounded-xl shadow-md border border-border">
+        <div className="bg-card rounded-xl shadow-md border border-border overflow-hidden">
           <ul className="divide-y divide-border">
             {orders.length === 0 && (
               <li className="p-4 text-center text-text-muted">
@@ -134,18 +135,18 @@ const ClienteProfile = () => {
               const productItems = order.items.filter(item => item.type === 'product' && item.productId);
 
               return (
-                <li key={order.id} className="p-4 hover:bg-background transition-colors">
+                <li key={order.id} className="p-3 md:p-4 hover:bg-background transition-colors">
                   <button
                     type="button"
-                    className="w-full flex items-center justify-between"
+                    className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                     onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
                   >
                     <div className="text-left">
                       <p className="font-semibold text-text">Comanda #{order.id.slice(0,6)}</p>
                       <p className="text-sm text-text-muted">{new Date(order.createdAt).toLocaleDateString('pt-BR')}</p>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="text-right">
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                      <div className="text-left sm:text-right">
                         <p className="font-semibold text-text">{order.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                         <Badge variant={getStatusVariant(order.status)}>{getStatusLabel(order.status)}</Badge>
                       </div>

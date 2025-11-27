@@ -76,9 +76,10 @@ const Notificacoes: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text">Notificações</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        <div className="pt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Notificações</h1>
           {unreadCount > 0 && (
             <p className="text-sm text-text-muted">Você tem {unreadCount} notificação(ões) não lida(s).</p>
           )}
@@ -97,11 +98,11 @@ const Notificacoes: React.FC = () => {
           .map(notification => (
             <div
               key={notification.id}
-              className={`flex items-start justify-between rounded-xl border border-border px-4 py-3 bg-card ${
+              className={`flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 rounded-xl border border-border px-3 md:px-4 py-3 bg-card ${
                 notification.read ? 'opacity-70' : ''
               }`}
             >
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-text">{notification.message}</p>
                 <p className="text-xs text-text-muted mt-1">
                   {new Date(notification.createdAt).toLocaleString('pt-BR')}
@@ -112,6 +113,7 @@ const Notificacoes: React.FC = () => {
                   size="sm"
                   variant="ghost"
                   onClick={() => handleMarkAsRead(notification.id)}
+                  className="self-end sm:self-auto whitespace-nowrap"
                 >
                   Marcar como lida
                 </Button>

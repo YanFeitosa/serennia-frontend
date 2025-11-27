@@ -68,14 +68,14 @@ const RegistrationForm = () => {
     );
   }
 
-  const inputClasses = "w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all";
+  const inputClasses = "w-full px-3 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all text-sm md:text-base";
 
   return (
-    <div className="w-full max-w-lg mx-auto p-8 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 backdrop-blur-sm">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <div className="w-full max-w-lg mx-auto p-5 md:p-8 rounded-xl md:rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 backdrop-blur-sm">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-5">
         {/* Salon Name */}
         <div>
-          <label htmlFor="salonName" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="salonName" className="block text-xs md:text-sm font-medium text-gray-300 mb-1.5 md:mb-2">
             Nome do salão
           </label>
           <input
@@ -86,13 +86,13 @@ const RegistrationForm = () => {
             placeholder="Ex: Salão da Maria"
           />
           {errors.salonName && (
-            <p className="mt-1 text-sm text-red-400">{errors.salonName.message}</p>
+            <p className="mt-1 text-xs md:text-sm text-red-400">{errors.salonName.message}</p>
           )}
         </div>
 
         {/* Name */}
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="name" className="block text-xs md:text-sm font-medium text-gray-300 mb-1.5 md:mb-2">
             Seu nome completo
           </label>
           <input
@@ -103,14 +103,14 @@ const RegistrationForm = () => {
             placeholder="Ex: Maria Silva"
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-400">{errors.name.message}</p>
+            <p className="mt-1 text-xs md:text-sm text-red-400">{errors.name.message}</p>
           )}
         </div>
 
         {/* Email & Phone Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="email" className="block text-xs md:text-sm font-medium text-gray-300 mb-1.5 md:mb-2">
               E-mail
             </label>
             <input
@@ -121,11 +121,11 @@ const RegistrationForm = () => {
               placeholder="seu@email.com"
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
+              <p className="mt-1 text-xs md:text-sm text-red-400">{errors.email.message}</p>
             )}
           </div>
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="phone" className="block text-xs md:text-sm font-medium text-gray-300 mb-1.5 md:mb-2">
               Telefone
             </label>
             <input
@@ -136,15 +136,15 @@ const RegistrationForm = () => {
               placeholder="(11) 99999-9999"
             />
             {errors.phone && (
-              <p className="mt-1 text-sm text-red-400">{errors.phone.message}</p>
+              <p className="mt-1 text-xs md:text-sm text-red-400">{errors.phone.message}</p>
             )}
           </div>
         </div>
 
         {/* Password Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="password" className="block text-xs md:text-sm font-medium text-gray-300 mb-1.5 md:mb-2">
               Senha
             </label>
             <input
@@ -155,11 +155,11 @@ const RegistrationForm = () => {
               placeholder="Mínimo 8 caracteres"
             />
             {errors.password && (
-              <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
+              <p className="mt-1 text-xs md:text-sm text-red-400">{errors.password.message}</p>
             )}
           </div>
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="confirmPassword" className="block text-xs md:text-sm font-medium text-gray-300 mb-1.5 md:mb-2">
               Confirmar senha
             </label>
             <input
@@ -170,7 +170,7 @@ const RegistrationForm = () => {
               placeholder="Digite novamente"
             />
             {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-400">{errors.confirmPassword.message}</p>
+              <p className="mt-1 text-xs md:text-sm text-red-400">{errors.confirmPassword.message}</p>
             )}
           </div>
         </div>
@@ -181,9 +181,9 @@ const RegistrationForm = () => {
             type="checkbox"
             id="terms"
             required
-            className="mt-1 mr-3 w-4 h-4 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-purple-500/20"
+            className="mt-1 mr-2 md:mr-3 w-4 h-4 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-purple-500/20"
           />
-          <label htmlFor="terms" className="text-sm text-gray-400">
+          <label htmlFor="terms" className="text-xs md:text-sm text-gray-400">
             Aceito os{' '}
             <Link to="/terms" className="text-purple-400 hover:text-purple-300 underline">
               termos de uso
@@ -197,7 +197,7 @@ const RegistrationForm = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+          <div className="p-3 md:p-4 rounded-lg md:rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs md:text-sm">
             {error}
           </div>
         )}
@@ -206,7 +206,7 @@ const RegistrationForm = () => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold text-lg hover:shadow-2xl hover:shadow-purple-500/30 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 md:py-4 rounded-lg md:rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold text-base md:text-lg hover:shadow-2xl hover:shadow-purple-500/30 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <>
@@ -219,7 +219,7 @@ const RegistrationForm = () => {
         </button>
 
         {/* Login Link */}
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-xs md:text-sm text-gray-500">
           Já tem conta?{' '}
           <Link to="/login" className="text-purple-400 hover:text-purple-300 font-medium">
             Entrar

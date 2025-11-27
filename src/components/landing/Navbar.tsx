@@ -32,15 +32,15 @@ const Navbar = () => {
         }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-2 md:gap-3 group">
             <img
               src={serenLogo}
               alt="Serennia Logo"
-              className="w-12 h-12 object-contain group-hover:scale-110 transition-transform"
+              className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:scale-110 transition-transform"
             />
-            <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               Serennia
             </span>
           </Link>

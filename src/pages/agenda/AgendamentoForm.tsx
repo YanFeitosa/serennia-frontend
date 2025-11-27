@@ -201,16 +201,19 @@ const AgendamentoForm = () => {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-3xl font-bold text-text">{appointment ? 'Editar Agendamento' : 'Novo Agendamento'}</h1>
-        <p className="text-text-muted">{appointment ? 'Altere os detalhes do agendamento.' : 'Preencha os dados para criar um novo agendamento.'}</p>
+      <header className="p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        <div className="pt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">{appointment ? 'Editar Agendamento' : 'Novo Agendamento'}</h1>
+          <p className="text-text-muted text-sm md:text-base">{appointment ? 'Altere os detalhes do agendamento.' : 'Preencha os dados para criar um novo agendamento.'}</p>
+        </div>
       </header>
       {(isLoading || error) && (
         <div className="text-sm text-text-muted">
           {isLoading ? 'Carregando dados do agendamento...' : error}
         </div>
       )}
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-6 rounded-xl shadow-md space-y-4 border border-border">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-4 md:p-6 rounded-xl shadow-md space-y-4 border border-border">
         <div>
           <label htmlFor="clientId" className="block text-sm font-medium text-text">Cliente</label>
           <SearchableSelectPlain
@@ -280,9 +283,9 @@ const AgendamentoForm = () => {
           <Textarea id="notes" {...register('notes')} rows={3} />
         </div>
 
-        <div className="flex justify-end space-x-4 pt-4">
-          <Button type="button" variant="ghost" onClick={() => navigate('/app/agenda')}>Cancelar</Button>
-          <Button type="submit" disabled={isSubmitting}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
+          <Button type="button" variant="ghost" onClick={() => navigate('/app/agenda')} className="w-full sm:w-auto">Cancelar</Button>
+          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
             {isSubmitting ? 'Salvando...' : (appointment ? 'Salvar Alterações' : 'Criar Agendamento')}
           </Button>
         </div>

@@ -39,11 +39,11 @@ const Agenda = () => {
   return (
     <div className="space-y-4">
       {/* Page header with gradient accent */}
-      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border">
+      <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border">
         <div>
-          <h1 className="text-3xl font-bold text-primary">Agenda</h1>
-          <p className="text-text-muted">Visualize e gerencie seus agendamentos.</p>
-          <p className="text-sm text-text-muted mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Agenda</h1>
+          <p className="text-text-muted text-sm md:text-base">Visualize e gerencie seus agendamentos.</p>
+          <p className="text-xs md:text-sm text-text-muted mt-1">
             {currentDate.toLocaleDateString(undefined, {
               weekday: 'long',
               year: 'numeric',
@@ -52,21 +52,21 @@ const Agenda = () => {
             })}
           </p>
         </div>
-        <div className="flex flex-col items-end space-y-2">
-          <div className="flex items-center space-x-2">
-            <Button variant={view === 'daily' ? 'primary' : 'ghost'} onClick={() => setView('daily')}>Diária</Button>
-            <Button variant={view === 'weekly' ? 'primary' : 'ghost'} onClick={() => setView('weekly')}>Semanal</Button>
-            <Button variant={view === 'monthly' ? 'primary' : 'ghost'} onClick={() => setView('monthly')}>Mensal</Button>
-            <Button onClick={() => handleEditAppointment(null)}>+ Novo Agendamento</Button>
+        <div className="flex flex-col space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant={view === 'daily' ? 'primary' : 'ghost'} onClick={() => setView('daily')}>Diária</Button>
+            <Button size="sm" variant={view === 'weekly' ? 'primary' : 'ghost'} onClick={() => setView('weekly')}>Semanal</Button>
+            <Button size="sm" variant={view === 'monthly' ? 'primary' : 'ghost'} onClick={() => setView('monthly')}>Mensal</Button>
+            <Button size="sm" onClick={() => handleEditAppointment(null)} className="whitespace-nowrap">+ Novo</Button>
           </div>
-          <div className="flex items-center space-x-2 text-sm">
-            <Button variant="ghost" onClick={() => changeDate(-1)}>
+          <div className="flex items-center justify-center lg:justify-end gap-1 text-sm">
+            <Button variant="ghost" size="sm" onClick={() => changeDate(-1)}>
               Anterior
             </Button>
-            <Button variant="ghost" onClick={goToToday}>
+            <Button variant="ghost" size="sm" onClick={goToToday}>
               Atual
             </Button>
-            <Button variant="ghost" onClick={() => changeDate(1)}>
+            <Button variant="ghost" size="sm" onClick={() => changeDate(1)}>
               Próximo
             </Button>
           </div>

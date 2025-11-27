@@ -174,15 +174,15 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 	}
 
 	return (
-		<div className="bg-card rounded-xl shadow-md p-4 border border-border">
-			<h2 className="text-xl font-bold mb-4 text-text">Visualização Mensal</h2>
+		<div className="bg-card rounded-xl shadow-md p-3 md:p-4 border border-border">
+			<h2 className="text-lg md:text-xl font-bold mb-4 text-text">Visualização Mensal</h2>
 			{(isLoading || error) && (
 				<div className="mb-2 text-[11px] text-text-muted">
 					{isLoading ? 'Carregando agendamentos...' : error}
 				</div>
 			)}
-			<div className="flex items-center justify-between mb-2 text-sm text-text-muted">
-				<span>
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 text-sm text-text-muted">
+				<span className="capitalize">
 					{date.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
 				</span>
 				<div className="flex items-center space-x-2 text-[11px]">
@@ -201,14 +201,16 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 					</select>
 				</div>
 			</div>
-			<div className="grid grid-cols-7 gap-1 text-xs mb-1">
-				{weekdayLabels.map(label => (
-					<div key={label} className="text-center font-semibold text-text-muted">
-						{label}
+			<div className="overflow-x-auto -mx-3 md:mx-0">
+				<div className="min-w-[500px] px-3 md:px-0">
+					<div className="grid grid-cols-7 gap-1 text-xs mb-1">
+						{weekdayLabels.map(label => (
+							<div key={label} className="text-center font-semibold text-text-muted">
+								{label}
+							</div>
+						))}
 					</div>
-				))}
-			</div>
-			<div className="grid grid-cols-7 gap-1 text-[11px]">
+					<div className="grid grid-cols-7 gap-1 text-[11px]">
 				{days.map(d => {
 					const key = getDateKey(d);
 					const isCurrentMonth = d.getMonth() === currentMonth;
@@ -295,6 +297,8 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 						</button>
 					);
 				})}
+					</div>
+				</div>
 			</div>
 		</div>
 	);

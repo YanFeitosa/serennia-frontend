@@ -62,15 +62,15 @@ const Clientes = () => {
   return (
     <div className="space-y-4">
       {/* Enhanced header with card styling */}
-      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
         
         <div className="pt-2">
-          <h1 className="text-3xl font-bold text-primary">Clientes</h1>
-          <p className="text-text-muted mt-1">Gerencie sua base de clientes</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Clientes</h1>
+          <p className="text-text-muted text-sm md:text-base mt-1">Gerencie sua base de clientes</p>
         </div>
-        <Button onClick={() => navigate('/app/clientes/novo')} className="mt-2">
+        <Button onClick={() => navigate('/app/clientes/novo')} className="mt-2 sm:mt-0">
           <Plus className="w-4 h-4 mr-2" />
           Novo Cliente
         </Button>
@@ -92,59 +92,64 @@ const Clientes = () => {
 
       <div className="bg-card rounded-xl shadow-elevated border border-border overflow-hidden">
         {error && (
-          <p className="text-sm text-red-500">{error}</p>
+          <p className="text-sm text-red-500 p-4">{error}</p>
         )}
         {isLoading && (
-          <p className="text-sm text-text-muted">Carregando clientes...</p>
+          <p className="text-sm text-text-muted p-4">Carregando clientes...</p>
         )}
-        <table className="w-full">
-          <thead>
-            <tr className="bg-sidebar border-b border-border">
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Nome</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Telefone</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Última Visita</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Visitas</th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {clients
-            .filter(client => client.name.toLowerCase().includes(searchTerm.toLowerCase()))
-            .map(client => (
-              <tr key={client.id} className="hover:bg-sidebar transition-colors">
-                <td className="px-6 py-4">
-                  <div className="font-medium text-text">{client.name}</div>
-                </td>
-                <td className="px-6 py-4 text-sm text-text-muted">
-                  <div className="flex items-center">
-                    <Phone className="w-4 h-4 mr-2 text-text-muted" />
-                    {client.phone}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-text-muted">
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2 text-text-muted" />
-                    {client.lastVisit ? new Date(client.lastVisit).toLocaleDateString('pt-BR') : 'Nunca'}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <Badge variant={getVisitCount(client.id) > 5 ? 'success' : 'default'}>
-                    {getVisitCount(client.id)} {getVisitCount(client.id) === 1 ? 'visita' : 'visitas'}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end space-x-2">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/app/clientes/${client.id}`)}>
-                      <Eye className="w-4 h-4 mr-1" />
-                      Ver Perfil
-                    </Button>
-                    <Button size="sm" onClick={() => navigate(`/app/agenda/novo?clientId=${client.id}`)}>Agendar</Button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
+            <thead>
+              <tr className="bg-sidebar border-b border-border">
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Nome</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Telefone</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider hidden sm:table-cell">Última Visita</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider hidden md:table-cell">Visitas</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {clients
+              .filter(client => client.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map(client => (
+                <tr key={client.id} className="hover:bg-sidebar transition-colors">
+                  <td className="px-4 md:px-6 py-3 md:py-4">
+                    <div className="font-medium text-text text-sm">{client.name}</div>
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted">
+                    <div className="flex items-center">
+                      <Phone className="w-4 h-4 mr-2 text-text-muted hidden sm:block" />
+                      <span className="truncate">{client.phone}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted hidden sm:table-cell">
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-2 text-text-muted" />
+                      {client.lastVisit ? new Date(client.lastVisit).toLocaleDateString('pt-BR') : 'Nunca'}
+                    </div>
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 hidden md:table-cell">
+                    <Badge variant={getVisitCount(client.id) > 5 ? 'success' : 'default'}>
+                      {getVisitCount(client.id)} {getVisitCount(client.id) === 1 ? 'visita' : 'visitas'}
+                    </Badge>
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-right">
+                    <div className="flex items-center justify-end gap-1 sm:gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/app/clientes/${client.id}`)}>
+                        <Eye className="w-4 h-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Ver</span>
+                      </Button>
+                      <Button size="sm" onClick={() => navigate(`/app/agenda/novo?clientId=${client.id}`)}>
+                        <span className="hidden sm:inline">Agendar</span>
+                        <span className="sm:hidden">+</span>
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

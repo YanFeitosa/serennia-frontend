@@ -257,13 +257,16 @@ const ColaboradorForm = () => {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-3xl font-bold text-text">{editingCollaborator ? 'Editar Colaborador' : 'Novo Colaborador'}</h1>
-        <p className="text-text-muted">
-          {editingCollaborator
-            ? 'Atualize as informações do colaborador.'
-            : 'Preencha os dados para cadastrar um novo colaborador.'}
-        </p>
+      <header className="p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        <div className="pt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">{editingCollaborator ? 'Editar Colaborador' : 'Novo Colaborador'}</h1>
+          <p className="text-text-muted text-sm md:text-base">
+            {editingCollaborator
+              ? 'Atualize as informações do colaborador.'
+              : 'Preencha os dados para cadastrar um novo colaborador.'}
+          </p>
+        </div>
       </header>
       {loadError && (
         <p className="text-sm text-red-500">{loadError}</p>
@@ -271,7 +274,7 @@ const ColaboradorForm = () => {
       {saveError && (
         <p className="text-sm text-red-500">{saveError}</p>
       )}
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-6 rounded-xl shadow-md space-y-4 border border-border">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-4 md:p-6 rounded-xl shadow-md space-y-4 border border-border">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-text">Nome</label>
           <Input id="name" {...register('name')} />
@@ -287,7 +290,6 @@ const ColaboradorForm = () => {
             <option value="professional">Profissional</option>
             <option value="receptionist">Recepcionista</option>
             <option value="manager">Gerente</option>
-            <option value="admin">Administrador</option>
           </select>
           {errors.role && <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>}
         </div>
@@ -311,8 +313,9 @@ const ColaboradorForm = () => {
           {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
         </div>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-text">Email</label>
-          <Input id="email" {...register('email')} />
+          <label htmlFor="email" className="block text-sm font-medium text-text">Email *</label>
+          <Input id="email" {...register('email')} type="email" />
+          <p className="mt-1 text-xs text-text-muted">Obrigatório para que o colaborador possa fazer login no sistema</p>
           {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
         </div>
         <div>
@@ -374,9 +377,9 @@ const ColaboradorForm = () => {
             )}
           </div>
         )}
-        <div className="flex justify-end space-x-4 pt-4">
-          <Button type="button" variant="ghost" onClick={() => navigate('/app/colaboradores')}>Cancelar</Button>
-          <Button type="submit" disabled={isLoading}>Salvar</Button>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
+          <Button type="button" variant="ghost" onClick={() => navigate('/app/colaboradores')} className="w-full sm:w-auto">Cancelar</Button>
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">Salvar</Button>
         </div>
       </form>
     </div>

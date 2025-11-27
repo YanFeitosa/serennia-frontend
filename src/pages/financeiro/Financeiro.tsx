@@ -318,29 +318,31 @@ const Financeiro = () => {
   return (
     <div className="space-y-6">
       {/* Enhanced header with card styling */}
-      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+      <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
         
         <div className="pt-2">
-          <h1 className="text-3xl font-bold text-primary">Financeiro</h1>
-          <p className="text-text-muted">Acompanhe a saúde financeira do seu negócio.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Financeiro</h1>
+          <p className="text-text-muted text-sm md:text-base">Acompanhe a saúde financeira do seu negócio.</p>
         </div>
-        <div className="flex items-center space-x-2 pt-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
           <DatePickerPlain
             date={startDate}
             setDate={setStartDate}
             placeholder="Data inicial"
-            className="w-[180px]"
+            className="w-full sm:w-[160px]"
           />
           <DatePickerPlain
             date={endDate}
             setDate={setEndDate}
             placeholder="Data final"
-            className="w-[180px]"
+            className="w-full sm:w-[160px]"
           />
           <Button
             variant="ghost"
+            size="sm"
+            className="whitespace-nowrap"
             onClick={() => {
               const today = new Date();
               const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -355,23 +357,23 @@ const Financeiro = () => {
       </header>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
-          <div className="p-3 bg-primary bg-opacity-20 rounded-full">
-            <DollarSign className="w-6 h-6 text-primary" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="bg-card p-4 md:p-6 rounded-xl shadow-md flex items-center space-x-3 md:space-x-4 border border-border">
+          <div className="p-2 md:p-3 bg-primary bg-opacity-20 rounded-full">
+            <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-primary" />
           </div>
-          <div>
-            <p className="text-sm text-text-muted">Faturamento Total</p>
-            <p className="text-2xl font-bold text-text">{totalFaturado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+          <div className="min-w-0">
+            <p className="text-xs md:text-sm text-text-muted">Faturamento Total</p>
+            <p className="text-lg md:text-2xl font-bold text-text truncate">{totalFaturado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
           </div>
         </div>
-        <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
-          <div className="p-3 bg-accent bg-opacity-20 rounded-full">
-            <TrendingDown className="w-6 h-6 text-accent" />
+        <div className="bg-card p-4 md:p-6 rounded-xl shadow-md flex items-center space-x-3 md:space-x-4 border border-border">
+          <div className="p-2 md:p-3 bg-accent bg-opacity-20 rounded-full">
+            <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-accent" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-sm text-text-muted">Gastos Fixos (pro rata)</p>
+              <p className="text-xs md:text-sm text-text-muted">Gastos Fixos</p>
               <div className="group relative">
                 <Info className="w-3 h-3 text-text-muted cursor-help" />
                 <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-sidebar border border-border rounded-lg text-xs text-text opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
@@ -379,17 +381,17 @@ const Financeiro = () => {
                 </div>
               </div>
             </div>
-            <p className="text-2xl font-bold text-text">{gastosFixosPeriodo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-            <p className="text-xs text-text-muted mt-1">Custos fixos mensais: {totalFixedMonthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ({fixedExpenses.length} itens)</p>
+            <p className="text-lg md:text-2xl font-bold text-text truncate">{gastosFixosPeriodo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-xs text-text-muted mt-1 hidden sm:block">Mensais: {totalFixedMonthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
           </div>
         </div>
-        <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
-          <div className="p-3 bg-accent bg-opacity-20 rounded-full">
-            <TrendingDown className="w-6 h-6 text-accent" />
+        <div className="bg-card p-4 md:p-6 rounded-xl shadow-md flex items-center space-x-3 md:space-x-4 border border-border">
+          <div className="p-2 md:p-3 bg-accent bg-opacity-20 rounded-full">
+            <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-accent" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-sm text-text-muted">Custos Variáveis (pro rata)</p>
+              <p className="text-xs md:text-sm text-text-muted">Custos Variáveis</p>
               <div className="group relative">
                 <Info className="w-3 h-3 text-text-muted cursor-help" />
                 <div className="absolute left-0 bottom-full mb-2 w-56 p-2 bg-sidebar border border-border rounded-lg text-xs text-text opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
@@ -397,21 +399,21 @@ const Financeiro = () => {
                 </div>
               </div>
             </div>
-            <p className="text-2xl font-bold text-text">{custosVariaveisPeriodo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-            <p className="text-xs text-text-muted mt-1">Custos variáveis mensais: {totalVariableMonthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ({variableExpenses.length} itens)</p>
+            <p className="text-lg md:text-2xl font-bold text-text truncate">{custosVariaveisPeriodo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-xs text-text-muted mt-1 hidden sm:block">Mensais: {totalVariableMonthly.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
           </div>
         </div>
-        <div className="bg-card p-6 rounded-xl shadow-md flex items-center space-x-4 border border-border">
-          <div className={`p-3 rounded-full ${resultadoPeriodo >= 0 ? 'bg-green-500 bg-opacity-20' : 'bg-red-500 bg-opacity-20'}`}>
+        <div className="bg-card p-4 md:p-6 rounded-xl shadow-md flex items-center space-x-3 md:space-x-4 border border-border">
+          <div className={`p-2 md:p-3 rounded-full ${resultadoPeriodo >= 0 ? 'bg-green-500 bg-opacity-20' : 'bg-red-500 bg-opacity-20'}`}>
             {resultadoPeriodo >= 0 ? (
-              <TrendingUp className={`w-6 h-6 ${resultadoPeriodo >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+              <TrendingUp className={`w-5 h-5 md:w-6 md:h-6 ${resultadoPeriodo >= 0 ? 'text-green-500' : 'text-red-500'}`} />
             ) : (
-              <TrendingDown className="w-6 h-6 text-red-500" />
+              <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
             )}
           </div>
-          <div>
-            <p className="text-sm text-text-muted">Resultado (Lucro/Prejuízo)</p>
-            <p className={`text-2xl font-bold ${resultadoPeriodo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+          <div className="min-w-0">
+            <p className="text-xs md:text-sm text-text-muted">Resultado</p>
+            <p className={`text-lg md:text-2xl font-bold truncate ${resultadoPeriodo >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {resultadoPeriodo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </p>
           </div>
@@ -473,7 +475,7 @@ const Financeiro = () => {
 
       {/* Recent Transactions */}
       <div className="bg-card rounded-xl shadow-md border border-border">
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 border-b border-border">
           <h3 className="text-lg font-semibold text-text">Transações Recentes</h3>
           <div className="flex gap-2">
             <Button
@@ -495,7 +497,7 @@ const Financeiro = () => {
               }}
             >
               <FileSpreadsheet className="w-4 h-4 mr-1" />
-              Excel
+              <span className="hidden sm:inline">Excel</span>
             </Button>
             <Button
               variant="ghost"
@@ -521,34 +523,36 @@ const Financeiro = () => {
               }}
             >
               <FileText className="w-4 h-4 mr-1" />
-              PDF
+              <span className="hidden sm:inline">PDF</span>
             </Button>
           </div>
         </div>
-        <table className="w-full text-left">
-          <thead className="border-b border-border">
-            <tr>
-              <th className="p-4 text-text">Comanda</th>
-              <th className="p-4 text-text">Data</th>
-              <th className="p-4 text-text">Valor</th>
-              <th className="p-4 text-text">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOrders.slice(0, 5).map(order => (
-              <tr key={order.id} className="border-b border-border hover:bg-background transition-colors">
-                <td className="p-4 font-mono text-sm text-text">#{order.id.slice(0, 6)}</td>
-                <td className="p-4 text-text">{new Date(order.createdAt).toLocaleString('pt-BR')}</td>
-                <td className="p-4 text-text">{order.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                <td className="p-4">
-                  <Badge variant={getStatusVariant(order.status)}>
-                    {getStatusLabel(order.status)}
-                  </Badge>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[500px]">
+            <thead className="border-b border-border">
+              <tr>
+                <th className="p-3 md:p-4 text-text text-sm">Comanda</th>
+                <th className="p-3 md:p-4 text-text text-sm">Data</th>
+                <th className="p-3 md:p-4 text-text text-sm">Valor</th>
+                <th className="p-3 md:p-4 text-text text-sm">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredOrders.slice(0, 5).map(order => (
+                <tr key={order.id} className="border-b border-border hover:bg-background transition-colors">
+                  <td className="p-3 md:p-4 font-mono text-xs md:text-sm text-text">#{order.id.slice(0, 6)}</td>
+                  <td className="p-3 md:p-4 text-xs md:text-sm text-text">{new Date(order.createdAt).toLocaleString('pt-BR')}</td>
+                  <td className="p-3 md:p-4 text-xs md:text-sm text-text">{order.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                  <td className="p-3 md:p-4">
+                    <Badge variant={getStatusVariant(order.status)}>
+                      {getStatusLabel(order.status)}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="bg-card rounded-xl shadow-md p-6 border border-border">

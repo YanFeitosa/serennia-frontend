@@ -135,9 +135,9 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
   });
 
   return (
-    <div className="bg-card rounded-xl shadow-md p-4 border border-border">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-text">Visualização Semanal</h2>
+    <div className="bg-card rounded-xl shadow-md p-3 md:p-4 border border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+        <h2 className="text-lg md:text-xl font-bold text-text">Visualização Semanal</h2>
         <div className="flex items-center space-x-2 text-[11px]">
           <span className="text-text-muted">Profissional:</span>
           <select
@@ -159,7 +159,8 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
           {isLoading ? 'Carregando agendamentos...' : error}
         </div>
       )}
-      <div className="grid grid-cols-7 gap-2 text-xs mb-2">
+      <div className="overflow-x-auto -mx-3 md:mx-0">
+        <div className="grid grid-cols-7 gap-1 md:gap-2 text-xs mb-2 min-w-[600px] px-3 md:px-0">
         {groupedByDay.map(({ date, appointments }) => {
           const label = `${weekdayLabels[date.getDay()]} ${date
             .getDate()
@@ -225,6 +226,7 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
             </button>
           );
         })}
+        </div>
       </div>
     </div>
   );

@@ -50,16 +50,16 @@ const Colaboradores = () => {
   return (
     <div className="space-y-4">
       {/* Enhanced header with card styling */}
-      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
         
         <div className="pt-2">
-          <h1 className="text-3xl font-bold text-primary">Colaboradores</h1>
-          <p className="text-text-muted mt-1">Gerencie sua equipe de profissionais</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Colaboradores</h1>
+          <p className="text-text-muted text-sm md:text-base mt-1">Gerencie sua equipe de profissionais</p>
         </div>
         {canCreate && (
-          <Button onClick={() => navigate('/app/colaboradores/novo')} className="mt-2">
+          <Button onClick={() => navigate('/app/colaboradores/novo')} className="mt-2 sm:mt-0">
             <Plus className="w-4 h-4 mr-2" />
             Novo Colaborador
           </Button>
@@ -87,47 +87,47 @@ const Colaboradores = () => {
         <p className="text-sm text-text-muted">Carregando colaboradores...</p>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {collaborators
           .filter(collab => collab.name.toLowerCase().includes(searchTerm.toLowerCase()))
           .map(collab => (
-          <div key={collab.id} className="bg-card rounded-xl shadow-elevated border border-border p-6 hover:shadow-lg hover:border-primary/20 transition-all duration-300">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
+          <div key={collab.id} className="bg-card rounded-xl shadow-elevated border border-border p-4 md:p-6 hover:shadow-lg hover:border-primary/20 transition-all duration-300">
+            <div className="flex items-start justify-between mb-3 md:mb-4">
+              <div className="flex items-center space-x-2 md:space-x-3">
                 <img 
                   src={collab.avatarUrl || `https://i.pravatar.cc/150?u=${collab.id}`}
                   alt={collab.name}
-                  className="w-16 h-16 rounded-full object-cover ring-2 ring-border"
+                  className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover ring-2 ring-border"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = `https://i.pravatar.cc/150?u=${collab.id}`;
                   }}
                 />
-                <div>
-                  <h3 className="text-lg font-semibold text-text">{collab.name}</h3>
-                  <p className="text-sm text-text-muted capitalize">{collab.role}</p>
+                <div className="min-w-0">
+                  <h3 className="text-base md:text-lg font-semibold text-text truncate">{collab.name}</h3>
+                  <p className="text-xs md:text-sm text-text-muted capitalize">{collab.role}</p>
                 </div>
               </div>
-              <Badge variant={collab.status === 'active' ? 'success' : 'default'}>
+              <Badge variant={collab.status === 'active' ? 'success' : 'default'} className="text-xs">
                 {collab.status === 'active' ? 'Ativo' : 'Inativo'}
               </Badge>
             </div>
             
-            <div className="space-y-2 mb-4">
+            <div className="space-y-1 md:space-y-2 mb-3 md:mb-4">
               {collab.email && (
-                <div className="flex items-center text-sm text-text-muted">
-                  <Mail className="w-4 h-4 mr-2 text-text-muted" />
-                  {collab.email}
+                <div className="flex items-center text-xs md:text-sm text-text-muted">
+                  <Mail className="w-3 h-3 md:w-4 md:h-4 mr-2 text-text-muted flex-shrink-0" />
+                  <span className="truncate">{collab.email}</span>
                 </div>
               )}
               {collab.phone && (
-                <div className="flex items-center text-sm text-text-muted">
-                  <Phone className="w-4 h-4 mr-2 text-text-muted" />
+                <div className="flex items-center text-xs md:text-sm text-text-muted">
+                  <Phone className="w-3 h-3 md:w-4 md:h-4 mr-2 text-text-muted flex-shrink-0" />
                   {collab.phone}
                 </div>
               )}
             </div>
             
-            <div className="pt-4 border-t border-border">
+            <div className="pt-3 md:pt-4 border-t border-border">
               <Button
                 variant="ghost"
                 size="sm"

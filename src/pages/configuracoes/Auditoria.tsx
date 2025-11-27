@@ -67,9 +67,12 @@ const Auditoria = () => {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-3xl font-bold text-text">Log de Auditoria</h1>
-        <p className="text-text-muted">Rastreie todas as ações importantes no sistema.</p>
+      <header className="p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        <div className="pt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Log de Auditoria</h1>
+          <p className="text-text-muted text-sm md:text-base">Rastreie todas as ações importantes no sistema.</p>
+        </div>
       </header>
 
       <div className="flex justify-end">
@@ -85,7 +88,7 @@ const Auditoria = () => {
 
       {showFilters && (
         <div className="bg-card rounded-xl shadow-md border border-border p-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-text mb-1">Usuário</label>
               <select
@@ -116,7 +119,7 @@ const Auditoria = () => {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:col-span-2 lg:col-span-1">
               <div>
                 <label className="block text-sm font-medium text-text mb-1">De</label>
                 <DatePickerPlain
@@ -124,7 +127,7 @@ const Auditoria = () => {
                   setDate={(date) =>
                     setStartDate(date ? date.toISOString().slice(0, 10) : '')
                   }
-                  placeholder="Data inicial"
+                  placeholder="Inicial"
                   className="w-full"
                 />
               </div>
@@ -135,7 +138,7 @@ const Auditoria = () => {
                   setDate={(date) =>
                     setEndDate(date ? date.toISOString().slice(0, 10) : '')
                   }
-                  placeholder="Data final"
+                  placeholder="Final"
                   className="w-full"
                 />
               </div>
@@ -157,42 +160,44 @@ const Auditoria = () => {
         <div className="text-center p-8 text-red-600">{error}</div>
       )}
       {!isLoading && !error && (
-        <div className="bg-card rounded-xl shadow-md border border-border">
-          <table className="w-full text-left">
-            <thead className="border-b border-border">
-              <tr>
-                <th className="p-4 text-text">Usuário</th>
-                <th className="p-4 text-text">Ação</th>
-                <th className="p-4 text-text">Item</th>
-                <th className="p-4 text-text">Data</th>
-                <th className="p-4 text-text">Detalhes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.length === 0 ? (
+        <div className="bg-card rounded-xl shadow-md border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[600px]">
+              <thead className="border-b border-border">
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-text-muted">
-                    Nenhum log de auditoria encontrado
-                  </td>
+                  <th className="p-3 md:p-4 text-text text-sm">Usuário</th>
+                  <th className="p-3 md:p-4 text-text text-sm">Ação</th>
+                  <th className="p-3 md:p-4 text-text text-sm">Item</th>
+                  <th className="p-3 md:p-4 text-text text-sm hidden sm:table-cell">Data</th>
+                  <th className="p-3 md:p-4 text-text text-sm">Detalhes</th>
                 </tr>
-              ) : (
-                logs.map(log => {
-                  const collaborator = collaborators.find(c => c.id === log.userId);
-                  return (
-                    <tr key={log.id} className="border-b border-border hover:bg-background transition-colors">
-                      <td className="p-4 text-text">{collaborator?.name || log.userId.slice(0, 8)}</td>
-                      <td className="p-4">
-                        <Badge variant={getActionVariant(log.action)}>{log.action}</Badge>
-                      </td>
-                      <td className="p-4 capitalize text-text">{log.tableName.slice(0, -1)} #{log.recordId.slice(0, 6)}</td>
-                      <td className="p-4 text-text">{new Date(log.timestamp).toLocaleString('pt-BR')}</td>
-                      <td className="p-4"><AuditLogDetails log={log} /></td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-text-muted">
+                      Nenhum log de auditoria encontrado
+                    </td>
+                  </tr>
+                ) : (
+                  logs.map(log => {
+                    const collaborator = collaborators.find(c => c.id === log.userId);
+                    return (
+                      <tr key={log.id} className="border-b border-border hover:bg-background transition-colors">
+                        <td className="p-3 md:p-4 text-text text-sm">{collaborator?.name || log.userId.slice(0, 8)}</td>
+                        <td className="p-3 md:p-4">
+                          <Badge variant={getActionVariant(log.action)}>{log.action}</Badge>
+                        </td>
+                        <td className="p-3 md:p-4 capitalize text-text text-sm">{log.tableName.slice(0, -1)} #{log.recordId.slice(0, 6)}</td>
+                        <td className="p-3 md:p-4 text-text text-sm hidden sm:table-cell">{new Date(log.timestamp).toLocaleString('pt-BR')}</td>
+                        <td className="p-3 md:p-4"><AuditLogDetails log={log} /></td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

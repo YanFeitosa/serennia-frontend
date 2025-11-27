@@ -49,16 +49,16 @@ const Servicos = () => {
   return (
     <div className="space-y-4">
       {/* Enhanced header with card styling */}
-      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
         
         <div className="pt-2">
-          <h1 className="text-3xl font-bold text-primary">Serviços</h1>
-          <p className="text-text-muted mt-1">Gerencie os serviços oferecidos pelo salão</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Serviços</h1>
+          <p className="text-text-muted text-sm md:text-base mt-1">Gerencie os serviços oferecidos pelo salão</p>
         </div>
         {canEdit && (
-          <Button onClick={() => navigate('/app/servicos/novo')} className="mt-2">
+          <Button onClick={() => navigate('/app/servicos/novo')} className="mt-2 sm:mt-0">
             <Plus className="w-4 h-4 mr-2" />
             Novo Serviço
           </Button>
@@ -81,67 +81,69 @@ const Servicos = () => {
 
       <div className="bg-card rounded-xl shadow-elevated border border-border overflow-hidden">
         {error && (
-          <p className="text-sm text-red-500">{error}</p>
+          <p className="text-sm text-red-500 p-4">{error}</p>
         )}
         {isLoading && (
-          <p className="text-sm text-text-muted">Carregando serviços...</p>
+          <p className="text-sm text-text-muted p-4">Carregando serviços...</p>
         )}
-        <table className="w-full">
-          <thead>
-            <tr className="bg-sidebar border-b border-border">
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Serviço</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Categoria</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Duração</th>
-              {canEdit && (
-                <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Comissão</th>
-              )}
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Preço</th>
-              {canEdit && (
-                <th className="px-6 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {services
-              .filter(service => service.name.toLowerCase().includes(searchTerm.toLowerCase()))
-              .map(service => (
-                <tr key={service.id} className="hover:bg-sidebar transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-3">
-                      <span className="font-medium text-text">{service.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-text-muted">
-                    {service.category ?? '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-text-muted">
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2 text-text-muted" />
-                      {service.duration} min
-                    </div>
-                  </td>
-                  {canEdit && (
-                    <td className="px-6 py-4 text-sm text-text-muted">{`${Math.round((service.commission ?? 0) * 100)}%`}</td>
-                  )}
-                  <td className="px-6 py-4 text-sm font-semibold text-text">
-                    {service.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </td>
-                  {canEdit && (
-                    <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/app/servicos/${service.id}`)}
-                      >
-                        <Edit2 className="w-4 h-4 mr-1" />
-                        Editar
-                      </Button>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[500px]">
+            <thead>
+              <tr className="bg-sidebar border-b border-border">
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Serviço</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider hidden sm:table-cell">Categoria</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Duração</th>
+                {canEdit && (
+                  <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider hidden md:table-cell">Comissão</th>
+                )}
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Preço</th>
+                {canEdit && (
+                  <th className="px-4 md:px-6 py-3 md:py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {services
+                .filter(service => service.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                .map(service => (
+                  <tr key={service.id} className="hover:bg-sidebar transition-colors">
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      <div className="flex items-center space-x-3">
+                        <span className="font-medium text-text text-sm">{service.name}</span>
+                      </div>
                     </td>
-                  )}
-                </tr>
-              ))}
-          </tbody>
-        </table>
+                    <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted hidden sm:table-cell">
+                      {service.category ?? '-'}
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted">
+                      <div className="flex items-center">
+                        <Clock className="w-4 h-4 mr-1 md:mr-2 text-text-muted" />
+                        {service.duration}m
+                      </div>
+                    </td>
+                    {canEdit && (
+                      <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted hidden md:table-cell">{`${Math.round((service.commission ?? 0) * 100)}%`}</td>
+                    )}
+                    <td className="px-4 md:px-6 py-3 md:py-4 text-sm font-semibold text-text">
+                      {service.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </td>
+                    {canEdit && (
+                      <td className="px-4 md:px-6 py-3 md:py-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/app/servicos/${service.id}`)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          <span className="hidden sm:inline ml-1">Editar</span>
+                        </Button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

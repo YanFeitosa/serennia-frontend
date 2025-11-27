@@ -1,20 +1,25 @@
 // src/components/layout/Sidebar.tsx
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Calendar, ShoppingCart, Users, Scissors, Briefcase, TrendingUp, Settings, Shield, Bell, Moon, Sun, LogOut, Package, User as UserIcon } from 'lucide-react';
+import { Calendar, ShoppingCart, Users, Scissors, Briefcase, TrendingUp, Settings, Shield, Bell, Moon, Sun, LogOut, Package, User as UserIcon, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../contexts/PermissionsContext';
 import { getNotifications } from '../../lib/api';
 
+interface SidebarProps {
+  onClose?: () => void;
+}
+
 interface SidebarLinkProps {
   to: string;
   icon: React.ReactNode;
   notification?: boolean;
   children: React.ReactNode;
+  onClick?: () => void;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, notification, children }) => {
+const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, notification, children, onClick }) => {
   const activeClass = 'bg-primary text-white border-r-4 border-accent shadow-md';
   const inactiveClass = 'text-text hover:bg-secondary/30 hover:text-primary';
 
@@ -22,11 +27,12 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, notification, child
     <li className="mb-1">
       <NavLink
         to={to}
+        onClick={onClick}
         className={({ isActive }) =>
-          `flex items-center justify-between px-4 py-3 rounded-l-xl transition-all duration-200 ${isActive ? activeClass : inactiveClass}`
+          `flex items-center justify-between px-3 lg:px-4 py-2.5 lg:py-3 rounded-l-xl transition-all duration-200 ${isActive ? activeClass : inactiveClass}`
         }
       >
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 lg:space-x-3">
           <div className="w-5 h-5">{icon}</div>
           <span className="font-medium text-sm">{children}</span>
         </div>
@@ -36,7 +42,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, notification, child
   );
 };
 
-const Sidebar = () => {
+const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -158,49 +164,61 @@ const Sidebar = () => {
     .toUpperCase();
 
   return (
-    <aside className="w-64 h-screen bg-sidebar shadow-serennia flex flex-col border-r border-border relative overflow-hidden">
+    <aside className="w-64 lg:w-64 h-screen bg-sidebar shadow-serennia flex flex-col border-r border-border relative overflow-hidden">
       {/* Subtle gradient overlay for depth */}
       <div className="absolute inset-0 gradient-subtle opacity-30 pointer-events-none" />
       
-      <div className="p-6 relative z-10">
-        <h1
-          className={`${titleSizeClass} font-bold text-primary leading-tight break-words max-w-full`}
-        >
-          {normalizedName}
-        </h1>
-        <p className="text-xs text-text-muted mt-1">powered by serennia</p>
+      <div className="p-4 lg:p-6 relative z-10 flex items-center justify-between">
+        <div>
+          <h1
+            className={`${titleSizeClass} font-bold text-primary leading-tight break-words max-w-full`}
+          >
+            {normalizedName}
+          </h1>
+          <p className="text-xs text-text-muted mt-1">powered by serennia</p>
+        </div>
+        {/* Close button for mobile */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 rounded-lg hover:bg-card transition-colors"
+            aria-label="Fechar menu"
+          >
+            <X className="w-5 h-5 text-text" />
+          </button>
+        )}
       </div>
-      <nav className="flex-1 py-4 px-2 relative z-10">
+      <nav className="flex-1 py-4 px-2 relative z-10 overflow-y-auto">
         <ul>
           {canSeeLink('agenda') && (
-            <SidebarLink to="/app/agenda" icon={<Calendar />}>Agenda</SidebarLink>
+            <SidebarLink to="/app/agenda" icon={<Calendar />} onClick={onClose}>Agenda</SidebarLink>
           )}
           {canSeeLink('comandas') && (
-            <SidebarLink to="/app/comandas" icon={<ShoppingCart />}>Comandas</SidebarLink>
+            <SidebarLink to="/app/comandas" icon={<ShoppingCart />} onClick={onClose}>Comandas</SidebarLink>
           )}
           {canSeeLink('clientes') && (
-            <SidebarLink to="/app/clientes" icon={<Users />}>Clientes</SidebarLink>
+            <SidebarLink to="/app/clientes" icon={<Users />} onClick={onClose}>Clientes</SidebarLink>
           )}
           {canSeeLink('servicos') && (
-            <SidebarLink to="/app/servicos" icon={<Scissors />}>Serviços</SidebarLink>
+            <SidebarLink to="/app/servicos" icon={<Scissors />} onClick={onClose}>Serviços</SidebarLink>
           )}
           {canSeeLink('produtos') && (
-            <SidebarLink to="/app/produtos" icon={<Package />}>Produtos</SidebarLink>
+            <SidebarLink to="/app/produtos" icon={<Package />} onClick={onClose}>Produtos</SidebarLink>
           )}
           {canSeeLink('colaboradores') && (
-            <SidebarLink to="/app/colaboradores" icon={<Briefcase />}>Colaboradores</SidebarLink>
+            <SidebarLink to="/app/colaboradores" icon={<Briefcase />} onClick={onClose}>Colaboradores</SidebarLink>
           )}
           {canSeeLink('financeiro') && (
-            <SidebarLink to="/app/financeiro" icon={<TrendingUp />}>Financeiro</SidebarLink>
+            <SidebarLink to="/app/financeiro" icon={<TrendingUp />} onClick={onClose}>Financeiro</SidebarLink>
           )}
           {canSeeLink('configuracoes') && (
-            <SidebarLink to="/app/configuracoes" icon={<Settings />}>Configurações</SidebarLink>
+            <SidebarLink to="/app/configuracoes" icon={<Settings />} onClick={onClose}>Configurações</SidebarLink>
           )}
           {canSeeLink('auditoria') && (
-            <SidebarLink to="/app/auditoria" icon={<Shield />}>Auditoria</SidebarLink>
+            <SidebarLink to="/app/auditoria" icon={<Shield />} onClick={onClose}>Auditoria</SidebarLink>
           )}
           {canSeeLink('notificacoes') && (
-            <SidebarLink to="/app/notificacoes" icon={<Bell />} notification={hasUnreadNotifications}>
+            <SidebarLink to="/app/notificacoes" icon={<Bell />} notification={hasUnreadNotifications} onClick={onClose}>
               Notificações
             </SidebarLink>
           )}
@@ -208,22 +226,22 @@ const Sidebar = () => {
       </nav>
 
       {/* Dark Mode Toggle */}
-      <div className="px-4 pb-4 relative z-10">
+      <div className="px-3 lg:px-4 pb-3 lg:pb-4 relative z-10">
         <button
           onClick={toggleTheme}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card hover:bg-secondary/50 transition-all duration-200 border border-border"
+          className="w-full flex items-center justify-between px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl bg-card hover:bg-secondary/50 transition-all duration-200 border border-border"
           aria-label="Toggle dark mode"
         >
-          <span className="text-sm font-medium text-text">
+          <span className="text-xs lg:text-sm font-medium text-text">
             {theme === 'light' ? 'Modo Claro' : 'Modo Escuro'}
           </span>
-          <div className="relative w-12 h-6 bg-border rounded-full transition-colors overflow-hidden">
+          <div className="relative w-10 lg:w-12 h-5 lg:h-6 bg-border rounded-full transition-colors overflow-hidden">
             <div className={`absolute inset-0 gradient-primary-secondary opacity-30`} />
-            <div className={`absolute top-1 ${theme === 'dark' ? 'right-1' : 'left-1'} w-4 h-4 gradient-primary-secondary rounded-full transition-all duration-200 flex items-center justify-center shadow-sm`}>
+            <div className={`absolute top-0.5 lg:top-1 ${theme === 'dark' ? 'right-0.5 lg:right-1' : 'left-0.5 lg:left-1'} w-4 h-4 gradient-primary-secondary rounded-full transition-all duration-200 flex items-center justify-center shadow-sm`}>
               {theme === 'light' ? (
-                <Sun className="w-3 h-3 text-white" />
+                <Sun className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-white" />
               ) : (
-                <Moon className="w-3 h-3 text-white" />
+                <Moon className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-white" />
               )}
             </div>
           </div>
@@ -231,18 +249,18 @@ const Sidebar = () => {
       </div>
 
       {/* User Profile */}
-      <div className="p-4 relative z-10" ref={profileRef}>
+      <div className="p-3 lg:p-4 relative z-10" ref={profileRef}>
         <button
           onClick={() => setShowLogout(!showLogout)}
-          className="w-full flex items-center space-x-3 px-4 py-3 bg-card rounded-xl hover:ring-2 hover:ring-primary/50 transition-all duration-200 border border-border hover:shadow-elevated"
+          className="w-full flex items-center space-x-2 lg:space-x-3 px-3 lg:px-4 py-2.5 lg:py-3 bg-card rounded-xl hover:ring-2 hover:ring-primary/50 transition-all duration-200 border border-border hover:shadow-elevated"
         >
-          <div className="w-10 h-10 gradient-primary-secondary rounded-full flex items-center justify-center shadow-md">
-            <span className="text-white font-semibold text-sm">{initials}</span>
+          <div className="w-8 h-8 lg:w-10 lg:h-10 gradient-primary-secondary rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+            <span className="text-white font-semibold text-xs lg:text-sm">{initials}</span>
           </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-medium text-text">{displayName}</p>
+          <div className="flex-1 text-left min-w-0">
+            <p className="text-xs lg:text-sm font-medium text-text truncate">{displayName}</p>
             {displayEmail && (
-              <p className="text-xs text-text-muted">{displayEmail}</p>
+              <p className="text-xs text-text-muted truncate">{displayEmail}</p>
             )}
           </div>
         </button>
@@ -250,11 +268,12 @@ const Sidebar = () => {
         {/* Dropdown Perfil / Logout */}
         {showLogout && (
           <div
-            className="absolute bottom-full left-4 right-4 mb-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-slide-up"
+            className="absolute bottom-full left-3 lg:left-4 right-3 lg:right-4 mb-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-slide-up"
           >
             <button
               onClick={() => {
                 setShowLogout(false);
+                onClose?.();
                 navigate('/app/perfil');
               }}
               className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-secondary transition-colors text-left border-b border-border"

@@ -119,13 +119,16 @@ const ClienteForm = () => {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-3xl font-bold text-text">{isEditing ? 'Editar Cliente' : 'Novo Cliente'}</h1>
-        <p className="text-text-muted">
-          {isEditing
-            ? 'Atualize as informações do cliente.'
-            : 'Preencha os dados para cadastrar um novo cliente.'}
-        </p>
+      <header className="p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        <div className="pt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">{isEditing ? 'Editar Cliente' : 'Novo Cliente'}</h1>
+          <p className="text-text-muted text-sm md:text-base">
+            {isEditing
+              ? 'Atualize as informações do cliente.'
+              : 'Preencha os dados para cadastrar um novo cliente.'}
+          </p>
+        </div>
       </header>
       {loadError && (
         <p className="text-sm text-red-500">{loadError}</p>
@@ -133,7 +136,7 @@ const ClienteForm = () => {
       {saveError && (
         <p className="text-sm text-red-500">{saveError}</p>
       )}
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-6 rounded-xl shadow-md space-y-4 border border-border">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-card p-4 md:p-6 rounded-xl shadow-md space-y-4 border border-border">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-text">Nome</label>
           <Input id="name" {...register('name')} />
@@ -149,15 +152,16 @@ const ClienteForm = () => {
           <Input id="email" {...register('email')} />
           {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
         </div>
-        <div className="flex justify-end space-x-4 pt-4">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
           <Button
             type="button"
             variant="ghost"
             onClick={() => navigate(isEditing && editingClient ? `/app/clientes/${editingClient.id}` : '/app/clientes')}
+            className="w-full sm:w-auto"
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={isLoading}>Salvar</Button>
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">Salvar</Button>
         </div>
       </form>
     </div>

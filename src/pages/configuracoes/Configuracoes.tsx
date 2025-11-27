@@ -651,50 +651,50 @@ const Configuracoes = () => {
   return (
     <div className="space-y-6">
       {/* Enhanced header with card styling */}
-      <header className="p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+      <header className="p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
         
         <div className="pt-2">
-          <h1 className="text-3xl font-bold text-primary">Configurações</h1>
-          <p className="text-text-muted mt-1">Gerencie as configurações do sistema e do salão</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Configurações</h1>
+          <p className="text-text-muted text-sm md:text-base mt-1">Gerencie as configurações do sistema e do salão</p>
         </div>
       </header>
 
       {/* Tab navigation */}
-      <div className="flex space-x-2 p-1 bg-card rounded-xl border border-border overflow-x-auto">
+      <div className="flex gap-1 p-1 bg-card rounded-xl border border-border overflow-x-auto">
         <Button
           variant="ghost"
           onClick={() => setTab('geral')}
-          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'geral' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
+          className={`py-2 px-3 md:px-4 font-medium text-xs md:text-sm rounded-lg transition-all whitespace-nowrap ${tab === 'geral' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
           Geral
         </Button>
         <Button
           variant="ghost"
           onClick={() => setTab('mensagens')}
-          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'mensagens' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
+          className={`py-2 px-3 md:px-4 font-medium text-xs md:text-sm rounded-lg transition-all whitespace-nowrap ${tab === 'mensagens' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
           Mensagens
         </Button>
         <Button
           variant="ghost"
           onClick={() => setTab('integracoes')}
-          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'integracoes' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
+          className={`py-2 px-3 md:px-4 font-medium text-xs md:text-sm rounded-lg transition-all whitespace-nowrap ${tab === 'integracoes' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
           Integrações
         </Button>
         <Button
           variant="ghost"
           onClick={() => setTab('personalizacao')}
-          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'personalizacao' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
+          className={`py-2 px-3 md:px-4 font-medium text-xs md:text-sm rounded-lg transition-all whitespace-nowrap ${tab === 'personalizacao' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
-          Personalização
+          Visual
         </Button>
         <Button
           variant="ghost"
           onClick={() => setTab('permissoes')}
-          className={`py-2 px-4 font-medium text-sm rounded-lg transition-all ${tab === 'permissoes' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
+          className={`py-2 px-3 md:px-4 font-medium text-xs md:text-sm rounded-lg transition-all whitespace-nowrap ${tab === 'permissoes' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text hover:bg-sidebar'}`}
         >
           Permissões
         </Button>

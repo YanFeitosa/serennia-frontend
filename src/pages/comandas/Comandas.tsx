@@ -209,13 +209,13 @@ const Comandas = () => {
   return (
     <div className="space-y-4">
       {/* Enhanced header with card styling */}
-      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
         
         <div className="pt-2">
-          <h1 className="text-3xl font-bold text-primary">Comandas</h1>
-          <p className="text-text-muted mt-1">Gerencie as comandas dos seus clientes</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Comandas</h1>
+          <p className="text-text-muted text-sm md:text-base mt-1">Gerencie as comandas dos seus clientes</p>
         </div>
         <Button
           onClick={() => {
@@ -224,7 +224,7 @@ const Comandas = () => {
             setNewOrderClientId('');
             setShowNewOrderPanel(true);
           }}
-          className="mt-2"
+          className="mt-2 sm:mt-0"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nova Comanda
@@ -293,19 +293,19 @@ const Comandas = () => {
       )}
 
       {/* Search and filters */}
-      <div className="flex items-center justify-between bg-card rounded-xl p-4 border border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between bg-card rounded-xl p-4 border border-border">
         <div className="relative flex-1 max-w-md">
           <input
             type="text"
             placeholder="Buscar por cliente ou comanda..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-border bg-background text-text rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-border bg-background text-text rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         
-        <div className="flex items-center space-x-2 ml-4">
+        <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 sm:pb-0">
           <Button size="sm" variant={filter === 'all' ? 'primary' : 'ghost'} onClick={() => setFilter('all')}>Todas</Button>
           <Button size="sm" variant={filter === 'open' ? 'primary' : 'ghost'} onClick={() => setFilter('open')}>Abertas</Button>
           <Button size="sm" variant={filter === 'closed' ? 'primary' : 'ghost'} onClick={() => setFilter('closed')}>Fechadas</Button>
@@ -330,84 +330,87 @@ const Comandas = () => {
       )}
 
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-sidebar border-b border-border">
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Cliente</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Data</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Valor</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Visualizar</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filteredComandas.map((comanda: Order) => (
-              <>
-                <tr 
-                  key={comanda.id} 
-                  className={`hover:bg-sidebar cursor-pointer transition-colors ${
-                    isOverdueOpenOrder(comanda) ? 'bg-red-950/30' : ''
-                  }`}
-                  onClick={() => toggleExpand(comanda.id)}
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="font-medium text-text">{getClientName(comanda.clientId)}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-text-muted">
-                    {new Date(comanda.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-semibold text-text">
-                      {comanda.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge variant={getStatusVariant(comanda)}>{getStatusLabel(comanda.status)}</Badge>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      {expandedComanda === comanda.id ? (
-                        <ChevronUp className="w-5 h-5 text-text-muted" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-text-muted" />
-                      )}
-                    </div>
-                  </td>
-                </tr>
-                {expandedComanda === comanda.id && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 bg-sidebar">
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-text mb-3">Itens da Comanda</h4>
-                        <div className="bg-card rounded-lg border border-border overflow-hidden">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="bg-sidebar border-b border-border">
-                                <th className="px-4 py-2 text-left text-xs font-medium text-text-muted">Itens</th>
-                                <th className="px-4 py-2 text-right text-xs font-medium text-text-muted">Preço</th>
-                                <th className="px-4 py-2 text-right text-xs font-medium text-text-muted">Horário</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                              {comanda.items.map((item: OrderItem) => (
-                                <tr key={item.id} className="hover:bg-sidebar">
-                                  <td className="px-4 py-3 text-sm text-text">{getItemLabel(item)}</td>
-                                  <td className="px-4 py-3 text-sm text-text text-right">
-                                    {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                  </td>
-                                  <td className="px-4 py-3 text-sm text-text-muted text-right">
-                                    {new Date(comanda.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        <div className="flex justify-between items-center pt-3 border-t border-border">
-                          <div className="flex items-center space-x-4">
-                            <div className="text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
+            <thead>
+              <tr className="bg-sidebar border-b border-border">
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Cliente</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider hidden sm:table-cell">Data</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Valor</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Status</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ver</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filteredComandas.map((comanda: Order) => (
+                <>
+                  <tr 
+                    key={comanda.id} 
+                    className={`hover:bg-sidebar cursor-pointer transition-colors ${
+                      isOverdueOpenOrder(comanda) ? 'bg-red-950/30' : ''
+                    }`}
+                    onClick={() => toggleExpand(comanda.id)}
+                  >
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      <div className="flex items-center">
+                        <div className="font-medium text-text text-sm">{getClientName(comanda.clientId)}</div>
+                      </div>
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted hidden sm:table-cell">
+                      {new Date(comanda.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      <span className="text-sm font-semibold text-text">
+                        {comanda.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      <Badge variant={getStatusVariant(comanda)}>{getStatusLabel(comanda.status)}</Badge>
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4 text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        {expandedComanda === comanda.id ? (
+                          <ChevronUp className="w-5 h-5 text-text-muted" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-text-muted" />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedComanda === comanda.id && (
+                    <tr>
+                      <td colSpan={5} className="px-4 md:px-6 py-4 bg-sidebar">
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-text mb-3">Itens da Comanda</h4>
+                          <div className="bg-card rounded-lg border border-border overflow-hidden">
+                            <div className="overflow-x-auto">
+                              <table className="w-full min-w-[400px]">
+                                <thead>
+                                  <tr className="bg-sidebar border-b border-border">
+                                    <th className="px-3 md:px-4 py-2 text-left text-xs font-medium text-text-muted">Itens</th>
+                                    <th className="px-3 md:px-4 py-2 text-right text-xs font-medium text-text-muted">Preço</th>
+                                    <th className="px-3 md:px-4 py-2 text-right text-xs font-medium text-text-muted hidden sm:table-cell">Horário</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                  {comanda.items.map((item: OrderItem) => (
+                                    <tr key={item.id} className="hover:bg-sidebar">
+                                      <td className="px-3 md:px-4 py-3 text-sm text-text">{getItemLabel(item)}</td>
+                                      <td className="px-3 md:px-4 py-3 text-sm text-text text-right">
+                                        {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                      </td>
+                                      <td className="px-3 md:px-4 py-3 text-sm text-text-muted text-right hidden sm:table-cell">
+                                        {new Date(comanda.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-3 border-t border-border">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                              <div className="text-sm">
                               <span className="text-text-muted">Subtotal: </span>
                               <span className="font-semibold text-text">
                                 {comanda.items
@@ -462,6 +465,7 @@ const Comandas = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

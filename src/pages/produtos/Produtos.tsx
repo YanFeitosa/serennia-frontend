@@ -57,16 +57,16 @@ const Produtos = () => {
   return (
     <div className="space-y-4">
       {/* Enhanced header with card styling */}
-      <header className="flex items-center justify-between p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
         
         <div className="pt-2">
-          <h1 className="text-3xl font-bold text-primary">Produtos</h1>
-          <p className="text-text-muted mt-1">Gerencie os produtos de venda do salão</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Produtos</h1>
+          <p className="text-text-muted text-sm md:text-base mt-1">Gerencie os produtos de venda do salão</p>
         </div>
         {canEdit && (
-          <Button onClick={() => navigate('/app/produtos/novo')} className="mt-2">
+          <Button onClick={() => navigate('/app/produtos/novo')} className="mt-2 sm:mt-0">
             <Plus className="w-4 h-4 mr-2" />
             Novo Produto
           </Button>
@@ -106,50 +106,52 @@ const Produtos = () => {
       )}
 
       <div className="bg-card rounded-xl shadow-elevated border border-border overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-sidebar/50 border-b border-border">
-              <th className="px-6 py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Produto</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Categoria</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Estoque</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Preço</th>
-              {canEdit && (
-                <th className="px-6 py-4 text-right text-xs font-semibold text-primary uppercase tracking-wider">Ações</th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filteredProducts.map((product) => (
-              <tr key={product.id} className="hover:bg-sidebar/50 transition-all duration-200">
-                <td className="px-6 py-4">
-                  <span className="font-medium text-text">{product.name}</span>
-                </td>
-                <td className="px-6 py-4 text-sm text-text-muted">
-                  {product.category ?? '-'}
-                </td>
-                <td className="px-6 py-4 text-sm text-text-muted">{product.stock}</td>
-                <td className="px-6 py-4 text-sm font-semibold text-text">
-                  {product.price.toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  })}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[450px]">
+            <thead>
+              <tr className="bg-sidebar/50 border-b border-border">
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Produto</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider hidden sm:table-cell">Categoria</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Estoque</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Preço</th>
                 {canEdit && (
-                  <td className="px-6 py-4 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/app/produtos/${product.id}`)}
-                    >
-                      <Edit2 className="w-4 h-4 mr-1" />
-                      Editar
-                    </Button>
-                  </td>
+                  <th className="px-4 md:px-6 py-3 md:py-4 text-right text-xs font-semibold text-primary uppercase tracking-wider">Ações</th>
                 )}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filteredProducts.map((product) => (
+                <tr key={product.id} className="hover:bg-sidebar/50 transition-all duration-200">
+                  <td className="px-4 md:px-6 py-3 md:py-4">
+                    <span className="font-medium text-text text-sm">{product.name}</span>
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted hidden sm:table-cell">
+                    {product.category ?? '-'}
+                  </td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted">{product.stock}</td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-sm font-semibold text-text">
+                    {product.price.toLocaleString('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL',
+                    })}
+                  </td>
+                  {canEdit && (
+                    <td className="px-4 md:px-6 py-3 md:py-4 text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/app/produtos/${product.id}`)}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        <span className="hidden sm:inline ml-1">Editar</span>
+                      </Button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

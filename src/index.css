@@ -2,12 +2,12 @@
 
 /* 🎨 IDENTIDADE VISUAL — Serennia UI System (ATUALIZADO) */
 :root {
-  /* Paleta base — modo claro */
-  --color-primary-light-theme: #25445A;    /* Azul-acinzentado profundo (mais profissional) */
-  --color-secondary-light-theme: #7AA7D8;  /* Azul suave / secundário */
-  --color-accent-light-theme: #BFA2DB;     /* Lilás sóbrio */
-  --color-text-light-theme: #0F1724;       /* Grafite escuro (um pouco mais contrastante) */
-  --color-background-light-theme: #FFFFFF; /* Branco puro para fundo principal */
+  /* Paleta base — modo claro (alinhada com a identidade landing page) */
+  --color-primary-light-theme: #7c3aed;    /* Roxo vibrante - cor principal da landing */
+  --color-secondary-light-theme: #3b82f6;  /* Azul - cor secundária da landing */
+  --color-accent-light-theme: #ec4899;     /* Rosa/Magenta - destaque */
+  --color-text-light-theme: #1f2937;       /* Grafite escuro para texto */
+  --color-background-light-theme: #ffffff; /* Branco puro para fundo principal */
 
   /* Tokens efetivos usados na UI (seguem o tema atual) */
   --color-primary: var(--color-primary-light-theme);
@@ -71,12 +71,12 @@
 
 /* 🌙 Dark Mode */
 .dark {
-  /* Paleta base — modo escuro */
-  --color-primary-dark-theme: #4A708A;
-  --color-secondary-dark-theme: #0F1724;
-  --color-accent-dark-theme: #BFA2DB;
-  --color-text-dark-theme: #F8FAFC;
-  --color-background-dark-theme: #0B1220;
+  /* Paleta base — modo escuro (alinhada com a identidade landing page) */
+  --color-primary-dark-theme: #a78bfa;     /* Roxo mais claro para dark mode */
+  --color-secondary-dark-theme: #60a5fa;   /* Azul mais claro para dark mode */
+  --color-accent-dark-theme: #f472b6;      /* Rosa mais claro para dark mode */
+  --color-text-dark-theme: #f8fafc;        /* Texto claro */
+  --color-background-dark-theme: #0f0f1a;  /* Fundo escuro similar à landing */
 
   /* Tokens efetivos quando o modo escuro está ativo */
   --color-primary: var(--color-primary-dark-theme);
@@ -150,6 +150,48 @@
   --landing-blob-purple: rgba(124, 58, 237, 0.2);
   --landing-blob-blue: rgba(59, 130, 246, 0.2);
   --landing-blob-pink: rgba(236, 72, 153, 0.1);
+}
+
+/* 🔒 ISOLATE LANDING PAGE FROM DARK MODE */
+/* When landing-theme is active, dark mode should not affect landing page colors */
+.landing-theme.dark .min-h-screen.bg-\\[\\#0a0a0f\\],
+.landing-theme .min-h-screen.bg-\\[\\#0a0a0f\\] {
+  color: #ffffff !important;
+}
+
+.landing-theme.dark .min-h-screen.bg-\\[\\#0a0a0f\\] .text-white,
+.landing-theme .min-h-screen.bg-\\[\\#0a0a0f\\] .text-white {
+  color: #ffffff !important;
+}
+
+.landing-theme.dark .min-h-screen.bg-\\[\\#0a0a0f\\] .text-gray-300,
+.landing-theme .min-h-screen.bg-\\[\\#0a0a0f\\] .text-gray-300 {
+  color: #d1d5db !important;
+}
+
+.landing-theme.dark .min-h-screen.bg-\\[\\#0a0a0f\\] .text-gray-400,
+.landing-theme .min-h-screen.bg-\\[\\#0a0a0f\\] .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.landing-theme.dark .min-h-screen.bg-\\[\\#0a0a0f\\] .text-gray-500,
+.landing-theme .min-h-screen.bg-\\[\\#0a0a0f\\] .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.landing-theme.dark .min-h-screen.bg-\\[\\#0a0a0f\\] .text-gray-600,
+.landing-theme .min-h-screen.bg-\\[\\#0a0a0f\\] .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.landing-theme.dark .min-h-screen.bg-\\[\\#0a0a0f\\] .text-purple-300,
+.landing-theme .min-h-screen.bg-\\[\\#0a0a0f\\] .text-purple-300 {
+  color: #c4b5fd !important;
+}
+
+.landing-theme.dark .min-h-screen.bg-\\[\\#0a0a0f\\] .text-purple-400,
+.landing-theme .min-h-screen.bg-\\[\\#0a0a0f\\] .text-purple-400 {
+  color: #a78bfa !important;
 }
 
 body {

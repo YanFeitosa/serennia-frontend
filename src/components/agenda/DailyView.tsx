@@ -102,7 +102,7 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
 
   return (
     <div
-      className="bg-card rounded-xl shadow-md p-4 border border-border"
+      className="bg-card rounded-xl shadow-md p-2 md:p-4 border border-border"
       style={{ minHeight: columnHeight + 32 }}
     >
       {(isLoading || error) && (
@@ -136,9 +136,9 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
         </button>
       </div>
 
-      <div className="flex">
+      <div className="flex overflow-x-auto">
         {/* Time Scale */}
-        <div className="w-16 text-right pr-2 border-r border-border" style={{ paddingTop: HEADER_HEIGHT }}>
+        <div className="w-12 md:w-16 flex-shrink-0 text-right pr-1 md:pr-2 border-r border-border" style={{ paddingTop: HEADER_HEIGHT }}>
           {timeSlots.map(slot => {
             const totalMinutes = slot * MINUTES_PER_SLOT;
             const hour = START_HOUR + Math.floor(totalMinutes / 60);

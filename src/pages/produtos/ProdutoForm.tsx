@@ -135,15 +135,18 @@ const ProdutoForm = () => {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-3xl font-bold text-text">
-          {isEditing ? 'Editar Produto' : 'Novo Produto'}
-        </h1>
-        <p className="text-text-muted">
-          {isEditing
-            ? 'Atualize as informações do produto.'
-            : 'Preencha os dados para cadastrar um novo produto.'}
-        </p>
+      <header className="p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        <div className="pt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">
+            {isEditing ? 'Editar Produto' : 'Novo Produto'}
+          </h1>
+          <p className="text-text-muted text-sm md:text-base">
+            {isEditing
+              ? 'Atualize as informações do produto.'
+              : 'Preencha os dados para cadastrar um novo produto.'}
+          </p>
+        </div>
       </header>
 
       {loadError && (
@@ -155,7 +158,7 @@ const ProdutoForm = () => {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-card p-6 rounded-xl shadow-md space-y-4 border border-border"
+        className="bg-card p-4 md:p-6 rounded-xl shadow-md space-y-4 border border-border"
       >
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-text">
@@ -231,11 +234,11 @@ const ProdutoForm = () => {
           </div>
         </div>
 
-        <div className="flex justify-end space-x-4 pt-4">
-          <Button type="button" variant="ghost" onClick={() => navigate('/app/produtos')}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
+          <Button type="button" variant="ghost" onClick={() => navigate('/app/produtos')} className="w-full sm:w-auto">
             Cancelar
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
             {isEditing ? 'Salvar alterações' : 'Salvar'}
           </Button>
         </div>

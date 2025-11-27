@@ -173,18 +173,19 @@ const PagamentoComanda = () => {
         <span>Voltar para Comandas</span>
       </Link>
 
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-text">Pagamento da Comanda #{shortId}</h1>
-          <p className="text-text-muted">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        <div className="pt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Pagamento da Comanda #{shortId}</h1>
+          <p className="text-text-muted text-sm md:text-base">
             Cliente: {client?.name ?? 'Cliente não encontrado'}
           </p>
         </div>
         <Badge variant={getStatusVariant(order.status)}>{getStatusLabel(order.status)}</Badge>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <section className="bg-card rounded-xl shadow-md border border-border p-6 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="bg-card rounded-xl shadow-md border border-border p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold text-text flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-primary" />
             Resumo da Comanda
@@ -262,7 +263,7 @@ const PagamentoComanda = () => {
           </div>
         </section>
 
-        <section className="bg-card rounded-xl shadow-md border border-border p-6 space-y-4">
+        <section className="bg-card rounded-xl shadow-md border border-border p-4 md:p-6 space-y-4">
           <h2 className="text-lg font-semibold text-text flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-primary" />
             Forma de pagamento
@@ -308,11 +309,11 @@ const PagamentoComanda = () => {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="ghost" onClick={() => navigate('/app/comandas')}>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
+            <Button type="button" variant="ghost" onClick={() => navigate('/app/comandas')} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button type="button" onClick={handleConfirm} disabled={isSubmitting}>
+            <Button type="button" onClick={handleConfirm} disabled={isSubmitting} className="w-full sm:w-auto">
               Confirmar pagamento
             </Button>
           </div>

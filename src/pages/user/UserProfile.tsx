@@ -71,15 +71,18 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-xl">
-      <header>
-        <h1 className="text-3xl font-bold text-text">Meu perfil</h1>
-        <p className="text-text-muted">Edite suas informações pessoais. Todas as funções podem editar o próprio perfil.</p>
+    <div className="space-y-6 max-w-xl mx-auto">
+      <header className="p-4 md:p-6 bg-card rounded-2xl shadow-elevated border border-border relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 gradient-primary-secondary opacity-80" />
+        <div className="pt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Meu perfil</h1>
+          <p className="text-text-muted text-sm md:text-base">Edite suas informações pessoais. Todas as funções podem editar o próprio perfil.</p>
+        </div>
       </header>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-card rounded-xl shadow-md border border-border p-6 space-y-4"
+        className="bg-card rounded-xl shadow-md border border-border p-4 md:p-6 space-y-4"
       >
         <div>
           <label className="block text-sm font-medium text-text mb-1">Nome</label>
@@ -149,11 +152,11 @@ const UserProfile = () => {
           )}
         </div>
 
-        <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
+          <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="w-full sm:w-auto">
             Cancelar
           </Button>
-          <Button type="submit" disabled={isChangingPassword}>
+          <Button type="submit" disabled={isChangingPassword} className="w-full sm:w-auto">
             {isChangingPassword ? 'Salvando...' : 'Salvar alterações'}
           </Button>
         </div>
