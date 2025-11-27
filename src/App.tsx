@@ -2,7 +2,7 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import Sidebar from './components/layout/Sidebar';
 import { useAuth } from './contexts/AuthContext';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 function App() {
 	const { user, isLoading } = useAuth();
