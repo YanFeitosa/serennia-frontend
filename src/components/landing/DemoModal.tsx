@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Button } from "../ui/Button";
 
 // Import das imagens locais
 import agendaImg from "../../assets/landing/demo/agenda.png";
@@ -108,11 +107,11 @@ const DemoModal = ({ isOpen, onClose }: DemoModalProps) => {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-4xl max-h-[95vh] overflow-y-auto bg-card rounded-xl md:rounded-2xl shadow-2xl border border-border animate-in fade-in zoom-in duration-200">
+      <div className="relative w-full max-w-4xl max-h-[95vh] overflow-y-auto bg-[#0f0f1a] rounded-xl md:rounded-2xl shadow-2xl border border-white/10 animate-in fade-in zoom-in duration-200">
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-2 right-2 md:top-4 md:right-4 z-10 p-2 bg-black/20 hover:bg-black/40 rounded-full text-white transition-colors"
+          className="absolute top-2 right-2 md:top-4 md:right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
         >
           <X className="w-4 h-4 md:w-5 md:h-5" />
         </button>
@@ -140,11 +139,11 @@ const DemoModal = ({ isOpen, onClose }: DemoModalProps) => {
           </div>
 
           {/* Right side - Image */}
-          <div className="lg:w-1/2 p-4 md:p-8 lg:p-12">
+          <div className="lg:w-1/2 p-4 md:p-8 lg:p-12 text-white">
             <div className="h-full flex flex-col">
               {/* Slide indicator */}
               <div className="flex items-center justify-between mb-4 md:mb-8">
-                <span className="text-xs md:text-sm text-text-muted">
+                <span className="text-xs md:text-sm text-gray-400">
                   {currentSlide + 1} de {demoSlides.length}
                 </span>
                 <div className="flex gap-1.5 md:gap-2">
@@ -152,7 +151,7 @@ const DemoModal = ({ isOpen, onClose }: DemoModalProps) => {
                     <button
                       key={index}
                       onClick={() => setCurrentSlide(index)}
-                      className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-colors ${index === currentSlide ? "bg-primary" : "bg-border"
+                      className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-colors ${index === currentSlide ? "bg-purple-500" : "bg-white/20"
                         }`}
                     />
                   ))}
@@ -160,7 +159,7 @@ const DemoModal = ({ isOpen, onClose }: DemoModalProps) => {
               </div>
 
               {/* Image Preview */}
-              <div className="flex-1 rounded-lg md:rounded-xl border border-border overflow-hidden shadow-md mb-4 md:mb-8">
+              <div className="flex-1 rounded-lg md:rounded-xl border border-white/10 overflow-hidden shadow-md mb-4 md:mb-8">
                 <img
                   src={slide.image}
                   alt={slide.title}
@@ -170,22 +169,21 @@ const DemoModal = ({ isOpen, onClose }: DemoModalProps) => {
 
               {/* Navigation */}
               <div className="flex items-center justify-between">
-                <Button
-                  variant="outline"
+                <button
                   onClick={prevSlide}
-                  className="flex items-center gap-1 md:gap-2 text-sm md:text-base"
+                  className="flex items-center gap-1 md:gap-2 text-sm md:text-base px-4 py-2 rounded-xl border border-white/20 text-white hover:bg-white/10 transition-colors"
                 >
                   <ChevronLeft className="w-3 h-3 md:w-4 md:h-4" />
                   <span className="hidden sm:inline">Anterior</span>
-                </Button>
+                </button>
 
                 {currentSlide === demoSlides.length - 1 ? (
-                  <Button variant="gradient" onClick={handleClose} className="text-sm md:text-base text-white">Começar Agora</Button>
+                  <button onClick={handleClose} className="text-sm md:text-base px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 transition-opacity">Começar Agora</button>
                 ) : (
-                  <Button variant="gradient" onClick={nextSlide} className="flex items-center gap-1 md:gap-2 text-sm md:text-base text-white">
+                  <button onClick={nextSlide} className="flex items-center gap-1 md:gap-2 text-sm md:text-base px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 transition-opacity">
                     Próximo
                     <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>
