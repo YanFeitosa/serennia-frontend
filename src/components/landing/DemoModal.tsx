@@ -119,7 +119,7 @@ const DemoModal = ({ isOpen, onClose }: DemoModalProps) => {
 
         <div className="flex flex-col lg:flex-row">
           {/* Left side - Text */}
-          <div className="lg:w-1/2 bg-gradient-to-br from-primary via-primary/80 to-accent p-6 md:p-8 lg:p-12 text-white">
+          <div className="lg:w-1/2 bg-gradient-to-br from-landing-purple via-landing-blue to-landing-pink p-6 md:p-8 lg:p-12 text-white">
             <div className="h-full flex flex-col justify-center">
               <div className="w-14 h-14 md:w-20 md:h-20 bg-white/20 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6">
                 <Icon className="w-7 h-7 md:w-10 md:h-10" />
@@ -171,7 +171,7 @@ const DemoModal = ({ isOpen, onClose }: DemoModalProps) => {
               {/* Navigation */}
               <div className="flex items-center justify-between">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   onClick={prevSlide}
                   className="flex items-center gap-1 md:gap-2 text-sm md:text-base"
                 >
@@ -180,10 +180,10 @@ const DemoModal = ({ isOpen, onClose }: DemoModalProps) => {
                 </Button>
 
                 {currentSlide === demoSlides.length - 1 ? (
-                  <Button onClick={handleClose} className="text-sm md:text-base">Começar Agora</Button>
+                  <Button variant="gradient" onClick={handleClose} className="text-sm md:text-base text-white">Começar Agora</Button>
                 ) : (
-                  <Button onClick={nextSlide} className="flex items-center gap-1 md:gap-2 text-sm md:text-base">
-                    <span className="hidden sm:inline">Próximo</span>
+                  <Button variant="gradient" onClick={nextSlide} className="flex items-center gap-1 md:gap-2 text-sm md:text-base text-white">
+                    Próximo
                     <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
                   </Button>
                 )}
