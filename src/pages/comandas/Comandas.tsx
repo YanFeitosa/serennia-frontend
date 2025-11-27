@@ -443,7 +443,7 @@ const Comandas = () => {
                                     }
                                   }}
                                 >
-                                  Adicionar Item
+                                  Editar
                                 </Button>
                                 <Button
                                   size="sm"

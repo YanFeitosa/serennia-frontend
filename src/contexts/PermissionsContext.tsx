@@ -21,6 +21,10 @@ const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
     'editarPerfilProfissionais',
     'podeEditarProduto',
     'podeEditarServico',
+    'podeDeletarCliente',
+    'podeDeletarColaborador',
+    'podeDeletarProduto',
+    'podeDeletarServico',
   ] as string[],
   manager: [
     'servicos',
@@ -29,6 +33,10 @@ const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
     'financeiro',
     'configuracoes',
     'auditoria',
+    'podeDeletarCliente',
+    'podeDeletarColaborador',
+    'podeDeletarProduto',
+    'podeDeletarServico',
   ],
   receptionist: [
     'agenda',
@@ -62,6 +70,10 @@ const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
     'editarPerfilProfissionais',
     'podeEditarProduto',
     'podeEditarServico',
+    'podeDeletarCliente',
+    'podeDeletarColaborador',
+    'podeDeletarProduto',
+    'podeDeletarServico',
   ],
   tenant_admin: [
     'agenda',
@@ -77,6 +89,10 @@ const DEFAULT_PERMISSIONS: Record<UserRole, string[]> = {
     'editarPerfilProfissionais',
     'podeEditarProduto',
     'podeEditarServico',
+    'podeDeletarCliente',
+    'podeDeletarColaborador',
+    'podeDeletarProduto',
+    'podeDeletarServico',
   ],
 };
 

@@ -1,8 +1,8 @@
 // src/pages/Financeiro.tsx
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Info, Plus, Trash2, FileSpreadsheet, FileText } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Info, Plus, Trash2, Pencil, X, Check, FileSpreadsheet, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { getOrders, getSalonSettings, getExpenses, createExpense, deleteExpense } from '../../lib/api';
+import { getOrders, getSalonSettings, getExpenses, createExpense, deleteExpense, updateExpense } from '../../lib/api';
 import { Badge } from '../../components/ui/Badge';
 import DatePickerPlain from '../../components/ui/DatePickerPlain';
 import { Button } from '../../components/ui/Button';
@@ -60,10 +60,66 @@ const Financeiro = () => {
   // Expenses state
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [expensesError, setExpensesError] = useState<string | null>(null);
-  const [newExpenseName, setNewExpenseName] = useState('');
-  const [newExpenseAmount, setNewExpenseAmount] = useState<number>(0);
-  const [newExpenseType, setNewExpenseType] = useState<ExpenseType>('FIXED');
+  const [expenseName, setExpenseName] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState<number>(0);
+  const [expenseType, setExpenseType] = useState<ExpenseType>('FIXED');
   const [isSavingExpense, setIsSavingExpense] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+
+  const startEditExpense = (expense: Expense) => {
+    setEditingExpenseId(expense.id);
+    setExpenseName(expense.name);
+    setExpenseAmount(expense.amount);
+    setExpenseType(expense.type);
+    setExpensesError(null);
+  };
+
+  const cancelEditExpense = () => {
+    setEditingExpenseId(null);
+    setExpenseName('');
+    setExpenseAmount(0);
+    setExpenseType('FIXED');
+    setExpensesError(null);
+  };
+
+  const handleSaveExpense = async () => {
+    if (!expenseName.trim() || expenseAmount <= 0) {
+      setExpensesError('Preencha o nome e o valor do custo.');
+      return;
+    }
+    setIsSavingExpense(true);
+    setExpensesError(null);
+
+    try {
+      if (editingExpenseId) {
+        // Update existing expense
+        const updated = await updateExpense(editingExpenseId, {
+          name: expenseName.trim(),
+          amount: expenseAmount,
+          type: expenseType,
+        });
+        setExpenses(prev => prev.map(e => (e.id === updated.id ? updated : e)));
+      } else {
+        // Create new expense
+        const created = await createExpense({
+          name: expenseName.trim(),
+          amount: expenseAmount,
+          type: expenseType,
+        });
+        setExpenses(prev => [...prev, created]);
+      }
+      // Reset form
+      setEditingExpenseId(null);
+      setExpenseName('');
+      setExpenseAmount(0);
+      setExpenseType('FIXED');
+    } catch (err: any) {
+      console.error('Failed to save expense', err);
+      setExpensesError(err.message || 'Falha ao salvar custo.');
+    } finally {
+      setIsSavingExpense(false);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -614,16 +670,29 @@ const Financeiro = () => {
             </div>
           )}
 
-          {/* Add new expense form */}
+          {/* Add/Edit expense form */}
           <div className="bg-background p-4 rounded-lg border border-border space-y-3">
-            <h4 className="text-sm font-medium text-text">Adicionar novo custo</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-text">
+                {editingExpenseId ? 'Editar custo' : 'Adicionar novo custo'}
+              </h4>
+              {editingExpenseId && (
+                <button
+                  type="button"
+                  onClick={cancelEditExpense}
+                  className="text-xs text-text-muted hover:text-text transition-colors"
+                >
+                  Cancelar edição
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div className="md:col-span-1">
                 <label className="block text-xs font-medium text-text-muted mb-1">Nome</label>
                 <Input
                   type="text"
-                  value={newExpenseName}
-                  onChange={(e) => setNewExpenseName(e.target.value)}
+                  value={expenseName}
+                  onChange={(e) => setExpenseName(e.target.value)}
                   placeholder="Ex: Aluguel, Energia"
                 />
               </div>
@@ -633,53 +702,51 @@ const Financeiro = () => {
                   type="number"
                   min={0}
                   step={0.01}
-                  value={newExpenseAmount || ''}
-                  onChange={(e) => setNewExpenseAmount(Number(e.target.value) || 0)}
+                  value={expenseAmount || ''}
+                  onChange={(e) => setExpenseAmount(Number(e.target.value) || 0)}
                   placeholder="0.00"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-text-muted mb-1">Tipo</label>
                 <select
-                  value={newExpenseType}
-                  onChange={(e) => setNewExpenseType(e.target.value as ExpenseType)}
+                  value={expenseType}
+                  onChange={(e) => setExpenseType(e.target.value as ExpenseType)}
                   className="w-full px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="FIXED">Fixo</option>
                   <option value="VARIABLE">Variável</option>
                 </select>
               </div>
-              <div className="flex items-end">
+              <div className="flex items-end gap-2">
+                {editingExpenseId && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={cancelEditExpense}
+                    disabled={isSavingExpense}
+                    className="px-3"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
                 <Button
                   type="button"
-                  onClick={async () => {
-                    if (!newExpenseName.trim() || newExpenseAmount <= 0) {
-                      setExpensesError('Preencha o nome e o valor do custo.');
-                      return;
-                    }
-                    setIsSavingExpense(true);
-                    setExpensesError(null);
-                    try {
-                      const created = await createExpense({
-                        name: newExpenseName.trim(),
-                        amount: newExpenseAmount,
-                        type: newExpenseType,
-                      });
-                      setExpenses(prev => [...prev, created]);
-                      setNewExpenseName('');
-                      setNewExpenseAmount(0);
-                    } catch (err: any) {
-                      console.error('Failed to create expense', err);
-                      setExpensesError(err.message || 'Falha ao criar custo.');
-                    } finally {
-                      setIsSavingExpense(false);
-                    }
-                  }}
+                  onClick={handleSaveExpense}
                   disabled={isSavingExpense}
-                  className="w-full"
+                  className="flex-1"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Adicionar
+                  {editingExpenseId ? (
+                    <>
+                      <Check className="w-4 h-4 mr-1" />
+                      {isSavingExpense ? 'Salvando...' : 'Salvar'}
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-1" />
+                      {isSavingExpense ? 'Adicionando...' : 'Adicionar'}
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -698,28 +765,43 @@ const Financeiro = () => {
                   <p className="p-3 text-sm text-text-muted text-center">Nenhum custo fixo cadastrado.</p>
                 ) : (
                   fixedExpenses.map(expense => (
-                    <div key={expense.id} className="flex items-center justify-between p-3">
+                    <div 
+                      key={expense.id} 
+                      className={`flex items-center justify-between p-3 ${editingExpenseId === expense.id ? 'bg-primary/10' : ''}`}
+                    >
                       <div>
                         <p className="text-sm font-medium text-text">{expense.name}</p>
                         <p className="text-xs text-text-muted">
                           {expense.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        className="p-1 text-text-muted hover:text-red-500 transition-colors"
-                        onClick={async () => {
-                          try {
-                            await deleteExpense(expense.id);
-                            setExpenses(prev => prev.filter(e => e.id !== expense.id));
-                          } catch (err: any) {
-                            console.error('Failed to delete expense', err);
-                            setExpensesError(err.message || 'Falha ao remover custo.');
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className={`p-1 transition-colors ${editingExpenseId === expense.id ? 'text-primary' : 'text-text-muted hover:text-primary'}`}
+                          onClick={() => startEditExpense(expense)}
+                          title="Editar"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-1 text-text-muted hover:text-red-500 transition-colors"
+                          onClick={async () => {
+                            try {
+                              await deleteExpense(expense.id);
+                              setExpenses(prev => prev.filter(e => e.id !== expense.id));
+                              if (editingExpenseId === expense.id) cancelEditExpense();
+                            } catch (err: any) {
+                              console.error('Failed to delete expense', err);
+                              setExpensesError(err.message || 'Falha ao remover custo.');
+                            }
+                          }}
+                          title="Excluir"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -740,28 +822,43 @@ const Financeiro = () => {
                   <p className="p-3 text-sm text-text-muted text-center">Nenhum custo variável cadastrado.</p>
                 ) : (
                   variableExpenses.map(expense => (
-                    <div key={expense.id} className="flex items-center justify-between p-3">
+                    <div 
+                      key={expense.id} 
+                      className={`flex items-center justify-between p-3 ${editingExpenseId === expense.id ? 'bg-primary/10' : ''}`}
+                    >
                       <div>
                         <p className="text-sm font-medium text-text">{expense.name}</p>
                         <p className="text-xs text-text-muted">
                           {expense.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        className="p-1 text-text-muted hover:text-red-500 transition-colors"
-                        onClick={async () => {
-                          try {
-                            await deleteExpense(expense.id);
-                            setExpenses(prev => prev.filter(e => e.id !== expense.id));
-                          } catch (err: any) {
-                            console.error('Failed to delete expense', err);
-                            setExpensesError(err.message || 'Falha ao remover custo.');
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className={`p-1 transition-colors ${editingExpenseId === expense.id ? 'text-primary' : 'text-text-muted hover:text-primary'}`}
+                          onClick={() => startEditExpense(expense)}
+                          title="Editar"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-1 text-text-muted hover:text-red-500 transition-colors"
+                          onClick={async () => {
+                            try {
+                              await deleteExpense(expense.id);
+                              setExpenses(prev => prev.filter(e => e.id !== expense.id));
+                              if (editingExpenseId === expense.id) cancelEditExpense();
+                            } catch (err: any) {
+                              console.error('Failed to delete expense', err);
+                              setExpensesError(err.message || 'Falha ao remover custo.');
+                            }
+                          }}
+                          title="Excluir"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
