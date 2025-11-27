@@ -39,7 +39,6 @@ O Supabase é usado apenas para autenticação (VITE_SUPABASE_URL), não para as
   }
 
   const url = `${API_BASE_URL}${path}`;
-  console.log('🌐 Making request:', { method: options.method || 'GET', url, path });
 
   const token = await getAuthToken();
 
@@ -57,6 +56,8 @@ O Supabase é usado apenas para autenticação (VITE_SUPABASE_URL), não para as
   if (salonId) {
     headers['x-salon-id'] = salonId;
   }
+
+  console.log('🌐 Making request:', { method: options.method || 'GET', url, path, salonIdHeader: salonId });
 
   // Create abort controller for timeout
   const controller = new AbortController();
