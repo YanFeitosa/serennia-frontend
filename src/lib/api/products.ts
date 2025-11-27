@@ -35,3 +35,9 @@ export async function updateProduct(
     body: JSON.stringify(input),
   });
 }
+
+export async function deleteProduct(id: string): Promise<void> {
+  return request<void>(`/products/${id}`, {
+    method: 'DELETE',
+  });
+}

@@ -39,3 +39,9 @@ export async function updateCollaborator(
     body: JSON.stringify(input),
   });
 }
+
+export async function deleteCollaborator(id: string): Promise<void> {
+  return request<void>(`/collaborators/${id}`, {
+    method: 'DELETE',
+  });
+}

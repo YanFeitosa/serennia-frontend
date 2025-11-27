@@ -1,21 +1,44 @@
 // src/pages/Produtos.tsx
 import { useState, useEffect } from 'react';
-import { Plus, Edit2 } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../contexts/PermissionsContext';
 import { isAdminLike } from '../../lib/utils';
 import type { Product } from '../../types';
-import { getProducts } from '../../lib/api';
+import { getProducts, deleteProduct } from '../../lib/api';
 
 const Produtos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { can } = usePermissions();
   const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
+  const canDelete = user?.role ? can(user.role, 'podeDeletarProduto') : false;
+
+  const handleDelete = async (product: Product) => {
+    if (!canDelete) return;
+    
+    if (!confirm(`Tem certeza que deseja excluir o produto "${product.name}"?`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(product.id);
+      await deleteProduct(product.id);
+      setProducts(prev => prev.filter(p => p.id !== product.id));
+    } catch (err) {
+      console.error('Failed to delete product', err);
+      setError('Falha ao excluir produto.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -114,7 +137,7 @@ const Produtos = () => {
                 <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider hidden sm:table-cell">Categoria</th>
                 <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Estoque</th>
                 <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Preço</th>
-                {canEdit && (
+                {(canEdit || canDelete) && (
                   <th className="px-4 md:px-6 py-3 md:py-4 text-right text-xs font-semibold text-primary uppercase tracking-wider">Ações</th>
                 )}
               </tr>
@@ -135,16 +158,31 @@ const Produtos = () => {
                       currency: 'BRL',
                     })}
                   </td>
-                  {canEdit && (
+                  {(canEdit || canDelete) && (
                     <td className="px-4 md:px-6 py-3 md:py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/app/produtos/${product.id}`)}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        <span className="hidden sm:inline ml-1">Editar</span>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {canEdit && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/app/produtos/${product.id}`)}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            <span className="hidden sm:inline ml-1">Editar</span>
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => handleDelete(product)}
+                            disabled={deletingId === product.id}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>

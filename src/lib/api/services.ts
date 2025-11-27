@@ -35,3 +35,9 @@ export async function updateService(
     body: JSON.stringify(input),
   });
 }
+
+export async function deleteService(id: string): Promise<void> {
+  return request<void>(`/services/${id}`, {
+    method: 'DELETE',
+  });
+}

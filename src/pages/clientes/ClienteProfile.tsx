@@ -1,11 +1,13 @@
 // src/pages/ClienteProfile.tsx
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Edit, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import { getClientById, getOrders, getServices, getProducts } from '../../lib/api';
+import { getClientById, getOrders, getServices, getProducts, deleteClient } from '../../lib/api';
 import type { Client, Order, Service, Product } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../contexts/PermissionsContext';
 
 const ClienteProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,8 +17,32 @@ const ClienteProfile = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { can } = usePermissions();
+
+  const canDelete = user?.role ? can(user.role, 'podeDeletarCliente') : false;
+
+  const handleDelete = async () => {
+    if (!client || !canDelete) return;
+    
+    if (!confirm(`Tem certeza que deseja excluir o cliente "${client.name}"?`)) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deleteClient(client.id);
+      navigate('/app/clientes', { replace: true });
+    } catch (err) {
+      console.error('Failed to delete client', err);
+      setError('Falha ao excluir cliente.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -107,17 +133,30 @@ const ClienteProfile = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-primary">{client?.name || 'Novo Cliente'}</h1>
           <p className="text-text-muted text-sm md:text-base">{client?.email || client?.phone}</p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-2 rounded-full self-end sm:self-auto"
-          onClick={() => {
-            if (!client) return;
-            navigate('/app/clientes/novo', { state: { editClientId: client.id } });
-          }}
-        >
-          <Edit className="w-5 h-5 text-text" />
-        </Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2 rounded-full"
+            onClick={() => {
+              if (!client) return;
+              navigate('/app/clientes/novo', { state: { editClientId: client.id } });
+            }}
+          >
+            <Edit className="w-5 h-5 text-text" />
+          </Button>
+          {canDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-2 rounded-full text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              <Trash2 className="w-5 h-5" />
+            </Button>
+          )}
+        </div>
       </header>
 
       <div>

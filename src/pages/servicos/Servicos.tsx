@@ -1,21 +1,44 @@
 // src/pages/Servicos.tsx
 import { useState, useEffect } from 'react';
-import { Plus, Clock, Edit2 } from 'lucide-react';
+import { Plus, Clock, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../contexts/PermissionsContext';
 import { isAdminLike } from '../../lib/utils';
 import type { Service } from '../../types';
-import { getServices } from '../../lib/api';
+import { getServices, deleteService } from '../../lib/api';
 
 const Servicos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { can } = usePermissions();
   const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
+  const canDelete = user?.role ? can(user.role, 'podeDeletarServico') : false;
+
+  const handleDelete = async (service: Service) => {
+    if (!canDelete) return;
+    
+    if (!confirm(`Tem certeza que deseja excluir o serviço "${service.name}"?`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(service.id);
+      await deleteService(service.id);
+      setServices(prev => prev.filter(s => s.id !== service.id));
+    } catch (err) {
+      console.error('Failed to delete service', err);
+      setError('Falha ao excluir serviço.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -97,7 +120,7 @@ const Servicos = () => {
                   <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider hidden md:table-cell">Comissão</th>
                 )}
                 <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-text-muted uppercase tracking-wider">Preço</th>
-                {canEdit && (
+                {(canEdit || canDelete) && (
                   <th className="px-4 md:px-6 py-3 md:py-4 text-right text-xs font-semibold text-text-muted uppercase tracking-wider">Ações</th>
                 )}
               </tr>
@@ -127,16 +150,31 @@ const Servicos = () => {
                     <td className="px-4 md:px-6 py-3 md:py-4 text-sm font-semibold text-text">
                       {service.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </td>
-                    {canEdit && (
+                    {(canEdit || canDelete) && (
                       <td className="px-4 md:px-6 py-3 md:py-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/app/servicos/${service.id}`)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          <span className="hidden sm:inline ml-1">Editar</span>
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(`/app/servicos/${service.id}`)}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                              <span className="hidden sm:inline ml-1">Editar</span>
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              onClick={() => handleDelete(service)}
+                              disabled={deletingId === service.id}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>

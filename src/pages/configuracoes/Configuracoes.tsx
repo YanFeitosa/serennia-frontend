@@ -1720,6 +1720,10 @@ const PermissionsTab = () => {
     { key: 'editarPerfilProfissionais', label: 'Pode editar perfil dos profissionais' },
     { key: 'podeEditarProduto', label: 'Pode editar produto' },
     { key: 'podeEditarServico', label: 'Pode editar serviço' },
+    { key: 'podeDeletarCliente', label: 'Pode excluir cliente' },
+    { key: 'podeDeletarColaborador', label: 'Pode excluir colaborador' },
+    { key: 'podeDeletarProduto', label: 'Pode excluir produto' },
+    { key: 'podeDeletarServico', label: 'Pode excluir serviço' },
   ];
 
   const roles: Array<{ key: UserRole; label: string }> = [
@@ -1774,6 +1778,10 @@ const PermissionsTab = () => {
         'editarPerfilProfissionais',
         'podeEditarProduto',
         'podeEditarServico',
+        'podeDeletarCliente',
+        'podeDeletarColaborador',
+        'podeDeletarProduto',
+        'podeDeletarServico',
       ],
       tenant_admin: [
         'agenda',
@@ -1789,6 +1797,10 @@ const PermissionsTab = () => {
         'editarPerfilProfissionais',
         'podeEditarProduto',
         'podeEditarServico',
+        'podeDeletarCliente',
+        'podeDeletarColaborador',
+        'podeDeletarProduto',
+        'podeDeletarServico',
       ],
       admin: [
         'agenda',
@@ -1804,6 +1816,10 @@ const PermissionsTab = () => {
         'editarPerfilProfissionais',
         'podeEditarProduto',
         'podeEditarServico',
+        'podeDeletarCliente',
+        'podeDeletarColaborador',
+        'podeDeletarProduto',
+        'podeDeletarServico',
       ],
       manager: [
         'servicos',
@@ -1814,6 +1830,9 @@ const PermissionsTab = () => {
         'auditoria',
         'podeEditarProduto',
         'podeEditarServico',
+        'podeDeletarColaborador',
+        'podeDeletarProduto',
+        'podeDeletarServico',
       ],
       receptionist: [
         'agenda',
@@ -1823,6 +1842,7 @@ const PermissionsTab = () => {
         'produtos',
         'colaboradores',
         'notificacoes',
+        'podeDeletarCliente',
       ],
       professional: [
         'agenda',

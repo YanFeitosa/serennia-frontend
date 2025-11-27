@@ -28,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     let isMounted = true;
     let isFetching = false;
+    let hasInitialLoad = false;
 
     const loadAuth = async () => {
       // Prevent multiple simultaneous calls
@@ -93,6 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          hasInitialLoad = true;
         }
         isFetching = false;
       }
@@ -107,10 +109,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+      // Skip token refresh events - they don't require re-fetching user data
+      // This prevents infinite loading when switching browser tabs
+      if (event === 'TOKEN_REFRESHED') {
+        if (session && isMounted) {
+          // Just update the access token, no need to re-fetch user
+          setAccessToken(session.access_token);
+        }
+        return;
+      }
+
       try {
         if (event === 'SIGNED_IN' && session) {
-          // Prevent duplicate calls if we're already fetching
-          if (isFetching) {
+          // Prevent duplicate calls if we're already fetching or have initial load
+          if (isFetching || hasInitialLoad) {
+            // If we already have the user loaded, just update the token
+            if (hasInitialLoad && session && isMounted) {
+              setAccessToken(session.access_token);
+            }
             return;
           }
           isFetching = true;

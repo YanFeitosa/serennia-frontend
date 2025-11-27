@@ -1,13 +1,14 @@
 // src/pages/ColaboradorProfile.tsx
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, User } from 'lucide-react';
+import { ArrowLeft, Edit, User, Trash2 } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import type { Collaborator } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../contexts/PermissionsContext';
 import { isAdminLike } from '../../lib/utils';
-import { getCollaboratorById } from '../../lib/api';
+import { getCollaboratorById, deleteCollaborator } from '../../lib/api';
 
 const getRoleLabel = (role: Collaborator['role']) => {
   switch (role) {
@@ -48,9 +49,31 @@ const ColaboradorProfile = () => {
   const [collaborator, setCollaborator] = useState<Collaborator | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuth();
+  const { can } = usePermissions();
   const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
   const canViewCommission = isAdminLike(user) || user?.tenantRole === 'manager';
+  const canDelete = user?.role ? can(user.role, 'podeDeletarColaborador') : false;
+
+  const handleDelete = async () => {
+    if (!collaborator || !canDelete) return;
+    
+    if (!confirm(`Tem certeza que deseja excluir o colaborador "${collaborator.name}"?`)) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deleteCollaborator(collaborator.id);
+      navigate('/app/colaboradores', { replace: true });
+    } catch (err) {
+      console.error('Failed to delete collaborator', err);
+      setError('Falha ao excluir colaborador.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -131,15 +154,30 @@ const ColaboradorProfile = () => {
             </div>
           </div>
         </div>
-        {canEdit && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="p-2 rounded-full self-end sm:self-auto"
-            onClick={() => navigate('/app/colaboradores/novo', { state: { editCollaboratorId: collaborator.id } })}
-          >
-            <Edit className="w-5 h-5 text-text" />
-          </Button>
+        {(canEdit || canDelete) && (
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-2 rounded-full"
+                onClick={() => navigate('/app/colaboradores/novo', { state: { editCollaboratorId: collaborator.id } })}
+              >
+                <Edit className="w-5 h-5 text-text" />
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-2 rounded-full text-red-500 hover:text-red-600 hover:bg-red-50"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                <Trash2 className="w-5 h-5" />
+              </Button>
+            )}
+          </div>
         )}
       </header>
 

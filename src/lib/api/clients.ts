@@ -31,3 +31,9 @@ export async function updateClient(
     body: JSON.stringify(input),
   });
 }
+
+export async function deleteClient(id: string): Promise<void> {
+  return request<void>(`/clients/${id}`, {
+    method: 'DELETE',
+  });
+}
