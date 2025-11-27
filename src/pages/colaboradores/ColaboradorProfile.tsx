@@ -6,19 +6,19 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import type { Collaborator } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-import { isAdminLike, getEffectiveRole } from '../../lib/utils';
+import { isAdminLike } from '../../lib/utils';
 import { getCollaboratorById } from '../../lib/api';
 
 const getRoleLabel = (role: Collaborator['role']) => {
   switch (role) {
-    case 'admin':
-      return 'Administrador';
     case 'manager':
       return 'Gerente';
     case 'receptionist':
       return 'Recepcionista';
     case 'professional':
       return 'Profissional';
+    case 'accountant':
+      return 'Contador';
     default:
       return role;
   }
@@ -49,7 +49,6 @@ const ColaboradorProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-  const role = getEffectiveRole(user);
   const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
   const canViewCommission = isAdminLike(user) || user?.tenantRole === 'manager';
 

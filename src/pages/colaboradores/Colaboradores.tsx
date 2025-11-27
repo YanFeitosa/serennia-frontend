@@ -5,7 +5,7 @@ import { Plus, Mail, Phone, Eye } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useAuth } from '../../contexts/AuthContext';
-import { isAdminLike, getEffectiveRole } from '../../lib/utils';
+import { isAdminLike } from '../../lib/utils';
 import type { Collaborator } from '../../types';
 import { getCollaborators } from '../../lib/api';
 
@@ -16,7 +16,6 @@ const Colaboradores = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const role = getEffectiveRole(user);
   const canCreate = isAdminLike(user) || user?.tenantRole === 'manager';
 
   useEffect(() => {

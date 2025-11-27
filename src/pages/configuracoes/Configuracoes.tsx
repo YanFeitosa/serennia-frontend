@@ -2,10 +2,9 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings, getMessageTemplates, createMessageTemplate, updateMessageTemplate, deleteMessageTemplate, testWhatsAppConnection, testPaymentConnection, type MessageTemplate, type SalonTheme, type SalonSettings } from '../../lib/api';
+import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings, getMessageTemplates, createMessageTemplate, updateMessageTemplate, deleteMessageTemplate, testWhatsAppConnection, testPaymentConnection, type MessageTemplate, type SalonTheme } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../contexts/PermissionsContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import { isAdminLike } from '../../lib/utils';
 import type { CategoryType, UserRole } from '../../types';
 import { MessageCircle, CreditCard, CheckCircle, XCircle, Loader2, Eye, EyeOff } from 'lucide-react';
@@ -596,26 +595,6 @@ const Configuracoes = () => {
     } catch (error) {
       console.error('Failed to create template', error);
       setTemplatesError('Falha ao criar template.');
-    } finally {
-      setIsSavingTemplate(false);
-    }
-  };
-
-  const handleUpdateTemplate = async (updates: Partial<MessageTemplate>) => {
-    if (!selectedTemplate) return;
-    try {
-      setIsSavingTemplate(true);
-      setTemplatesError(null);
-      const updated = await updateMessageTemplate(selectedTemplate.id, {
-        name: updates.name,
-        channel: updates.channel,
-        content: updates.content,
-        isActive: updates.isActive,
-      });
-      setTemplates(templates.map(t => (t.id === selectedTemplate.id ? updated : t)));
-    } catch (error) {
-      console.error('Failed to update template', error);
-      setTemplatesError('Falha ao atualizar template.');
     } finally {
       setIsSavingTemplate(false);
     }
@@ -1273,7 +1252,6 @@ const Configuracoes = () => {
 // Integrations Tab Component
 const IntegrationsTab = () => {
   const { user } = useAuth();
-  const [settings, setSettings] = useState<SalonSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1302,7 +1280,6 @@ const IntegrationsTab = () => {
       try {
         setIsLoading(true);
         const data = await getSalonSettings();
-        setSettings(data);
         // WhatsApp
         setWhatsappApiUrl(data.whatsappApiUrl || '');
         setWhatsappApiKey(data.whatsappApiKey || '');
@@ -1763,6 +1740,36 @@ const PermissionsTab = () => {
 
   const handleReset = () => {
     const defaultPerms: Record<UserRole, string[]> = {
+      super_admin: [
+        'agenda',
+        'comandas',
+        'clientes',
+        'servicos',
+        'produtos',
+        'colaboradores',
+        'financeiro',
+        'configuracoes',
+        'auditoria',
+        'notificacoes',
+        'editarPerfilProfissionais',
+        'podeEditarProduto',
+        'podeEditarServico',
+      ],
+      tenant_admin: [
+        'agenda',
+        'comandas',
+        'clientes',
+        'servicos',
+        'produtos',
+        'colaboradores',
+        'financeiro',
+        'configuracoes',
+        'auditoria',
+        'notificacoes',
+        'editarPerfilProfissionais',
+        'podeEditarProduto',
+        'podeEditarServico',
+      ],
       admin: [
         'agenda',
         'comandas',

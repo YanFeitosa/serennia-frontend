@@ -1,6 +1,6 @@
 // src/pages/Financeiro.tsx
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Info, Plus, Trash2, Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Info, Plus, Trash2, FileSpreadsheet, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getOrders, getSalonSettings, getExpenses, createExpense, deleteExpense } from '../../lib/api';
 import { Badge } from '../../components/ui/Badge';
@@ -10,7 +10,7 @@ import { Input } from '../../components/ui/Input';
 import type { Order, OrderItem, Expense, ExpenseType } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAdminLike } from '../../lib/utils';
-import { exportToCSV, exportToPDF, formatCurrency, formatDateTime } from '../../lib/export';
+import { exportToCSV, exportToPDF, formatDateTime } from '../../lib/export';
 
 type ChartResolution = 'auto' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 

@@ -133,7 +133,7 @@ const AppointmentForm = ({ onClose, appointment, onSuccess }: AppointmentFormPro
           serviceIds: data.serviceIds,
           start: data.start,
           notes: data.notes,
-          origin: data.origin,
+          origin: data.origin || 'reception',
         });
       } else {
         await createAppointment({
@@ -142,7 +142,7 @@ const AppointmentForm = ({ onClose, appointment, onSuccess }: AppointmentFormPro
           serviceIds: data.serviceIds,
           start: data.start,
           notes: data.notes,
-          origin: data.origin,
+          origin: data.origin || 'reception',
         });
       }
       if (onSuccess) onSuccess();

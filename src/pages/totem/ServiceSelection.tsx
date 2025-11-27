@@ -8,7 +8,7 @@ import { useTotem } from '../../contexts/TotemContext';
 
 const ServiceSelection: React.FC = () => {
   const navigate = useNavigate();
-  const { state, addService, removeService, setSelectedServices, getTotalPrice, getTotalDuration } = useTotem();
+  const { state, addService, removeService, getTotalPrice, getTotalDuration } = useTotem();
   const [services, setServices] = useState<TotemService[]>([]);
   const [categories, setCategories] = useState<Record<string, TotemService[]>>({});
   const [isLoading, setIsLoading] = useState(true);

@@ -128,7 +128,13 @@ const Sidebar = () => {
 
     // Fallback: if role is set (legacy), use it
     if (user.role) {
-      return user.role;
+      // Map super_admin and tenant_admin to admin for permissions
+      if (user.role === 'super_admin' || user.role === 'tenant_admin') {
+        return 'admin';
+      }
+      if (user.role === 'admin' || user.role === 'manager' || user.role === 'receptionist' || user.role === 'professional' || user.role === 'accountant') {
+        return user.role;
+      }
     }
 
     // Default to admin for safety

@@ -34,15 +34,15 @@ npm install
 
 3. **Configure as variáveis de ambiente:**
 
-Crie um arquivo `.env` na raiz do projeto:
+Crie um arquivo `.env` na raiz do projeto (para desenvolvimento) e use `.env.production` ou variáveis de ambiente no provedor (para produção):
 
 ```env
 # URL da API do backend
-VITE_API_URL=http://localhost:4000
+VITE_API_BASE_URL=http://localhost:4000
 
-# Supabase
+# Supabase (Auth)
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua-chave-anon-aqui
+VITE_SUPABASE_PUBLISHABLE_KEY=sua-chave-publica-aqui
 ```
 
 4. **Inicie o servidor de desenvolvimento:**
@@ -104,15 +104,27 @@ src/
 
 A autenticação é feita via Supabase Auth. Os usuários são criados pelo backend e recebem um email de boas-vindas com link para definir a senha.
 
-## 🌐 Deploy
+## 🌐 Deploy (Render)
 
-Para produção, gere o build e sirva os arquivos estáticos:
+Static Site (Render):
+
+- Build Command: `npm ci && npm run build`
+- Publish Directory: `dist`
+- Environment (Build-time):
+	- `VITE_API_BASE_URL=https://serennia-backend.onrender.com`
+	- `VITE_SUPABASE_URL=<sua URL do Supabase>`
+	- `VITE_SUPABASE_PUBLISHABLE_KEY=<sua chave publicável do Supabase>`
+
+Recomendado para SPA (React Router): adicione um Redirect/Rewrite `/* -> /index.html` na aba Redirects do site para que rotas do app funcionem ao recarregar a página.
+
+Para testar localmente a build de produção:
 
 ```bash
 npm run build
+npm run preview
 ```
 
-Os arquivos estarão na pasta `dist/`.
+Os arquivos compilados estarão em `dist/`.
 
 ## 📄 Licença
 

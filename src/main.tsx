@@ -7,13 +7,6 @@ import { PermissionsProvider } from './contexts/PermissionsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
-// Check if user should see landing or app
-const getInitialRoute = () => {
-  // If accessing root and not authenticated, show landing
-  // Otherwise, router will handle it
-  return null;
-};
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>

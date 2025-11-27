@@ -1,5 +1,5 @@
 // src/contexts/TotemContext.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { TotemClient, TotemService, TotemCollaborator } from '../lib/api/totem';
 
 interface TotemState {

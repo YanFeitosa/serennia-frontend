@@ -1,5 +1,4 @@
 import type { User } from '../../types';
-import { request } from '../request';
 
 export async function getUsers(): Promise<User[]> {
   // For now, we'll need to get users from the backend

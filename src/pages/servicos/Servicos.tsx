@@ -4,7 +4,7 @@ import { Plus, Clock, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
-import { isAdminLike, getEffectiveRole } from '../../lib/utils';
+import { isAdminLike } from '../../lib/utils';
 import type { Service } from '../../types';
 import { getServices } from '../../lib/api';
 
@@ -15,7 +15,6 @@ const Servicos = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const role = getEffectiveRole(user);
   const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
 
   useEffect(() => {

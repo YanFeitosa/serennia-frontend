@@ -14,6 +14,7 @@ export const appointmentSchema = z.object({
   serviceIds: z.array(z.string()).min(1, 'Selecione ao menos um serviço'),
   start: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Data e hora de início inválidas' }),
   notes: z.string().optional(),
+  origin: z.enum(['whatsapp', 'app', 'totem', 'reception']).optional(),
 });
 
 export type AppointmentSchema = z.infer<typeof appointmentSchema>;

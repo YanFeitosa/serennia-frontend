@@ -7,7 +7,7 @@ import { Input } from '../../components/ui/Input';
 import { changePassword } from '../../lib/api';
 
 const UserProfile = () => {
-  const { user, loginAs } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   if (!user) {
@@ -32,14 +32,8 @@ const UserProfile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const updatedUser = {
-      ...user,
-      name: name.trim() || user.name,
-      email: email.trim() || user.email,
-      phone: phone.trim() || user.phone,
-    };
-
-    loginAs(updatedUser);
+    // TODO: Implement profile update via backend API
+    // For now, only password change is supported
 
     // Handle password change if provided
     if (newPassword.trim()) {
