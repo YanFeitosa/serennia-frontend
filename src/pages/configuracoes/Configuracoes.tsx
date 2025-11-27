@@ -128,21 +128,22 @@ const Configuracoes = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // 🎨 Paleta padrão alinhada com a landing page (roxo/indigo/rosa)
     const base: AppearanceSettings = {
       platformName: 'Serennia',
       light: {
-        primaryColor: '#25445A',
-        secondaryColor: '#7AA7D8',
-        accentColor: '#BFA2DB',
-        backgroundColor: '#FFFFFF',
-        textColor: '#0F1724',
+        primaryColor: '#7c3aed',
+        secondaryColor: '#6366f1',
+        accentColor: '#ec4899',
+        backgroundColor: '#faf5ff',
+        textColor: '#1e1b4b',
       },
       dark: {
-        primaryColor: '#4A708A',
-        secondaryColor: '#0F1724',
-        accentColor: '#BFA2DB',
-        backgroundColor: '#0B1220',
-        textColor: '#F8FAFC',
+        primaryColor: '#a78bfa',
+        secondaryColor: '#818cf8',
+        accentColor: '#f472b6',
+        backgroundColor: '#0f0a1f',
+        textColor: '#f1f5f9',
       },
     };
 
@@ -213,30 +214,48 @@ const Configuracoes = () => {
             : 'professional';
         setCommissionCalcMode(mode);
 
-        // Load theme from backend if available
-        if (settings.theme) {
-          const themeFromBackend: AppearanceSettings = {
-            platformName: settings.theme.platformName || settings.name || 'Serennia',
-            light: {
-              primaryColor: settings.theme.light?.primaryColor || '#25445A',
-              secondaryColor: settings.theme.light?.secondaryColor || '#7AA7D8',
-              accentColor: settings.theme.light?.accentColor || '#BFA2DB',
-              backgroundColor: settings.theme.light?.backgroundColor || '#FFFFFF',
-              textColor: settings.theme.light?.textColor || '#0F1724',
-            },
-            dark: {
-              primaryColor: settings.theme.dark?.primaryColor || '#4A708A',
-              secondaryColor: settings.theme.dark?.secondaryColor || '#0F1724',
-              accentColor: settings.theme.dark?.accentColor || '#BFA2DB',
-              backgroundColor: settings.theme.dark?.backgroundColor || '#0B1220',
-              textColor: settings.theme.dark?.textColor || '#F8FAFC',
-            },
-          };
-          setAppearanceDraft(themeFromBackend);
-          setAppearanceApplied(themeFromBackend);
-          applyAppearance(themeFromBackend);
-          window.localStorage.setItem('serennia-appearance', JSON.stringify(themeFromBackend));
-        }
+        // 🎨 Paleta padrão alinhada com a landing page
+        const defaultPalette: AppearanceSettings = {
+          platformName: settings.name || 'Serennia',
+          light: {
+            primaryColor: '#7c3aed',
+            secondaryColor: '#6366f1',
+            accentColor: '#ec4899',
+            backgroundColor: '#faf5ff',
+            textColor: '#1e1b4b',
+          },
+          dark: {
+            primaryColor: '#a78bfa',
+            secondaryColor: '#818cf8',
+            accentColor: '#f472b6',
+            backgroundColor: '#0f0a1f',
+            textColor: '#f1f5f9',
+          },
+        };
+
+        // Sempre carrega do banco, usando valores padrão apenas como fallback para campos ausentes
+        const themeFromBackend: AppearanceSettings = {
+          platformName: settings.theme?.platformName || settings.name || defaultPalette.platformName,
+          light: {
+            primaryColor: settings.theme?.light?.primaryColor || defaultPalette.light.primaryColor,
+            secondaryColor: settings.theme?.light?.secondaryColor || defaultPalette.light.secondaryColor,
+            accentColor: settings.theme?.light?.accentColor || defaultPalette.light.accentColor,
+            backgroundColor: settings.theme?.light?.backgroundColor || defaultPalette.light.backgroundColor,
+            textColor: settings.theme?.light?.textColor || defaultPalette.light.textColor,
+          },
+          dark: {
+            primaryColor: settings.theme?.dark?.primaryColor || defaultPalette.dark.primaryColor,
+            secondaryColor: settings.theme?.dark?.secondaryColor || defaultPalette.dark.secondaryColor,
+            accentColor: settings.theme?.dark?.accentColor || defaultPalette.dark.accentColor,
+            backgroundColor: settings.theme?.dark?.backgroundColor || defaultPalette.dark.backgroundColor,
+            textColor: settings.theme?.dark?.textColor || defaultPalette.dark.textColor,
+          },
+        };
+        
+        setAppearanceDraft(themeFromBackend);
+        setAppearanceApplied(themeFromBackend);
+        applyAppearance(themeFromBackend);
+        window.localStorage.setItem('serennia-appearance', JSON.stringify(themeFromBackend));
 
         window.localStorage.setItem('serennia-default-commission', String(percent));
       } catch (error) {
@@ -356,22 +375,23 @@ const Configuracoes = () => {
     try {
       const updated = await updateSalonSettings({ name: nameToSave });
 
+      // 🎨 Fallback para paleta padrão alinhada com landing
       const next: AppearanceSettings = {
         ...(appearanceDraft || {
           platformName: nameToSave,
           light: {
-            primaryColor: '#25445A',
-            secondaryColor: '#7AA7D8',
-            accentColor: '#BFA2DB',
-            backgroundColor: '#FFFFFF',
-            textColor: '#0F1724',
+            primaryColor: '#7c3aed',
+            secondaryColor: '#6366f1',
+            accentColor: '#ec4899',
+            backgroundColor: '#faf5ff',
+            textColor: '#1e1b4b',
           },
           dark: {
-            primaryColor: '#4A708A',
-            secondaryColor: '#0F1724',
-            accentColor: '#BFA2DB',
-            backgroundColor: '#0B1220',
-            textColor: '#F8FAFC',
+            primaryColor: '#a78bfa',
+            secondaryColor: '#818cf8',
+            accentColor: '#f472b6',
+            backgroundColor: '#0f0a1f',
+            textColor: '#f1f5f9',
           },
         }),
         platformName: updated.name || nameToSave,
