@@ -7,7 +7,7 @@ import { getMe } from '../lib/api';
 interface AuthContextType {
   user: User | null;
   accessToken: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -176,56 +176,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
+    // Clear any previous salon context on fresh login
+    // Super Admin will select a salon after login
+    window.localStorage.removeItem('serennia-salon-id');
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Erro ao fazer login');
+    }
+
+    if (!data.session) {
+      throw new Error('Sessão não criada');
+    }
+
+    // Get user info from backend
     try {
-      // Clear any previous salon context on fresh login
-      // Super Admin will select a salon after login
-      window.localStorage.removeItem('serennia-salon-id');
+      const userData = await getMe();
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Erro ao fazer login');
+      // Update appearance if salonName is present
+      if (userData.salonName) {
+        window.localStorage.setItem('serennia-appearance', JSON.stringify({
+          platformName: userData.salonName
+        }));
+        window.dispatchEvent(new Event('serennia-appearance-changed'));
       }
 
-      if (!data.session) {
-        throw new Error('Sessão não criada');
-      }
+      const userWithRoles = {
+        ...userData,
+        tenantRole: userData.tenantRole,
+        platformRole: userData.platformRole,
+        role: userData.tenantRole || userData.platformRole || undefined,
+      } as User;
 
-      // Get user info from backend
-      try {
-        const userData = await getMe();
-
-        // Update appearance if salonName is present
-        if (userData.salonName) {
-          window.localStorage.setItem('serennia-appearance', JSON.stringify({
-            platformName: userData.salonName
-          }));
-          window.dispatchEvent(new Event('serennia-appearance-changed'));
-        }
-
-        setUser({
-          ...userData,
-          tenantRole: userData.tenantRole,
-          platformRole: userData.platformRole,
-          role: userData.tenantRole || userData.platformRole || undefined,
-        } as User);
-        setAccessToken(data.session.access_token);
-      } catch (error) {
-        // If getMe fails, sign out and throw
-        await supabase.auth.signOut();
-        throw new Error(
-          error instanceof Error
-            ? `Erro ao obter dados do usuário: ${error.message}`
-            : 'Erro ao obter dados do usuário'
-        );
-      }
+      setUser(userWithRoles);
+      setAccessToken(data.session.access_token);
+      
+      return userWithRoles;
     } catch (error) {
-      // Re-throw to let the caller handle it
-      throw error;
+      // If getMe fails, sign out and throw
+      await supabase.auth.signOut();
+      throw new Error(
+        error instanceof Error
+          ? `Erro ao obter dados do usuário: ${error.message}`
+          : 'Erro ao obter dados do usuário'
+      );
     }
   };
 

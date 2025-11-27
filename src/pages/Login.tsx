@@ -26,28 +26,18 @@ const LoginPage = () => {
     try {
       setError(null);
 
-      await loginUser(data.email, data.password);
+      const user = await loginUser(data.email, data.password);
       
-      // Get user info from localStorage to check role
-      const authData = window.localStorage.getItem('serennia-auth');
-      if (authData) {
-        const parsed = JSON.parse(authData);
-        const user = parsed.user;
-        
-        // If super_admin, redirect to salon selection
-        if (user?.platformRole === 'super_admin') {
-          navigate('/selecionar-salao', { replace: true });
-          return;
-        }
-        
-        // For other roles, go to default path
-        const from = (location.state as any)?.from?.pathname as string | undefined;
-        const target = from || getDefaultPathForRole(user?.role as any);
-        navigate(target, { replace: true });
+      // If super_admin, redirect to salon selection
+      if (user?.platformRole === 'super_admin') {
+        navigate('/selecionar-salao', { replace: true });
         return;
       }
       
-      navigate('/app/agenda', { replace: true });
+      // For other roles, go to default path
+      const from = (location.state as any)?.from?.pathname as string | undefined;
+      const target = from || getDefaultPathForRole(user?.role as any);
+      navigate(target, { replace: true });
     } catch (err: any) {
       setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
     }
