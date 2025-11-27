@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from '../App';
 import RoleGuard from '../components/auth/RoleGuard';
 import LoginPage from '../pages/Login';
+import SelecionarSalao from '../pages/SelecionarSalao';
 import Agenda from '../pages/agenda/Agenda';
 import AgendamentoForm from '../pages/agenda/AgendamentoForm';
 import Comandas from '../pages/comandas/Comandas';
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/selecionar-salao',
+    element: <SelecionarSalao />,
   },
   // Static pages
   {

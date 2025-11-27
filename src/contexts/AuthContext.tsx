@@ -7,7 +7,7 @@ import { getMe } from '../lib/api';
 interface AuthContextType {
   user: User | null;
   accessToken: string | null;
-  login: (email: string, password: string, salonId?: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -176,21 +176,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, password: string, salonId?: string) => {
+  const login = async (email: string, password: string) => {
     try {
-      // Set salonId in localStorage if provided (for Super Admin context)
-      if (salonId) {
-        window.localStorage.setItem('serennia-salon-id', salonId);
-      } else {
-        // If not provided, we might want to clear it to avoid stale context, 
-        // OR keep it if we want persistence. 
-        // Given the requirement is "login with salon_id", let's assume if it's NOT provided, 
-        // we shouldn't force a context unless it was already there? 
-        // Safest is to NOT clear it here if we want persistence across reloads, 
-        // but if the user logs in explicitly without it, maybe they want default context?
-        // Let's clear it if it's a fresh login without salonId to be safe and avoid confusion.
-        window.localStorage.removeItem('serennia-salon-id');
-      }
+      // Clear any previous salon context on fresh login
+      // Super Admin will select a salon after login
+      window.localStorage.removeItem('serennia-salon-id');
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
