@@ -12,20 +12,21 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+// 🎨 Paleta padrão alinhada com a landing page (roxo/indigo/rosa)
 const DEFAULT_LIGHT_PALETTE: ThemePalette = {
-  primaryColor: '#25445A',
-  secondaryColor: '#7AA7D8',
-  accentColor: '#BFA2DB',
-  backgroundColor: '#FFFFFF',
-  textColor: '#0F1724',
+  primaryColor: '#7c3aed',     // Roxo vibrante - igual à landing
+  secondaryColor: '#6366f1',   // Indigo - complementar
+  accentColor: '#ec4899',      // Rosa/Magenta - destaque
+  backgroundColor: '#faf5ff',  // Lavanda muito clara
+  textColor: '#1e1b4b',        // Indigo escuro
 };
 
 const DEFAULT_DARK_PALETTE: ThemePalette = {
-  primaryColor: '#4A708A',
-  secondaryColor: '#0F1724',
-  accentColor: '#BFA2DB',
-  backgroundColor: '#0B1220',
-  textColor: '#F8FAFC',
+  primaryColor: '#a78bfa',     // Roxo claro - legível em fundo escuro
+  secondaryColor: '#818cf8',   // Indigo claro
+  accentColor: '#f472b6',      // Rosa claro
+  backgroundColor: '#0f0a1f',  // Roxo muito escuro
+  textColor: '#f1f5f9',        // Cinza muito claro
 };
 
 function applyPaletteToCSS(lightPalette: ThemePalette, darkPalette: ThemePalette) {
