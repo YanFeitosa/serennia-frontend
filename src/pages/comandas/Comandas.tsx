@@ -324,7 +324,7 @@ const Comandas = () => {
               setSelectedComanda(next);
               setExpandedComanda(next.id);
             }}
-            onFinalize={(order) => navigate(`/comandas/${order.id}/pagamento`)}
+            onFinalize={(order) => navigate(`/app/comandas/${order.id}/pagamento`)}
           />
         </div>
       )}
@@ -447,7 +447,7 @@ const Comandas = () => {
                                 </Button>
                                 <Button
                                   size="sm"
-                                  onClick={() => navigate(`/comandas/${comanda.id}/pagamento`)}
+                                  onClick={() => navigate(`/app/comandas/${comanda.id}/pagamento`)}
                                 >
                                   Finalizar Comanda
                                 </Button>
