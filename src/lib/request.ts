@@ -51,13 +51,7 @@ O Supabase é usado apenas para autenticação (VITE_SUPABASE_URL), não para as
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Add salon context header if available (for Super Admin context switching)
-  const salonId = window.localStorage.getItem('serennia-salon-id');
-  if (salonId) {
-    headers['x-salon-id'] = salonId;
-  }
-
-  console.log('🌐 Making request:', { method: options.method || 'GET', url, path, salonIdHeader: salonId });
+  console.log('🌐 Making request:', { method: options.method || 'GET', url, path });
 
   // Create abort controller for timeout
   const controller = new AbortController();

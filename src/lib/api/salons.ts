@@ -27,3 +27,17 @@ export async function getSalons(): Promise<Salon[]> {
 export async function getSalonById(id: string): Promise<SalonDetails> {
   return request<SalonDetails>(`/salons/${id}`);
 }
+
+// Select a salon to manage (Super Admin only)
+export interface SelectSalonResponse {
+  success: boolean;
+  message: string;
+  salonId: string;
+  salonName: string;
+}
+
+export async function selectSalon(salonId: string): Promise<SelectSalonResponse> {
+  return request<SelectSalonResponse>(`/salons/${salonId}/select`, {
+    method: 'POST',
+  });
+}

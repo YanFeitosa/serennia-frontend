@@ -1,18 +1,18 @@
-// src/pages/SelecionarSalao.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Users, UserCheck, Search, LogOut } from 'lucide-react';
-import { getSalons, type Salon } from '../lib/api';
+import { getSalons, selectSalon, type Salon } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Badge } from '../components/ui/Badge';
 
 const SelecionarSalao = () => {
   const [salons, setSalons] = useState<Salon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSelecting, setIsSelecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
 
   useEffect(() => {
     const loadSalons = async () => {
@@ -32,16 +32,31 @@ const SelecionarSalao = () => {
     loadSalons();
   }, []);
 
-  const handleSelectSalon = (salon: Salon) => {
-    // Save salon context to localStorage
-    window.localStorage.setItem('serennia-salon-id', salon.id);
-    window.localStorage.setItem('serennia-appearance', JSON.stringify({
-      platformName: salon.name
-    }));
-    window.dispatchEvent(new Event('serennia-appearance-changed'));
-    
-    // Navigate to the app
-    navigate('/app/agenda', { replace: true });
+  const handleSelectSalon = async (salon: Salon) => {
+    try {
+      setIsSelecting(true);
+      setError(null);
+
+      // Call API to update super_admin's salonId in database
+      await selectSalon(salon.id);
+
+      // Update appearance
+      window.localStorage.setItem('serennia-appearance', JSON.stringify({
+        platformName: salon.name
+      }));
+      window.dispatchEvent(new Event('serennia-appearance-changed'));
+
+      // Refresh user data to get updated salonId
+      await refreshUser();
+
+      // Navigate to the app
+      navigate('/app/agenda', { replace: true });
+    } catch (err: any) {
+      console.error('Failed to select salon', err);
+      setError(err.message || 'Falha ao selecionar salão.');
+    } finally {
+      setIsSelecting(false);
+    }
   };
 
   const handleLogout = () => {
@@ -161,7 +176,8 @@ const SelecionarSalao = () => {
                   <button
                     key={salon.id}
                     onClick={() => handleSelectSalon(salon)}
-                    className="w-full p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 rounded-xl text-left transition-all group"
+                    disabled={isSelecting}
+                    className="w-full p-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 rounded-xl text-left transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">

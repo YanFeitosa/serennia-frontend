@@ -9,6 +9,7 @@ interface AuthContextType {
   accessToken: string | null;
   login: (email: string, password: string) => Promise<User>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -235,8 +236,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAccessToken(null);
   };
 
+  const refreshUser = async () => {
+    try {
+      const userData = await getMe();
+
+      // Update appearance if salonName is present
+      if (userData.salonName) {
+        window.localStorage.setItem('serennia-appearance', JSON.stringify({
+          platformName: userData.salonName
+        }));
+        window.dispatchEvent(new Event('serennia-appearance-changed'));
+      }
+
+      setUser({
+        ...userData,
+        tenantRole: userData.tenantRole,
+        platformRole: userData.platformRole,
+        role: userData.tenantRole || userData.platformRole || undefined,
+      } as User);
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, accessToken, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, accessToken, login, logout, refreshUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
