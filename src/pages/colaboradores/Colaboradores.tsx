@@ -1,7 +1,7 @@
 // src/pages/Colaboradores.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Mail, Phone, Eye } from 'lucide-react';
+import { Plus, Mail, Phone, Eye, User } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useAuth } from '../../contexts/AuthContext';
@@ -94,14 +94,17 @@ const Colaboradores = () => {
           <div key={collab.id} className="bg-card rounded-xl shadow-elevated border border-border p-4 md:p-6 hover:shadow-lg hover:border-primary/20 transition-all duration-300">
             <div className="flex items-start justify-between mb-3 md:mb-4">
               <div className="flex items-center space-x-2 md:space-x-3">
-                <img 
-                  src={collab.avatarUrl || `https://i.pravatar.cc/150?u=${collab.id}`}
-                  alt={collab.name}
-                  className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover ring-2 ring-border"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = `https://i.pravatar.cc/150?u=${collab.id}`;
-                  }}
-                />
+                {collab.avatarUrl ? (
+                  <img 
+                    src={collab.avatarUrl}
+                    alt={collab.name}
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover ring-2 ring-border"
+                  />
+                ) : (
+                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary/10 ring-2 ring-border flex items-center justify-center">
+                    <User className="w-6 h-6 md:w-8 md:h-8 text-primary" />
+                  </div>
+                )}
                 <div className="min-w-0">
                   <h3 className="text-base md:text-lg font-semibold text-text truncate">{collab.name}</h3>
                   <p className="text-xs md:text-sm text-text-muted capitalize">{collab.role}</p>

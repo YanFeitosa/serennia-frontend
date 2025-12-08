@@ -9,7 +9,6 @@ export const mockUsers: User[] = [
     name: 'Ana (Admin)',
     email: 'admin@serennia.com',
     role: 'admin',
-    avatarUrl: 'https://i.pravatar.cc/150?u=admin',
   },
   {
     id: 'user-2',
@@ -17,7 +16,6 @@ export const mockUsers: User[] = [
     name: 'Beatriz (Gerente)',
     email: 'manager@serennia.com',
     role: 'manager',
-    avatarUrl: 'https://i.pravatar.cc/150?u=manager',
   },
   {
     id: 'user-3',
@@ -25,7 +23,6 @@ export const mockUsers: User[] = [
     name: 'Carla (Recepcionista)',
     email: 'reception@serennia.com',
     role: 'receptionist',
-    avatarUrl: 'https://i.pravatar.cc/150?u=reception',
   },
   {
     id: 'user-4',
@@ -33,6 +30,5 @@ export const mockUsers: User[] = [
     name: 'Diana (Profissional)',
     email: 'diana@serennia.com',
     role: 'professional',
-    avatarUrl: 'https://i.pravatar.cc/150?u=diana',
   },
 ];
