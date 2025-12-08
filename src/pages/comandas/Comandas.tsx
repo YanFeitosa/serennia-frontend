@@ -153,13 +153,17 @@ const Comandas = () => {
   useEffect(() => {
     if (overdueOpenOrders.length === 0) return;
 
+    let isMounted = true;
+
     // Regra 2: se o agendamento relacionado estiver 'in_progress' e a comanda for de dia anterior,
     // atualiza o status do agendamento para 'not_paid'.
     const syncOverdueAppointments = async () => {
       for (const order of overdueOpenOrders) {
+        if (!isMounted) break;
         if (!order.appointmentId) continue;
         try {
           const appt = await getAppointmentById(order.appointmentId);
+          if (!isMounted) break;
           if (appt.status === 'in_progress') {
             await updateAppointmentStatus(order.appointmentId, 'not_paid');
           }
@@ -187,6 +191,10 @@ const Comandas = () => {
     };
 
     upsertNotification(notification);
+
+    return () => {
+      isMounted = false;
+    };
   }, [overdueOpenOrders.length]);
 
   const filteredComandas = orders

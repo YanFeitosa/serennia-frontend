@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import type { Appointment, AppointmentStatus, Collaborator } from '../../types';
 import { getAppointments, getCollaborators } from '../../lib/api';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 interface MonthlyViewProps {
 	date: Date;
@@ -71,7 +72,7 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ date, onSelectDate }) => {
 				setCollaborators(collaboratorsRes);
 			} catch (err) {
 				console.error('Error loading monthly view data', err);
-				setError('Erro ao carregar agendamentos.');
+				setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_APPOINTMENTS_FAILED));
 			} finally {
 				setIsLoading(false);
 			}

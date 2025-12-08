@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { Appointment, AppointmentStatus, Client, Collaborator, Service } from '../../types';
 import { getAppointments, getClients, getCollaborators, getServices } from '../../lib/api';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 interface WeeklyViewProps {
   date: Date;
@@ -108,7 +109,7 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({ date, onSelectDate }) => {
         setServices(servicesRes);
       } catch (err) {
         console.error('Error loading weekly view data', err);
-        setError('Erro ao carregar agendamentos.');
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_APPOINTMENTS_FAILED));
       } finally {
         setIsLoading(false);
       }

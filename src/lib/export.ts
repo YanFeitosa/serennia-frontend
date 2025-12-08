@@ -112,7 +112,7 @@ export async function exportToPDF(
     doc.save(`${filename}.pdf`);
   } catch (error) {
     console.error('Error generating PDF:', error);
-    alert('Erro ao gerar PDF. Verifique se as bibliotecas estão instaladas.');
+    alert('Não foi possível gerar o PDF. Por favor, tente novamente.');
   }
 }
 

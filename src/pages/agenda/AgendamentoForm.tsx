@@ -18,6 +18,7 @@ import {
   getCollaborators,
   getServices,
 } from '../../lib/api';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const toDateTimeLocal = (dateStr: string | Date): string => {
   const date = new Date(dateStr);
@@ -88,7 +89,7 @@ const AgendamentoForm = () => {
         setServices(servicesRes);
       } catch (err) {
         console.error('Error loading appointment form data', err);
-        setError('Erro ao carregar dados para o agendamento.');
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_FORM_DATA_FAILED));
       } finally {
         setIsLoading(false);
       }
@@ -111,7 +112,7 @@ const AgendamentoForm = () => {
         setAppointment(data);
       } catch (err) {
         console.error('Error loading appointment', err);
-        setError('Erro ao carregar agendamento.');
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_APPOINTMENTS_FAILED));
         navigate('/app/agenda');
       } finally {
         setIsLoading(false);

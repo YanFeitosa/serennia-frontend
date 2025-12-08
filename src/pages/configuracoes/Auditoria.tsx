@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import DatePickerPlain from '../../components/ui/DatePickerPlain';
 import AuditLogDetails from '../../components/auditoria/AuditLogDetails';
 import type { AuditLog, Collaborator } from '../../types';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const Auditoria = () => {
   const [showFilters, setShowFilters] = useState(false);
@@ -56,7 +57,7 @@ const Auditoria = () => {
         setCollaborators(collaboratorsData);
       } catch (err: any) {
         console.error('Error loading audit logs', err);
-        setError(err.message || 'Erro ao carregar logs de auditoria');
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_AUDIT_LOGS_FAILED));
       } finally {
         setIsLoading(false);
       }

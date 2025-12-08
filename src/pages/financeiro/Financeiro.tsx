@@ -1,6 +1,6 @@
 // src/pages/Financeiro.tsx
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Info, Plus, Trash2, Pencil, X, Check, FileSpreadsheet, FileText } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Info, Plus, Trash2, Pencil, X, Check, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getOrders, getSalonSettings, getExpenses, createExpense, deleteExpense, updateExpense } from '../../lib/api';
 import { Badge } from '../../components/ui/Badge';
@@ -10,7 +10,8 @@ import { Input } from '../../components/ui/Input';
 import type { Order, OrderItem, Expense, ExpenseType } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAdminLike } from '../../lib/utils';
-import { exportToCSV, exportToPDF, formatDateTime } from '../../lib/export';
+import { exportToPDF, formatDateTime } from '../../lib/export';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 type ChartResolution = 'auto' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -115,7 +116,7 @@ const Financeiro = () => {
       setExpenseType('FIXED');
     } catch (err: any) {
       console.error('Failed to save expense', err);
-      setExpensesError(err.message || 'Falha ao salvar custo.');
+      setExpensesError(getUserFriendlyError(err, ERROR_MESSAGES.SAVE_EXPENSE_FAILED));
     } finally {
       setIsSavingExpense(false);
     }
@@ -135,7 +136,7 @@ const Financeiro = () => {
         setExpenses(expensesData);
       } catch (err: any) {
         console.error('Error loading financial data', err);
-        setError(err.message || 'Erro ao carregar dados financeiros');
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_FINANCIAL_DATA_FAILED));
       } finally {
         setIsLoading(false);
       }
@@ -534,27 +535,6 @@ const Financeiro = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 border-b border-border">
           <h3 className="text-lg font-semibold text-text">Transações Recentes</h3>
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const exportData = filteredOrders.map(order => ({
-                  comanda: `#${order.id.slice(0, 6)}`,
-                  data: formatDateTime(order.createdAt),
-                  valor: order.finalValue,
-                  status: getStatusLabel(order.status),
-                }));
-                exportToCSV(exportData, `faturamento_${new Date().toISOString().split('T')[0]}`, {
-                  comanda: 'Comanda',
-                  data: 'Data',
-                  valor: 'Valor (R$)',
-                  status: 'Status',
-                });
-              }}
-            >
-              <FileSpreadsheet className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Excel</span>
-            </Button>
             <Button
               variant="ghost"
               size="sm"

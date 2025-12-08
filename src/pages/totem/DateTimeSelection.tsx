@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Button } from '../../components/ui/Button';
 import { getTotemAvailability, type AvailabilityResponse } from '../../lib/api/totem';
 import { useTotem } from '../../contexts/TotemContext';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const DateTimeSelection: React.FC = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const DateTimeSelection: React.FC = () => {
       });
       setAvailability(data);
     } catch (err: any) {
-      setError(err.message || 'Erro ao verificar disponibilidade');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_AVAILABILITY_FAILED));
     } finally {
       setIsLoading(false);
     }

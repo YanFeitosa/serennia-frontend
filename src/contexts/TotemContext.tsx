@@ -44,13 +44,18 @@ export const TotemProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+        // Converter selectedDateTime de string para Date se existir e for válida
+        let parsedDate: Date | null = null;
+        if (parsed.selectedDateTime) {
+          const dateAttempt = new Date(parsed.selectedDateTime);
+          if (!isNaN(dateAttempt.getTime())) {
+            parsedDate = dateAttempt;
+          }
+        }
         setState({
           ...defaultState,
           ...parsed,
-          // Converter selectedDateTime de string para Date se existir
-          selectedDateTime: parsed.selectedDateTime
-            ? new Date(parsed.selectedDateTime)
-            : null,
+          selectedDateTime: parsedDate,
         });
       }
     } catch (error) {

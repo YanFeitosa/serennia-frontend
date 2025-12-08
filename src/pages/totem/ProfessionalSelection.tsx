@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Button } from '../../components/ui/Button';
 import { getTotemCollaborators, type TotemCollaborator } from '../../lib/api/totem';
 import { useTotem } from '../../contexts/TotemContext';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const ProfessionalSelection: React.FC = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const ProfessionalSelection: React.FC = () => {
         });
         setCollaborators(data);
       } catch (err: any) {
-        setError(err.message || 'Erro ao carregar profissionais');
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_COLLABORATORS_FAILED));
       } finally {
         setIsLoading(false);
       }

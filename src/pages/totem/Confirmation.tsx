@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { createTotemAppointment } from '../../lib/api/totem';
 import { useTotem } from '../../contexts/TotemContext';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const Confirmation: React.FC = () => {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ const Confirmation: React.FC = () => {
       setAppointmentId(appointment.id);
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Erro ao confirmar agendamento. Tente novamente.');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.CONFIRM_APPOINTMENT_FAILED));
     } finally {
       setIsSubmitting(false);
     }

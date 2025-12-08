@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Button } from '../../components/ui/Button';
 import { getTotemServices, type TotemService } from '../../lib/api/totem';
 import { useTotem } from '../../contexts/TotemContext';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const ServiceSelection: React.FC = () => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const ServiceSelection: React.FC = () => {
         });
         setCategories(grouped);
       } catch (err: any) {
-        setError(err.message || 'Erro ao carregar serviços');
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_SERVICES_FAILED));
       } finally {
         setIsLoading(false);
       }

@@ -8,6 +8,7 @@ import { usePermissions } from '../../contexts/PermissionsContext';
 import { isAdminLike } from '../../lib/utils';
 import type { CategoryType, UserRole } from '../../types';
 import { MessageCircle, CreditCard, CheckCircle, XCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const AVAILABLE_VARIABLES = [
   { key: 'cliente_nome', label: 'Nome do cliente' },
@@ -1329,7 +1330,7 @@ const IntegrationsTab = () => {
         setStripePublishableKey(data.stripePublishableKey || '');
       } catch (err: any) {
         console.error('Error loading settings', err);
-        setError(err.message || 'Erro ao carregar configurações');
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_SETTINGS_FAILED));
       } finally {
         setIsLoading(false);
       }
@@ -1350,7 +1351,7 @@ const IntegrationsTab = () => {
       setSuccessMessage('Configurações do WhatsApp salvas!');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar configurações');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.SAVE_SETTINGS_FAILED));
     } finally {
       setIsSaving(false);
     }
@@ -1365,11 +1366,11 @@ const IntegrationsTab = () => {
       if (result.success) {
         setSuccessMessage('WhatsApp conectado com sucesso!');
       } else {
-        setError(result.error || 'Falha ao conectar');
+        setError(getUserFriendlyError(null, ERROR_MESSAGES.TEST_WHATSAPP_FAILED));
       }
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Erro ao testar conexão');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.TEST_WHATSAPP_FAILED));
       setWhatsappConnected(false);
     } finally {
       setIsTestingWhatsApp(false);
@@ -1390,7 +1391,7 @@ const IntegrationsTab = () => {
       setSuccessMessage('Configurações de pagamento salvas!');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar configurações');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.SAVE_PAYMENT_SETTINGS_FAILED));
     } finally {
       setIsSaving(false);
     }
@@ -1404,11 +1405,11 @@ const IntegrationsTab = () => {
       if (result.success) {
         setSuccessMessage('Conexão de pagamento validada!');
       } else {
-        setError(result.error || 'Falha ao validar conexão');
+        setError(getUserFriendlyError(null, ERROR_MESSAGES.TEST_PAYMENT_FAILED));
       }
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Erro ao testar conexão');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.TEST_PAYMENT_FAILED));
     } finally {
       setIsTestingPayment(false);
     }
@@ -1771,7 +1772,7 @@ const PermissionsTab = () => {
       await refreshPermissions();
     } catch (err: any) {
       console.error('Error saving permissions', err);
-      setError(err.message || 'Erro ao salvar permissões');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.SAVE_PERMISSIONS_FAILED));
     } finally {
       setIsSaving(false);
     }

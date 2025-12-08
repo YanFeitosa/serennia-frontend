@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import type { Notification } from '../../types';
 import { getNotifications, markAllNotificationsAsRead, markNotificationAsRead } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const Notificacoes: React.FC = () => {
   const [items, setItems] = useState<Notification[]>([]);
@@ -17,7 +18,7 @@ const Notificacoes: React.FC = () => {
       setItems(data);
     } catch (err: any) {
       console.error('Error loading notifications', err);
-      setError(err.message || 'Erro ao carregar notificações');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_NOTIFICATIONS_FAILED));
     } finally {
       setIsLoading(false);
     }
