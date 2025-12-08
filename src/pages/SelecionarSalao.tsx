@@ -4,6 +4,7 @@ import { Building2, Users, UserCheck, Search, LogOut } from 'lucide-react';
 import { getSalons, selectSalon, type Salon } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Badge } from '../components/ui/Badge';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../lib/errorMessages';
 
 const SelecionarSalao = () => {
   const [salons, setSalons] = useState<Salon[]>([]);
@@ -23,7 +24,7 @@ const SelecionarSalao = () => {
         setSalons(data);
       } catch (err: any) {
         console.error('Failed to load salons', err);
-        setError(err.message || 'Falha ao carregar salões.');
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_SALONS_FAILED));
       } finally {
         setIsLoading(false);
       }
@@ -53,7 +54,7 @@ const SelecionarSalao = () => {
       navigate('/app/agenda', { replace: true });
     } catch (err: any) {
       console.error('Failed to select salon', err);
-      setError(err.message || 'Falha ao selecionar salão.');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.SELECT_SALON_FAILED));
     } finally {
       setIsSelecting(false);
     }

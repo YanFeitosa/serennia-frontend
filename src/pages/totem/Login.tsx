@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { motion } from 'framer-motion';
 import { totemClientLogin } from '../../lib/api/totem';
 import { useTotem } from '../../contexts/TotemContext';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ const Login: React.FC = () => {
       setClient(client);
       navigate('/totem/servicos');
     } catch (err: any) {
-      setError(err.message || 'Cliente não encontrado. Verifique o telefone ou faça um cadastro.');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.CLIENT_NOT_FOUND));
     } finally {
       setIsLoading(false);
     }

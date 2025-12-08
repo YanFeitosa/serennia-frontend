@@ -1,6 +1,6 @@
 // src/components/ErrorBoundary.tsx
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from './ui/Button';
 
 interface Props {
@@ -33,6 +33,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Log apenas no console para debug - não mostra para o usuário
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({
       error,
@@ -58,48 +59,41 @@ class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="flex items-center justify-center min-h-screen bg-background p-4">
-          <div className="w-full max-w-2xl bg-card rounded-xl shadow-xl border border-border p-8 space-y-6">
-            <div className="flex items-center space-x-3 text-red-600">
-              <AlertTriangle className="w-8 h-8" />
-              <h1 className="text-2xl font-bold">Algo deu errado</h1>
+          <div className="w-full max-w-lg bg-card rounded-2xl shadow-xl border border-border p-8 space-y-6 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+              <h1 className="text-2xl font-bold text-text">Ops! Algo deu errado</h1>
             </div>
 
-            <div className="space-y-4">
-              <p className="text-text">
-                Ocorreu um erro inesperado na aplicação. Por favor, tente recarregar a página.
+            <div className="space-y-3">
+              <p className="text-text-muted">
+                Encontramos um problema inesperado. Não se preocupe, isso não afetou seus dados.
               </p>
-
-              {this.state.error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-sm font-mono text-red-800 break-all">
-                    {this.state.error.toString()}
-                  </p>
-                  {this.state.errorInfo && (
-                    <details className="mt-2">
-                      <summary className="text-sm text-red-700 cursor-pointer">
-                        Detalhes técnicos
-                      </summary>
-                      <pre className="mt-2 text-xs text-red-600 overflow-auto max-h-64">
-                        {this.state.errorInfo.componentStack}
-                      </pre>
-                    </details>
-                  )}
-                </div>
-              )}
+              <p className="text-sm text-text-muted">
+                Tente recarregar a página ou voltar para a tela inicial.
+              </p>
             </div>
 
-            <div className="flex gap-3">
-              <Button onClick={this.handleReset} className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button onClick={this.handleReset} className="flex-1 flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4" />
                 Recarregar Página
               </Button>
               <Button
                 variant="outline"
-                onClick={() => (window.location.href = '/login')}
-                className="flex-1"
+                onClick={() => (window.location.href = '/')}
+                className="flex-1 flex items-center justify-center gap-2"
               >
-                Ir para Login
+                <Home className="w-4 h-4" />
+                Ir para Início
               </Button>
             </div>
+
+            <p className="text-xs text-text-muted pt-4">
+              Se o problema persistir, entre em contato com o suporte.
+            </p>
           </div>
         </div>
       );
@@ -110,4 +104,3 @@ class ErrorBoundary extends Component<Props, State> {
 }
 
 export default ErrorBoundary;
-

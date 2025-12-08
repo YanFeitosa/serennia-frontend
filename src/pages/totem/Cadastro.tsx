@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { motion } from 'framer-motion';
 import { totemClientRegister } from '../../lib/api/totem';
 import { useTotem } from '../../contexts/TotemContext';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const Cadastro: React.FC = () => {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ const Cadastro: React.FC = () => {
       setClient(client);
       navigate('/totem/servicos');
     } catch (err: any) {
-      setError(err.message || 'Erro ao cadastrar. Tente novamente.');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.TOTEM_REGISTRATION_FAILED));
     } finally {
       setIsLoading(false);
     }

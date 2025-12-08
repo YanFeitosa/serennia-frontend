@@ -4,6 +4,7 @@ import { Mail, X, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { forgotPassword } from '../../lib/api';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 interface ForgotPasswordModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
       await forgotPassword({ email: email.trim() });
       setIsSubmitted(true);
     } catch (err: any) {
-      setError(err.message || 'Erro ao solicitar recuperação de senha');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.FORGOT_PASSWORD_FAILED));
     } finally {
       setIsSubmitting(false);
     }

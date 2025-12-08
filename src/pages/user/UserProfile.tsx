@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { changePassword } from '../../lib/api';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const UserProfile = () => {
   const { user } = useAuth();
@@ -63,7 +64,7 @@ const UserProfile = () => {
         setConfirmPassword('');
         setTimeout(() => setPasswordSuccess(false), 3000);
       } catch (err: any) {
-        setPasswordError(err.message || 'Erro ao alterar senha');
+        setPasswordError(getUserFriendlyError(err, ERROR_MESSAGES.PASSWORD_CHANGE_FAILED));
       } finally {
         setIsChangingPassword(false);
       }

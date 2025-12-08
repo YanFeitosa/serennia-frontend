@@ -7,6 +7,7 @@ import { loginSchema, type LoginSchema } from '../lib/schemas';
 import { Mail, Lock } from 'lucide-react';
 import { useAuth, getDefaultPathForRole } from '../contexts/AuthContext';
 import ForgotPasswordModal from '../components/auth/ForgotPasswordModal';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../lib/errorMessages';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const LoginPage = () => {
       const target = from || getDefaultPathForRole(user?.role as any);
       navigate(target, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.LOGIN_FAILED));
     }
   };
 

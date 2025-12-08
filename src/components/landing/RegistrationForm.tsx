@@ -6,6 +6,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { registerSchema, type RegisterSchema } from '../../lib/schemas';
 import { register as registerUser } from '../../lib/api/register';
 import { CheckCircle, Loader2 } from 'lucide-react';
+import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const RegistrationForm = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const RegistrationForm = () => {
       }
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'Erro ao criar conta. Tente novamente.');
+      setError(getUserFriendlyError(err, ERROR_MESSAGES.REGISTRATION_FAILED));
     } finally {
       setIsSubmitting(false);
     }
