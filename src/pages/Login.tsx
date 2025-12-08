@@ -40,7 +40,20 @@ const LoginPage = () => {
       const target = from || getDefaultPathForRole(user?.role as any);
       navigate(target, { replace: true });
     } catch (err: any) {
-      setError(getUserFriendlyError(err, ERROR_MESSAGES.LOGIN_FAILED));
+      // Check for specific error codes from backend
+      if (err?.response?.data?.code === 'EMAIL_NOT_CONFIRMED' || err?.code === 'EMAIL_NOT_CONFIRMED') {
+        setError(ERROR_MESSAGES.EMAIL_NOT_CONFIRMED);
+      } else if (err?.response?.data?.error) {
+        // Use backend error message if it seems user-friendly
+        const backendError = err.response.data.error;
+        if (/^[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ]/.test(backendError) && backendError.length < 200) {
+          setError(backendError);
+        } else {
+          setError(getUserFriendlyError(err, ERROR_MESSAGES.LOGIN_FAILED));
+        }
+      } else {
+        setError(getUserFriendlyError(err, ERROR_MESSAGES.LOGIN_FAILED));
+      }
     }
   };
 

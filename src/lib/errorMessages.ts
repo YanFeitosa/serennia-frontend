@@ -4,6 +4,7 @@
 export const ERROR_MESSAGES = {
   // Autenticação
   LOGIN_FAILED: 'Não foi possível realizar o login. Verifique seu e-mail e senha.',
+  EMAIL_NOT_CONFIRMED: 'Sua conta ainda não foi ativada. Por favor, confirme seu email para acessar o sistema. Verifique sua caixa de entrada e spam.',
   SESSION_EXPIRED: 'Sua sessão expirou. Por favor, faça login novamente.',
   USER_DATA_FAILED: 'Erro ao carregar seus dados. Por favor, faça login novamente.',
   PASSWORD_CHANGE_FAILED: 'Não foi possível alterar a senha. Verifique se a senha atual está correta.',
