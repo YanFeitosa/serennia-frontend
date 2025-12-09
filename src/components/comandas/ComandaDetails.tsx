@@ -216,14 +216,17 @@ const ComandaDetails: React.FC<ComandaDetailsProps> = ({ order, onOrderChange, o
 			<div className="text-right font-bold text-xl">
 				Total: {currentOrder.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
 			</div>
-			<div className="flex justify-end space-x-4 pt-4">
-				<Button
-					variant="secondary"
-					onClick={() => onFinalize?.(currentOrder)}
-				>
-					Finalizar Comanda
-				</Button>
-			</div>
+			{/* Only show finalize button if order is not already paid */}
+			{currentOrder.status !== 'paid' && (
+				<div className="flex justify-end space-x-4 pt-4">
+					<Button
+						variant="secondary"
+						onClick={() => onFinalize?.(currentOrder)}
+					>
+						Finalizar Comanda
+					</Button>
+				</div>
+			)}
 
 			<Modal
 				isOpen={itemToRemove !== null}
