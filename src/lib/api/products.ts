@@ -16,6 +16,7 @@ export interface ProductPayload {
   price: number;
   costPrice?: number;
   stock: number;
+  trackStock?: boolean;
   isActive?: boolean;
 }
 

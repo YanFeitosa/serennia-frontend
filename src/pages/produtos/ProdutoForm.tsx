@@ -4,7 +4,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getProductById, createProduct, updateProduct, getCategories } from '../../lib/api';
+import { getProductById, createProduct, updateProduct, getCategories, getSalonSettings } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
@@ -13,6 +13,7 @@ const productSchema = z.object({
   category: z.string().min(1, 'Categoria é obrigatória'),
   price: z.number().min(0, 'Preço inválido'),
   stock: z.number().min(0, 'Estoque não pode ser negativo'),
+  trackStock: z.boolean().optional(),
 });
 
 type ProductSchema = z.infer<typeof productSchema>;
@@ -26,12 +27,14 @@ const ProdutoForm = () => {
   const [productCategories, setProductCategories] = useState<string[]>([]);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [stockControlEnabled, setStockControlEnabled] = useState<boolean>(true);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<ProductSchema>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -39,8 +42,11 @@ const ProdutoForm = () => {
       category: '',
       price: 0,
       stock: 0,
+      trackStock: true,
     },
   });
+
+  const trackStock = watch('trackStock');
 
   useEffect(() => {
     let isMounted = true;
@@ -49,9 +55,13 @@ const ProdutoForm = () => {
       try {
         setIsLoadingCategories(true);
         setCategoriesError(null);
-        const categories = await getCategories('product');
+        const [categories, settings] = await Promise.all([
+          getCategories('product'),
+          getSalonSettings(),
+        ]);
         if (!isMounted) return;
         setProductCategories(categories.map(c => c.name));
+        setStockControlEnabled(settings.stockControlEnabled ?? true);
       } catch (err) {
         console.error('Failed to load product categories', err);
         if (isMounted) {
@@ -88,6 +98,7 @@ const ProdutoForm = () => {
           category: product.category ?? '',
           price: product.price,
           stock: product.stock,
+          trackStock: product.trackStock ?? true,
         });
       } catch (err) {
         console.error('Failed to load product', err);
@@ -115,7 +126,8 @@ const ProdutoForm = () => {
         name: data.name,
         category: data.category,
         price: data.price,
-        stock: data.stock,
+        stock: stockControlEnabled && data.trackStock ? data.stock : 0,
+        trackStock: stockControlEnabled ? data.trackStock : false,
       };
 
       if (id) {
@@ -218,21 +230,38 @@ const ProdutoForm = () => {
             )}
           </div>
 
-          <div>
-            <label htmlFor="stock" className="block text-sm font-medium text-text">
-              Estoque
-            </label>
-            <Input
-              id="stock"
-              type="number"
-              min={0}
-              {...register('stock', { valueAsNumber: true })}
-            />
-            {errors.stock && (
-              <p className="mt-1 text-sm text-red-600">{errors.stock.message}</p>
-            )}
-          </div>
+          {stockControlEnabled && (
+            <div>
+              <label htmlFor="stock" className="block text-sm font-medium text-text">
+                Estoque
+              </label>
+              <Input
+                id="stock"
+                type="number"
+                min={0}
+                disabled={!trackStock}
+                {...register('stock', { valueAsNumber: true })}
+              />
+              {errors.stock && (
+                <p className="mt-1 text-sm text-red-600">{errors.stock.message}</p>
+              )}
+            </div>
+          )}
         </div>
+
+        {stockControlEnabled && (
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="trackStock"
+              {...register('trackStock')}
+              className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+            />
+            <label htmlFor="trackStock" className="text-sm font-medium text-text">
+              Controlar estoque deste produto
+            </label>
+          </div>
+        )}
 
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
           <Button type="button" variant="ghost" onClick={() => navigate('/app/produtos')} className="w-full sm:w-auto">

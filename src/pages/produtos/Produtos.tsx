@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../contexts/PermissionsContext';
 import { isAdminLike } from '../../lib/utils';
 import type { Product } from '../../types';
-import { getProducts, deleteProduct } from '../../lib/api';
+import { getProducts, deleteProduct, getSalonSettings } from '../../lib/api';
 
 const Produtos = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,6 +15,7 @@ const Produtos = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [stockControlEnabled, setStockControlEnabled] = useState<boolean>(true);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { can } = usePermissions();
@@ -43,13 +44,17 @@ const Produtos = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const loadProducts = async () => {
+    const loadData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await getProducts();
+        const [productsData, settingsData] = await Promise.all([
+          getProducts(),
+          getSalonSettings(),
+        ]);
         if (!isMounted) return;
-        setProducts(data);
+        setProducts(productsData);
+        setStockControlEnabled(settingsData.stockControlEnabled ?? true);
       } catch (err) {
         console.error('Failed to load products', err);
         if (isMounted) {
@@ -62,7 +67,7 @@ const Produtos = () => {
       }
     };
 
-    loadProducts();
+    loadData();
 
     return () => {
       isMounted = false;
@@ -135,7 +140,7 @@ const Produtos = () => {
               <tr className="bg-sidebar/50 border-b border-border">
                 <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Produto</th>
                 <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider hidden sm:table-cell">Categoria</th>
-                <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Estoque</th>
+                <th className="px-4 md:px-6 py-3 md:py-4 text-center text-xs font-semibold text-primary uppercase tracking-wider">Estoque</th>
                 <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-primary uppercase tracking-wider">Preço</th>
                 {(canEdit || canDelete) && (
                   <th className="px-4 md:px-6 py-3 md:py-4 text-right text-xs font-semibold text-primary uppercase tracking-wider">Ações</th>
@@ -143,7 +148,9 @@ const Produtos = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product) => {
+                const showStock = stockControlEnabled && product.trackStock !== false;
+                return (
                 <tr key={product.id} className="hover:bg-sidebar/50 transition-all duration-200">
                   <td className="px-4 md:px-6 py-3 md:py-4">
                     <span className="font-medium text-text text-sm">{product.name}</span>
@@ -151,7 +158,9 @@ const Produtos = () => {
                   <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted hidden sm:table-cell">
                     {product.category ?? '-'}
                   </td>
-                  <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted">{product.stock}</td>
+                  <td className="px-4 md:px-6 py-3 md:py-4 text-sm text-text-muted text-center">
+                    {showStock ? product.stock : 'N/A'}
+                  </td>
                   <td className="px-4 md:px-6 py-3 md:py-4 text-sm font-semibold text-text">
                     {product.price.toLocaleString('pt-BR', {
                       style: 'currency',
@@ -186,7 +195,8 @@ const Produtos = () => {
                     </td>
                   )}
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>

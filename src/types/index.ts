@@ -92,6 +92,7 @@ export interface Product {
   price: number;
   costPrice?: number;
   stock: number;
+  trackStock?: boolean;
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;

@@ -331,6 +331,8 @@ const Comandas = () => {
             onOrderChange={(next) => {
               setSelectedComanda(next);
               setExpandedComanda(next.id);
+              // Also update the orders array so the table shows updated values
+              setOrders((prev) => prev.map((o) => (o.id === next.id ? next : o)));
             }}
             onFinalize={(order) => navigate(`/app/comandas/${order.id}/pagamento`)}
           />

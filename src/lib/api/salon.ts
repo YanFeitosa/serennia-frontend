@@ -23,6 +23,7 @@ export interface SalonSettings {
   variableCostRate?: number | null;
   rolePermissions?: Record<string, any> | null;
   theme?: SalonTheme | null;
+  stockControlEnabled?: boolean;
   // WhatsApp Integration
   whatsappApiUrl?: string | null;
   whatsappApiKey?: string | null;
@@ -50,6 +51,7 @@ export async function updateSalonSettings(
     variableCostRate: number;
     rolePermissions: Record<string, any> | null;
     theme: SalonTheme | null;
+    stockControlEnabled: boolean;
     // WhatsApp Integration
     whatsappApiUrl: string | null;
     whatsappApiKey: string | null;

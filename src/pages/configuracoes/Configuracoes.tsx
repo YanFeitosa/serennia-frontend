@@ -46,6 +46,10 @@ const Configuracoes = () => {
   const [isSavingCommissionSettings, setIsSavingCommissionSettings] = useState(false);
   const [commissionSettingsError, setCommissionSettingsError] = useState<string | null>(null);
 
+  // Controle de estoque
+  const [stockControlEnabled, setStockControlEnabled] = useState<boolean>(true);
+  const [isSavingStockControl, setIsSavingStockControl] = useState(false);
+  const [stockControlError, setStockControlError] = useState<string | null>(null);
 
   // Categorias por tipo (serviços/produtos vêm do backend)
   const [serviceCategories, setServiceCategories] = useState<string[]>([]);
@@ -214,6 +218,9 @@ const Configuracoes = () => {
             ? settings.commissionMode
             : 'professional';
         setCommissionCalcMode(mode);
+
+        // Stock control
+        setStockControlEnabled(settings.stockControlEnabled ?? true);
 
         // 🎨 Paleta padrão alinhada com a landing page
         const defaultPalette: AppearanceSettings = {
@@ -442,6 +449,24 @@ const Configuracoes = () => {
       setCommissionSettingsError('Falha ao salvar configurações de comissão.');
     } finally {
       setIsSavingCommissionSettings(false);
+    }
+  };
+
+  const handleSaveStockControlSettings = async () => {
+    setIsSavingStockControl(true);
+    setStockControlError(null);
+
+    try {
+      const updated = await updateSalonSettings({
+        stockControlEnabled,
+      });
+
+      setStockControlEnabled(updated.stockControlEnabled ?? true);
+    } catch (error) {
+      console.error('Failed to save stock control settings', error);
+      setStockControlError('Falha ao salvar configurações de controle de estoque.');
+    } finally {
+      setIsSavingStockControl(false);
     }
   };
 
@@ -789,6 +814,41 @@ const Configuracoes = () => {
               </div>
               {commissionSettingsError && (
                 <p className="mt-2 text-xs text-red-500">{commissionSettingsError}</p>
+              )}
+            </div>
+
+            {/* Controle de Estoque */}
+            <div className="bg-card rounded-xl shadow-elevated border border-border p-6 space-y-3">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h3 className="text-lg font-semibold text-text">Controle de Estoque</h3>
+                  <p className="text-sm text-text-muted max-w-xl">
+                    Ative ou desative o controle de estoque para os produtos do salão. Quando desativado, o estoque não será reduzido automaticamente ao finalizar comandas.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={stockControlEnabled}
+                    onChange={(e) => setStockControlEnabled(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-border peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <span className="ml-3 text-sm font-medium text-text">{stockControlEnabled ? 'Ativado' : 'Desativado'}</span>
+                </label>
+              </div>
+              <div className="flex justify-end pt-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleSaveStockControlSettings}
+                  disabled={isSavingStockControl}
+                >
+                  Salvar configurações de estoque
+                </Button>
+              </div>
+              {stockControlError && (
+                <p className="mt-2 text-xs text-red-500">{stockControlError}</p>
               )}
             </div>
 

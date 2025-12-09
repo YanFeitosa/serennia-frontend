@@ -290,6 +290,7 @@ const ColaboradorForm = () => {
             <option value="professional">Profissional</option>
             <option value="receptionist">Recepcionista</option>
             <option value="manager">Gerente</option>
+            <option value="accountant">Contador</option>
           </select>
           {errors.role && <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>}
         </div>
