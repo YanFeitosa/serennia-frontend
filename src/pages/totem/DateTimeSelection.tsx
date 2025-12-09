@@ -9,7 +9,7 @@ import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const DateTimeSelection: React.FC = () => {
   const navigate = useNavigate();
-  const { state, setSelectedDateTime, getTotalDuration } = useTotem();
+  const { state, setSelectedDateTime, getTotalDuration, isDeviceAuthenticated, salonId } = useTotem();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [availability, setAvailability] = useState<AvailabilityResponse | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -17,24 +17,30 @@ const DateTimeSelection: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Redirect to device login if not authenticated
+    if (!isDeviceAuthenticated || !salonId) {
+      navigate('/totem/device-login');
+      return;
+    }
+
     if (!state.selectedCollaborator || state.selectedServices.length === 0) {
       navigate('/totem/servicos');
       return;
     }
-  }, [state, navigate]);
+  }, [state, navigate, isDeviceAuthenticated, salonId]);
 
   const handleDateChange = async (date: Date) => {
     setSelectedDate(date);
     setSelectedSlot(null);
     setError(null);
 
-    if (!state.selectedCollaborator) return;
+    if (!state.selectedCollaborator || !salonId) return;
 
     setIsLoading(true);
     try {
       const dateStr = date.toISOString().split('T')[0];
       const duration = getTotalDuration();
-      const data = await getTotemAvailability({
+      const data = await getTotemAvailability(salonId, {
         collaboratorId: state.selectedCollaborator.id,
         date: dateStr,
         duration,

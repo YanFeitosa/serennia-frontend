@@ -1,5 +1,5 @@
 // src/pages/totem/Login.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { motion } from 'framer-motion';
@@ -9,10 +9,17 @@ import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { setClient } = useTotem();
+  const { setClient, isDeviceAuthenticated, salonId } = useTotem();
   const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Redirect to device login if not authenticated
+    if (!isDeviceAuthenticated) {
+      navigate('/totem/device-login');
+    }
+  }, [isDeviceAuthenticated, navigate]);
 
   const formatPhone = (value: string) => {
     // Remove tudo exceto números
@@ -35,10 +42,16 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!salonId) {
+      setError('Dispositivo não autenticado');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const client = await totemClientLogin(phone);
+      const client = await totemClientLogin(phone, salonId);
       setClient(client);
       navigate('/totem/servicos');
     } catch (err: any) {

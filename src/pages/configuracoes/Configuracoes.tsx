@@ -5,10 +5,11 @@ import { Input } from '../../components/ui/Input';
 import { getCategories, createCategory, deleteCategory, getSalonSettings, updateSalonSettings, getMessageTemplates, createMessageTemplate, updateMessageTemplate, deleteMessageTemplate, testWhatsAppConnection, testPaymentConnection, type MessageTemplate, type SalonTheme } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../contexts/PermissionsContext';
-import { isAdminLike } from '../../lib/utils';
+import { getEffectiveRole } from '../../lib/utils';
 import type { CategoryType, UserRole } from '../../types';
 import { MessageCircle, CreditCard, CheckCircle, XCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
+import TotemDevicesSection from '../../components/configuracoes/TotemDevicesSection';
 
 const AVAILABLE_VARIABLES = [
   { key: 'cliente_nome', label: 'Nome do cliente' },
@@ -1041,6 +1042,9 @@ const Configuracoes = () => {
               </div>
 
             </div>
+
+            {/* Totem Devices Section */}
+            <TotemDevicesSection />
           </div>
         )}
 
@@ -1348,6 +1352,8 @@ const Configuracoes = () => {
 // Integrations Tab Component
 const IntegrationsTab = () => {
   const { user } = useAuth();
+  const { can } = usePermissions();
+  const effectiveRole = getEffectiveRole(user) as UserRole;
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1475,10 +1481,10 @@ const IntegrationsTab = () => {
     }
   };
 
-  if (!isAdminLike(user)) {
+  if (!can(effectiveRole, 'podeAcessarIntegracoes')) {
     return (
       <div className="p-8 text-center text-text-muted">
-        Apenas administradores podem configurar integrações.
+        Você não tem permissão para configurar integrações.
       </div>
     );
   }
@@ -1496,7 +1502,7 @@ const IntegrationsTab = () => {
     <div className="space-y-8">
       {/* Banner de em desenvolvimento */}
       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-xl flex items-start gap-3">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
@@ -1777,7 +1783,8 @@ const IntegrationsTab = () => {
 
 const PermissionsTab = () => {
   const { user } = useAuth();
-  const { permissions, refreshPermissions } = usePermissions();
+  const { permissions, refreshPermissions, can } = usePermissions();
+  const effectiveRole = getEffectiveRole(user) as UserRole;
   const [localPermissions, setLocalPermissions] = useState<Record<UserRole, string[]>>(permissions);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1786,10 +1793,10 @@ const PermissionsTab = () => {
     setLocalPermissions(permissions);
   }, [permissions]);
 
-  if (!isAdminLike(user)) {
+  if (!can(effectiveRole, 'podeAcessarPermissoes')) {
     return (
       <div className="p-8 text-center text-text-muted">
-        Apenas administradores podem configurar permissões.
+        Você não tem permissão para configurar permissões.
       </div>
     );
   }
@@ -1809,7 +1816,7 @@ const PermissionsTab = () => {
   ];
 
   const specificPermissions: Array<{ key: string; label: string }> = [
-    { key: 'editarPerfilProfissionais', label: 'Pode editar perfil dos profissionais' },
+    { key: 'editarPerfilColaborador', label: 'Pode editar perfil do colaborador' },
     { key: 'podeEditarProduto', label: 'Pode editar produto' },
     { key: 'podeEditarServico', label: 'Pode editar serviço' },
     { key: 'podeDeletarCliente', label: 'Pode excluir cliente' },
@@ -1817,6 +1824,8 @@ const PermissionsTab = () => {
     { key: 'podeDeletarProduto', label: 'Pode excluir produto' },
     { key: 'podeDeletarServico', label: 'Pode excluir serviço' },
     { key: 'verDadosBancariosColaborador', label: 'Ver dados bancários de colaboradores' },
+    { key: 'podeAcessarPermissoes', label: 'Pode acessar configurações de permissões' },
+    { key: 'podeAcessarIntegracoes', label: 'Pode acessar configurações de integrações' },
   ];
 
   const roles: Array<{ key: UserRole; label: string }> = [
@@ -1869,7 +1878,7 @@ const PermissionsTab = () => {
         'configuracoes',
         'auditoria',
         'notificacoes',
-        'editarPerfilProfissionais',
+        'editarPerfilColaborador',
         'podeEditarProduto',
         'podeEditarServico',
         'podeDeletarCliente',
@@ -1877,6 +1886,8 @@ const PermissionsTab = () => {
         'podeDeletarProduto',
         'podeDeletarServico',
         'verDadosBancariosColaborador',
+        'podeAcessarPermissoes',
+        'podeAcessarIntegracoes',
       ],
       tenant_admin: [
         'agenda',
@@ -1890,7 +1901,7 @@ const PermissionsTab = () => {
         'configuracoes',
         'auditoria',
         'notificacoes',
-        'editarPerfilProfissionais',
+        'editarPerfilColaborador',
         'podeEditarProduto',
         'podeEditarServico',
         'podeDeletarCliente',
@@ -1898,6 +1909,8 @@ const PermissionsTab = () => {
         'podeDeletarProduto',
         'podeDeletarServico',
         'verDadosBancariosColaborador',
+        'podeAcessarPermissoes',
+        'podeAcessarIntegracoes',
       ],
       admin: [
         'agenda',
@@ -1911,7 +1924,7 @@ const PermissionsTab = () => {
         'configuracoes',
         'auditoria',
         'notificacoes',
-        'editarPerfilProfissionais',
+        'editarPerfilColaborador',
         'podeEditarProduto',
         'podeEditarServico',
         'podeDeletarCliente',
@@ -1919,8 +1932,13 @@ const PermissionsTab = () => {
         'podeDeletarProduto',
         'podeDeletarServico',
         'verDadosBancariosColaborador',
+        'podeAcessarPermissoes',
+        'podeAcessarIntegracoes',
       ],
       manager: [
+        'agenda',
+        'comandas',
+        'clientes',
         'servicos',
         'produtos',
         'colaboradores',
@@ -1928,8 +1946,10 @@ const PermissionsTab = () => {
         'comissoes',
         'configuracoes',
         'auditoria',
+        'editarPerfilColaborador',
         'podeEditarProduto',
         'podeEditarServico',
+        'podeDeletarCliente',
         'podeDeletarColaborador',
         'podeDeletarProduto',
         'podeDeletarServico',

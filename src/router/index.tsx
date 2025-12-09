@@ -31,6 +31,7 @@ import DateTimeSelection from '../pages/totem/DateTimeSelection';
 import Confirmation from '../pages/totem/Confirmation';
 import Cadastro from '../pages/totem/Cadastro';
 import TotemLogin from '../pages/totem/Login';
+import DeviceLogin from '../pages/totem/DeviceLogin';
 import TotemLayout from '../components/layout/TotemLayout';
 import Landing from '../pages/Landing';
 // Auth pages
@@ -85,6 +86,7 @@ const router = createBrowserRouter([
     element: <TotemLayout />,
     children: [
       { path: '', element: <Welcome />, index: true },
+      { path: 'device-login', element: <DeviceLogin /> },
       { path: 'login', element: <TotemLogin /> },
       { path: 'cadastro', element: <Cadastro /> },
       { path: 'servicos', element: <ServiceSelection /> },
@@ -281,7 +283,7 @@ const router = createBrowserRouter([
       {
         path: 'configuracoes',
         element: (
-          <RoleGuard allowed={['admin', 'super_admin', 'tenant_admin']}>
+          <RoleGuard resourceKey="configuracoes">
             <Configuracoes />
           </RoleGuard>
         ),

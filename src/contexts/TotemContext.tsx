@@ -1,8 +1,17 @@
 // src/contexts/TotemContext.tsx
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { TotemClient, TotemService, TotemCollaborator } from '../lib/api/totem';
+import type { TotemClient, TotemService, TotemCollaborator, TotemDeviceLoginResponse } from '../lib/api/totem';
+
+interface TotemSalonInfo {
+  salonId: string;
+  salonName: string;
+  salonTheme: Record<string, unknown> | null;
+  deviceId: string;
+  deviceName: string;
+}
 
 interface TotemState {
+  salonInfo: TotemSalonInfo | null;
   client: TotemClient | null;
   selectedServices: TotemService[];
   selectedCollaborator: TotemCollaborator | null;
@@ -11,12 +20,20 @@ interface TotemState {
 
 interface TotemContextType {
   state: TotemState;
+  isAuthenticated: boolean;
+  isDeviceAuthenticated: boolean;
+  salonId: string | null;
+  salonName: string | null;
+  setSalonInfo: (info: TotemSalonInfo | null) => void;
+  loginDevice: (response: TotemDeviceLoginResponse) => void;
+  logoutDevice: () => void;
   setClient: (client: TotemClient | null) => void;
   setSelectedServices: (services: TotemService[]) => void;
   addService: (service: TotemService) => void;
   removeService: (serviceId: string) => void;
   setSelectedCollaborator: (collaborator: TotemCollaborator | null) => void;
   setSelectedDateTime: (dateTime: Date | null) => void;
+  clearClientState: () => void;
   clearState: () => void;
   getTotalDuration: () => number;
   getTotalPrice: () => number;
@@ -25,8 +42,10 @@ interface TotemContextType {
 const TotemContext = createContext<TotemContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'serennia-totem-state';
+const DEVICE_STORAGE_KEY = 'serennia-totem-device';
 
 const defaultState: TotemState = {
+  salonInfo: null,
   client: null,
   selectedServices: [],
   selectedCollaborator: null,
@@ -41,6 +60,14 @@ export const TotemProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (typeof window === 'undefined') return;
 
     try {
+      // Load device info separately (persistent)
+      const deviceStored = window.localStorage.getItem(DEVICE_STORAGE_KEY);
+      if (deviceStored) {
+        const deviceInfo = JSON.parse(deviceStored) as TotemSalonInfo;
+        setState(prev => ({ ...prev, salonInfo: deviceInfo }));
+      }
+
+      // Load client state (session)
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -52,11 +79,13 @@ export const TotemProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             parsedDate = dateAttempt;
           }
         }
-        setState({
-          ...defaultState,
-          ...parsed,
+        setState(prev => ({
+          ...prev,
+          client: parsed.client ?? null,
+          selectedServices: parsed.selectedServices ?? [],
+          selectedCollaborator: parsed.selectedCollaborator ?? null,
           selectedDateTime: parsedDate,
-        });
+        }));
       }
     } catch (error) {
       console.error('Error loading totem state from localStorage', error);
@@ -69,15 +98,43 @@ export const TotemProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     try {
       const toStore = {
-        ...state,
-        // Converter selectedDateTime para string para armazenar
+        client: state.client,
+        selectedServices: state.selectedServices,
+        selectedCollaborator: state.selectedCollaborator,
         selectedDateTime: state.selectedDateTime?.toISOString() ?? null,
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
     } catch (error) {
       console.error('Error saving totem state to localStorage', error);
     }
-  }, [state]);
+  }, [state.client, state.selectedServices, state.selectedCollaborator, state.selectedDateTime]);
+
+  const setSalonInfo = (info: TotemSalonInfo | null) => {
+    setState(prev => ({ ...prev, salonInfo: info }));
+    if (typeof window !== 'undefined') {
+      if (info) {
+        window.localStorage.setItem(DEVICE_STORAGE_KEY, JSON.stringify(info));
+      } else {
+        window.localStorage.removeItem(DEVICE_STORAGE_KEY);
+      }
+    }
+  };
+
+  const loginDevice = (response: TotemDeviceLoginResponse) => {
+    const info: TotemSalonInfo = {
+      salonId: response.salonId,
+      salonName: response.salonName,
+      salonTheme: response.salonTheme,
+      deviceId: response.deviceId,
+      deviceName: response.deviceName,
+    };
+    setSalonInfo(info);
+  };
+
+  const logoutDevice = () => {
+    setSalonInfo(null);
+    clearState();
+  };
 
   const setClient = (client: TotemClient | null) => {
     setState((prev) => ({ ...prev, client }));
@@ -115,10 +172,24 @@ export const TotemProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setState((prev) => ({ ...prev, selectedDateTime: dateTime }));
   };
 
+  const clearClientState = () => {
+    setState(prev => ({
+      ...prev,
+      client: null,
+      selectedServices: [],
+      selectedCollaborator: null,
+      selectedDateTime: null,
+    }));
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+  };
+
   const clearState = () => {
     setState(defaultState);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(DEVICE_STORAGE_KEY);
     }
   };
 
@@ -130,16 +201,28 @@ export const TotemProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return state.selectedServices.reduce((sum, service) => sum + service.price, 0);
   };
 
+  const isDeviceAuthenticated = !!state.salonInfo;
+  const salonId = state.salonInfo?.salonId ?? null;
+  const salonName = state.salonInfo?.salonName ?? null;
+
   return (
     <TotemContext.Provider
       value={{
         state,
+        isAuthenticated: !!state.salonInfo,
+        isDeviceAuthenticated,
+        salonId,
+        salonName,
+        setSalonInfo,
+        loginDevice,
+        logoutDevice,
         setClient,
         setSelectedServices,
         addService,
         removeService,
         setSelectedCollaborator,
         setSelectedDateTime,
+        clearClientState,
         clearState,
         getTotalDuration,
         getTotalPrice,

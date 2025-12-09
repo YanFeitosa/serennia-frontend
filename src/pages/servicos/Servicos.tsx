@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../contexts/PermissionsContext';
-import { isAdminLike } from '../../lib/utils';
-import type { Service } from '../../types';
+import { getEffectiveRole } from '../../lib/utils';
+import type { Service, UserRole } from '../../types';
 import { getServices, deleteService } from '../../lib/api';
 
 const Servicos = () => {
@@ -18,8 +18,9 @@ const Servicos = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
-  const canDelete = user?.role ? can(user.role, 'podeDeletarServico') : false;
+  const effectiveRole = getEffectiveRole(user) as UserRole;
+  const canEdit = can(effectiveRole, 'podeEditarServico');
+  const canDelete = can(effectiveRole, 'podeDeletarServico');
 
   const handleDelete = async (service: Service) => {
     if (!canDelete) return;

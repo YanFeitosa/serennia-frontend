@@ -4,10 +4,10 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, User, Trash2 } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import type { Collaborator } from '../../types';
+import type { Collaborator, UserRole } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../contexts/PermissionsContext';
-import { isAdminLike } from '../../lib/utils';
+import { getEffectiveRole } from '../../lib/utils';
 import { getCollaboratorById, deleteCollaborator } from '../../lib/api';
 
 const getRoleLabel = (role: Collaborator['role']) => {
@@ -52,10 +52,11 @@ const ColaboradorProfile = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
-  const canViewCommission = isAdminLike(user) || user?.tenantRole === 'manager';
-  const canDelete = user?.role ? can(user.role, 'podeDeletarColaborador') : false;
-  const canViewBankingData = user?.role ? can(user.role, 'verDadosBancariosColaborador') : false;
+  const effectiveRole = getEffectiveRole(user) as UserRole;
+  const canEdit = can(effectiveRole, 'editarPerfilColaborador');
+  const canViewCommission = can(effectiveRole, 'financeiro');
+  const canDelete = can(effectiveRole, 'podeDeletarColaborador');
+  const canViewBankingData = can(effectiveRole, 'verDadosBancariosColaborador');
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Não informado';

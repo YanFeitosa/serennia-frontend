@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import MultiSelectPlain from '../../components/ui/MultiSelectPlain';
+import DatePickerPlain from '../../components/ui/DatePickerPlain';
 import type { Collaborator } from '../../types';
 import { createCollaborator, updateCollaborator, getCollaboratorById, getCategories } from '../../lib/api';
 
@@ -127,6 +128,8 @@ const ColaboradorForm = () => {
   const [serviceCategoryOptions, setServiceCategoryOptions] = useState<string[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [hireDate, setHireDate] = useState<Date | undefined>(undefined);
+  const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     basic: true,
     professional: true,
@@ -179,6 +182,15 @@ const ColaboradorForm = () => {
         const collaborator = await getCollaboratorById(editCollaboratorId);
         if (!isMounted) return;
         setEditingCollaborator(collaborator);
+        
+        // Set date states for DatePickerPlain
+        if (collaborator.hireDate) {
+          setHireDate(new Date(collaborator.hireDate));
+        }
+        if (collaborator.birthDate) {
+          setBirthDate(new Date(collaborator.birthDate));
+        }
+        
         reset({
           name: collaborator.name,
           role: collaborator.role,
@@ -475,12 +487,30 @@ const ColaboradorForm = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="hireDate" className="block text-sm font-medium text-text">Data de Admissão</label>
-                  <Input id="hireDate" {...register('hireDate')} type="date" />
+                  <label htmlFor="hireDate" className="block text-sm font-medium text-text mb-1">Data de Admissão</label>
+                  <DatePickerPlain
+                    id="hireDate"
+                    date={hireDate}
+                    setDate={(date) => {
+                      setHireDate(date);
+                      // Update form value as ISO string date part
+                      setValue('hireDate', date ? date.toISOString().split('T')[0] : '');
+                    }}
+                    placeholder="Selecione a data"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="birthDate" className="block text-sm font-medium text-text">Data de Nascimento</label>
-                  <Input id="birthDate" {...register('birthDate')} type="date" />
+                  <label htmlFor="birthDate" className="block text-sm font-medium text-text mb-1">Data de Nascimento</label>
+                  <DatePickerPlain
+                    id="birthDate"
+                    date={birthDate}
+                    setDate={(date) => {
+                      setBirthDate(date);
+                      // Update form value as ISO string date part
+                      setValue('birthDate', date ? date.toISOString().split('T')[0] : '');
+                    }}
+                    placeholder="Selecione a data"
+                  />
                 </div>
               </div>
             </div>

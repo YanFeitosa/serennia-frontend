@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../contexts/PermissionsContext';
-import { isAdminLike } from '../../lib/utils';
-import type { Product } from '../../types';
+import { getEffectiveRole } from '../../lib/utils';
+import type { Product, UserRole } from '../../types';
 import { getProducts, deleteProduct, getSalonSettings } from '../../lib/api';
 
 const Produtos = () => {
@@ -19,8 +19,9 @@ const Produtos = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { can } = usePermissions();
-  const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
-  const canDelete = user?.role ? can(user.role, 'podeDeletarProduto') : false;
+  const effectiveRole = getEffectiveRole(user) as UserRole;
+  const canEdit = can(effectiveRole, 'podeEditarProduto');
+  const canDelete = can(effectiveRole, 'podeDeletarProduto');
 
   const handleDelete = async (product: Product) => {
     if (!canDelete) return;

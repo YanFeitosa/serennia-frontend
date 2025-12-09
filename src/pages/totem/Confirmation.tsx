@@ -10,13 +10,19 @@ import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const Confirmation: React.FC = () => {
   const navigate = useNavigate();
-  const { state, getTotalPrice, getTotalDuration, clearState } = useTotem();
+  const { state, getTotalPrice, getTotalDuration, clearClientState, isDeviceAuthenticated, salonId } = useTotem();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Redirect to device login if not authenticated
+    if (!isDeviceAuthenticated || !salonId) {
+      navigate('/totem/device-login');
+      return;
+    }
+
     // Validar se todos os dados estão preenchidos
     if (!state.client) {
       navigate('/totem');
@@ -34,10 +40,10 @@ const Confirmation: React.FC = () => {
       navigate('/totem/data-hora');
       return;
     }
-  }, [state, navigate]);
+  }, [state, navigate, isDeviceAuthenticated, salonId]);
 
   const handleConfirm = async () => {
-    if (!state.client || !state.selectedCollaborator || !state.selectedDateTime) {
+    if (!state.client || !state.selectedCollaborator || !state.selectedDateTime || !salonId) {
       setError('Dados incompletos');
       return;
     }
@@ -47,6 +53,7 @@ const Confirmation: React.FC = () => {
 
     try {
       const appointment = await createTotemAppointment({
+        salonId,
         clientId: state.client.id,
         collaboratorId: state.selectedCollaborator.id,
         serviceIds: state.selectedServices.map((s) => s.id),
@@ -63,7 +70,7 @@ const Confirmation: React.FC = () => {
   };
 
   const handleFinish = () => {
-    clearState();
+    clearClientState();
     navigate('/totem');
   };
 

@@ -1,5 +1,5 @@
 // src/pages/totem/Cadastro.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { motion } from 'framer-motion';
@@ -9,12 +9,19 @@ import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const Cadastro: React.FC = () => {
   const navigate = useNavigate();
-  const { setClient } = useTotem();
+  const { setClient, isDeviceAuthenticated, salonId } = useTotem();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Redirect to device login if not authenticated
+    if (!isDeviceAuthenticated) {
+      navigate('/totem/device-login');
+    }
+  }, [isDeviceAuthenticated, navigate]);
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -40,6 +47,11 @@ const Cadastro: React.FC = () => {
       return;
     }
 
+    if (!salonId) {
+      setError('Dispositivo não autenticado');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -47,6 +59,7 @@ const Cadastro: React.FC = () => {
         name: name.trim(),
         phone,
         email: email.trim() || undefined,
+        salonId,
       });
       setClient(client);
       navigate('/totem/servicos');

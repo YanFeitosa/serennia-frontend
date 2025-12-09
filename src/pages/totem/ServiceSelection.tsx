@@ -9,18 +9,24 @@ import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const ServiceSelection: React.FC = () => {
   const navigate = useNavigate();
-  const { state, addService, removeService, getTotalPrice, getTotalDuration } = useTotem();
+  const { state, addService, removeService, getTotalPrice, getTotalDuration, isDeviceAuthenticated, salonId } = useTotem();
   const [services, setServices] = useState<TotemService[]>([]);
   const [categories, setCategories] = useState<Record<string, TotemService[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Redirect to device login if not authenticated
+    if (!isDeviceAuthenticated || !salonId) {
+      navigate('/totem/device-login');
+      return;
+    }
+
     const loadServices = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await getTotemServices();
+        const data = await getTotemServices(salonId);
         setServices(data);
 
         // Agrupar por categoria
@@ -41,7 +47,7 @@ const ServiceSelection: React.FC = () => {
     };
 
     loadServices();
-  }, []);
+  }, [isDeviceAuthenticated, navigate, salonId]);
 
   const handleServiceToggle = (service: TotemService) => {
     const isSelected = state.selectedServices.some((s) => s.id === service.id);

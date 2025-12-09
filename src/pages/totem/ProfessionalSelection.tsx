@@ -9,12 +9,18 @@ import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const ProfessionalSelection: React.FC = () => {
   const navigate = useNavigate();
-  const { state, setSelectedCollaborator } = useTotem();
+  const { state, setSelectedCollaborator, isDeviceAuthenticated, salonId } = useTotem();
   const [collaborators, setCollaborators] = useState<TotemCollaborator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Redirect to device login if not authenticated
+    if (!isDeviceAuthenticated || !salonId) {
+      navigate('/totem/device-login');
+      return;
+    }
+
     const loadCollaborators = async () => {
       try {
         setIsLoading(true);
@@ -25,7 +31,7 @@ const ProfessionalSelection: React.FC = () => {
           .map((s) => s.category?.id)
           .filter((id): id is string => id !== undefined);
 
-        const data = await getTotemCollaborators({
+        const data = await getTotemCollaborators(salonId, {
           serviceCategoryIds: categoryIds.length > 0 ? categoryIds : undefined,
         });
         setCollaborators(data);
@@ -42,7 +48,7 @@ const ProfessionalSelection: React.FC = () => {
     }
 
     loadCollaborators();
-  }, [state.selectedServices, navigate]);
+  }, [state.selectedServices, navigate, isDeviceAuthenticated, salonId]);
 
   const handleSelectCollaborator = (collaborator: TotemCollaborator) => {
     setSelectedCollaborator(collaborator);

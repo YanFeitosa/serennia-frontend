@@ -5,8 +5,9 @@ import { Plus, Mail, Phone, Eye, User } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useAuth } from '../../contexts/AuthContext';
-import { isAdminLike } from '../../lib/utils';
-import type { Collaborator } from '../../types';
+import { usePermissions } from '../../contexts/PermissionsContext';
+import { getEffectiveRole } from '../../lib/utils';
+import type { Collaborator, UserRole } from '../../types';
 import { getCollaborators } from '../../lib/api';
 
 const Colaboradores = () => {
@@ -16,7 +17,9 @@ const Colaboradores = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const canCreate = isAdminLike(user) || user?.tenantRole === 'manager';
+  const { can } = usePermissions();
+  const effectiveRole = getEffectiveRole(user) as UserRole;
+  const canCreate = can(effectiveRole, 'editarPerfilColaborador');
 
   useEffect(() => {
     let isMounted = true;
@@ -118,13 +121,13 @@ const Colaboradores = () => {
             <div className="space-y-1 md:space-y-2 mb-3 md:mb-4">
               {collab.email && (
                 <div className="flex items-center text-xs md:text-sm text-text-muted">
-                  <Mail className="w-3 h-3 md:w-4 md:h-4 mr-2 text-text-muted flex-shrink-0" />
+                  <Mail className="w-3 h-3 md:w-4 md:h-4 mr-2 text-text-muted shrink-0" />
                   <span className="truncate">{collab.email}</span>
                 </div>
               )}
               {collab.phone && (
                 <div className="flex items-center text-xs md:text-sm text-text-muted">
-                  <Phone className="w-3 h-3 md:w-4 md:h-4 mr-2 text-text-muted flex-shrink-0" />
+                  <Phone className="w-3 h-3 md:w-4 md:h-4 mr-2 text-text-muted shrink-0" />
                   {collab.phone}
                 </div>
               )}

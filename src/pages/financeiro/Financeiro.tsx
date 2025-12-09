@@ -7,9 +7,10 @@ import { Badge } from '../../components/ui/Badge';
 import DatePickerPlain from '../../components/ui/DatePickerPlain';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import type { Order, OrderItem, Expense, ExpenseType } from '../../types';
+import type { Order, OrderItem, Expense, ExpenseType, UserRole } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-import { isAdminLike } from '../../lib/utils';
+import { usePermissions } from '../../contexts/PermissionsContext';
+import { getEffectiveRole } from '../../lib/utils';
 import { exportToPDF, formatDateTime } from '../../lib/export';
 import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
@@ -43,7 +44,10 @@ const getStatusVariant = (status: Order['status']) => {
 
 const Financeiro = () => {
   const { user } = useAuth();
-  const canEditCosts = isAdminLike(user) || user?.tenantRole === 'manager' || user?.tenantRole === 'accountant';
+  const { can } = usePermissions();
+  const effectiveRole = getEffectiveRole(user) as UserRole;
+  // Can edit costs if user has 'financeiro' permission (will include accountant by default)
+  const canEditCosts = can(effectiveRole, 'financeiro');
 
   const [startDate, setStartDate] = useState<Date | undefined>(() => {
     const today = new Date();
