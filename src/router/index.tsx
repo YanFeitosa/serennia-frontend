@@ -32,6 +32,8 @@ import Cadastro from '../pages/totem/Cadastro';
 import TotemLogin from '../pages/totem/Login';
 import TotemLayout from '../components/layout/TotemLayout';
 import Landing from '../pages/Landing';
+// Auth pages
+import EmailConfirmed from '../pages/auth/EmailConfirmed';
 // Static pages
 import About from '../pages/static/About';
 import Contact from '../pages/static/Contact';
@@ -50,6 +52,15 @@ const router = createBrowserRouter([
   {
     path: '/selecionar-salao',
     element: <SelecionarSalao />,
+  },
+  // Auth callback pages
+  {
+    path: '/auth/callback',
+    element: <EmailConfirmed />,
+  },
+  {
+    path: '/verificar-email',
+    element: <EmailConfirmed />,
   },
   // Static pages
   {
