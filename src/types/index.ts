@@ -49,7 +49,7 @@ export interface Collaborator {
   cpf?: string;
   avatarUrl?: string;
   commissionRate: number; // Default commission rate
-  commissionMode?: 'service' | 'professional'; // service = usa comissão do serviço, professional = usa taxa do profissional
+  commissionMode?: 'service' | 'professional' | null; // null = usa padrão do salão, service = comissão do serviço, professional = taxa fixa
   serviceCategories?: string[];
   // Informações bancárias
   pixKey?: string;

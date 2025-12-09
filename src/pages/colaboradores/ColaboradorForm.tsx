@@ -77,7 +77,7 @@ const collaboratorSchema = z.object({
     .min(0, 'Comissão deve ser pelo menos 0%')
     .max(100, 'Use um valor entre 0 e 100')
     .optional(),
-  commissionMode: z.enum(['service', 'professional']).optional(),
+  commissionMode: z.enum(['', 'service', 'professional']).optional().nullable(),
   // Datas
   hireDate: z.string().optional().or(z.literal('')),
   birthDate: z.string().optional().or(z.literal('')),
@@ -148,7 +148,7 @@ const ColaboradorForm = () => {
       email: '',
       serviceCategories: [],
       commission: undefined,
-      commissionMode: 'service',
+      commissionMode: undefined, // undefined = usa padrão do salão
       hireDate: '',
       birthDate: '',
       pixKey: '',
@@ -188,7 +188,7 @@ const ColaboradorForm = () => {
           avatarUrl: collaborator.avatarUrl ?? '',
           serviceCategories: collaborator.serviceCategories ?? [],
           commission: Math.round((collaborator.commissionRate ?? getDefaultCommissionRate()) * 100),
-          commissionMode: collaborator.commissionMode ?? 'service',
+          commissionMode: collaborator.commissionMode ?? undefined, // undefined = usa padrão do salão
           hireDate: collaborator.hireDate ? collaborator.hireDate.split('T')[0] : '',
           birthDate: collaborator.birthDate ? collaborator.birthDate.split('T')[0] : '',
           pixKey: collaborator.pixKey ?? '',
@@ -300,7 +300,8 @@ const ColaboradorForm = () => {
         email: cleanString(data.email),
         avatarUrl: cleanString(data.avatarUrl),
         serviceCategories: isProfessional ? data.serviceCategories : [],
-        commissionMode: isProfessional ? (data.commissionMode ?? 'service') : undefined,
+        // commissionMode: empty string or undefined = use salon default (send null), otherwise send the value
+        commissionMode: isProfessional ? (data.commissionMode && (data.commissionMode as string) !== '' ? data.commissionMode : null) : null,
         hireDate: cleanString(data.hireDate),
         birthDate: cleanString(data.birthDate),
         // Banking info
@@ -516,13 +517,16 @@ const ColaboradorForm = () => {
                       {...register('commissionMode')}
                       className="mt-1 block w-full px-3 py-2 border border-border rounded-md bg-card text-text focus:outline-none focus:ring-2 focus:ring-primary"
                     >
+                      <option value="">Usar padrão do salão</option>
                       <option value="service">Usar comissão do serviço</option>
                       <option value="professional">Usar taxa do profissional</option>
                     </select>
                     <p className="mt-1 text-xs text-text-muted">
-                      {watch('commissionMode') === 'service' 
-                        ? 'A comissão será a definida em cada serviço'
-                        : 'A comissão será a taxa padrão deste profissional'}
+                      {!watch('commissionMode') || watch('commissionMode') === ''
+                        ? 'Seguirá a configuração definida nas configurações gerais do salão'
+                        : watch('commissionMode') === 'service' 
+                          ? 'A comissão será a definida em cada serviço'
+                          : 'A comissão será a taxa padrão deste profissional'}
                     </p>
                   </div>
                   {showCommissionField && (

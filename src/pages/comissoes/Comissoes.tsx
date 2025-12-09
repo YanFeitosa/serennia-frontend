@@ -304,7 +304,9 @@ const Comissoes = () => {
                       <h3 className="font-semibold text-text">{item.collaborator.name}</h3>
                       <p className="text-xs text-text-muted">
                         Taxa: {Math.round((item.collaborator.commissionRate || 0) * 100)}%
-                        {item.collaborator.commissionMode === 'professional' && ' (fixa)'}
+                        {item.collaborator.commissionMode === 'professional' ? ' (fixa)' : 
+                         item.collaborator.commissionMode === 'service' ? ' (por serviço)' : 
+                         ' (padrão salão)'}
                       </p>
                     </div>
                   </div>
