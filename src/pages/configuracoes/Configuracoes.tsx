@@ -1787,6 +1787,7 @@ const PermissionsTab = () => {
     { key: 'produtos', label: 'Produtos' },
     { key: 'colaboradores', label: 'Colaboradores' },
     { key: 'financeiro', label: 'Financeiro' },
+    { key: 'comissoes', label: 'Comissões' },
     { key: 'configuracoes', label: 'Configurações' },
     { key: 'auditoria', label: 'Auditoria' },
     { key: 'notificacoes', label: 'Notificações' },
@@ -1800,6 +1801,7 @@ const PermissionsTab = () => {
     { key: 'podeDeletarColaborador', label: 'Pode excluir colaborador' },
     { key: 'podeDeletarProduto', label: 'Pode excluir produto' },
     { key: 'podeDeletarServico', label: 'Pode excluir serviço' },
+    { key: 'verDadosBancariosColaborador', label: 'Ver dados bancários de colaboradores' },
   ];
 
   const roles: Array<{ key: UserRole; label: string }> = [
@@ -1848,6 +1850,7 @@ const PermissionsTab = () => {
         'produtos',
         'colaboradores',
         'financeiro',
+        'comissoes',
         'configuracoes',
         'auditoria',
         'notificacoes',
@@ -1858,6 +1861,7 @@ const PermissionsTab = () => {
         'podeDeletarColaborador',
         'podeDeletarProduto',
         'podeDeletarServico',
+        'verDadosBancariosColaborador',
       ],
       tenant_admin: [
         'agenda',
@@ -1867,6 +1871,7 @@ const PermissionsTab = () => {
         'produtos',
         'colaboradores',
         'financeiro',
+        'comissoes',
         'configuracoes',
         'auditoria',
         'notificacoes',
@@ -1877,6 +1882,7 @@ const PermissionsTab = () => {
         'podeDeletarColaborador',
         'podeDeletarProduto',
         'podeDeletarServico',
+        'verDadosBancariosColaborador',
       ],
       admin: [
         'agenda',
@@ -1886,6 +1892,7 @@ const PermissionsTab = () => {
         'produtos',
         'colaboradores',
         'financeiro',
+        'comissoes',
         'configuracoes',
         'auditoria',
         'notificacoes',
@@ -1896,12 +1903,14 @@ const PermissionsTab = () => {
         'podeDeletarColaborador',
         'podeDeletarProduto',
         'podeDeletarServico',
+        'verDadosBancariosColaborador',
       ],
       manager: [
         'servicos',
         'produtos',
         'colaboradores',
         'financeiro',
+        'comissoes',
         'configuracoes',
         'auditoria',
         'podeEditarProduto',
@@ -1909,6 +1918,7 @@ const PermissionsTab = () => {
         'podeDeletarColaborador',
         'podeDeletarProduto',
         'podeDeletarServico',
+        'verDadosBancariosColaborador',
       ],
       receptionist: [
         'agenda',
@@ -1928,6 +1938,8 @@ const PermissionsTab = () => {
       ],
       accountant: [
         'financeiro',
+        'comissoes',
+        'verDadosBancariosColaborador',
       ],
     };
     setLocalPermissions(defaultPerms);

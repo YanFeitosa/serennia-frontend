@@ -1,6 +1,6 @@
 // src/components/layout/Sidebar.tsx
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Calendar, ShoppingCart, Users, Scissors, Briefcase, TrendingUp, Settings, Shield, Bell, Moon, Sun, LogOut, Package, User as UserIcon, X } from 'lucide-react';
+import { Calendar, ShoppingCart, Users, Scissors, Briefcase, TrendingUp, Settings, Shield, Bell, Moon, Sun, LogOut, Package, User as UserIcon, X, DollarSign } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -150,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const role = getRoleForPermissions();
   const { canAccessRoute } = usePermissions();
 
-  const canSeeLink = (key: 'agenda' | 'comandas' | 'clientes' | 'servicos' | 'produtos' | 'colaboradores' | 'financeiro' | 'configuracoes' | 'auditoria' | 'notificacoes') => {
+  const canSeeLink = (key: 'agenda' | 'comandas' | 'clientes' | 'servicos' | 'produtos' | 'colaboradores' | 'financeiro' | 'comissoes' | 'configuracoes' | 'auditoria' | 'notificacoes') => {
     return canAccessRoute(role, key);
   };
 
@@ -210,6 +210,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           )}
           {canSeeLink('financeiro') && (
             <SidebarLink to="/app/financeiro" icon={<TrendingUp />} onClick={onClose}>Financeiro</SidebarLink>
+          )}
+          {canSeeLink('comissoes') && (
+            <SidebarLink to="/app/comissoes" icon={<DollarSign />} onClick={onClose}>Comissões</SidebarLink>
           )}
           {canSeeLink('configuracoes') && (
             <SidebarLink to="/app/configuracoes" icon={<Settings />} onClick={onClose}>Configurações</SidebarLink>

@@ -49,7 +49,26 @@ export interface Collaborator {
   cpf?: string;
   avatarUrl?: string;
   commissionRate: number; // Default commission rate
+  commissionMode?: 'service' | 'professional'; // service = usa comissão do serviço, professional = usa taxa do profissional
   serviceCategories?: string[];
+  // Informações bancárias
+  pixKey?: string;
+  pixKeyType?: 'cpf' | 'cnpj' | 'email' | 'phone' | 'random';
+  bankName?: string;
+  bankAgency?: string;
+  bankAccount?: string;
+  bankAccountType?: 'corrente' | 'poupanca';
+  // Endereço
+  address?: string;
+  addressNumber?: string;
+  addressComplement?: string;
+  addressNeighborhood?: string;
+  addressCity?: string;
+  addressState?: string;
+  addressZipCode?: string;
+  // Datas importantes
+  hireDate?: string;
+  birthDate?: string;
   createdAt?: string;
   updatedAt?: string;
 }

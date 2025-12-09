@@ -20,6 +20,7 @@ import ColaboradorForm from '../pages/colaboradores/ColaboradorForm';
 import ColaboradorProfile from '../pages/colaboradores/ColaboradorProfile';
 import UserProfile from '../pages/user/UserProfile';
 import Financeiro from '../pages/financeiro/Financeiro';
+import Comissoes from '../pages/comissoes/Comissoes';
 import Configuracoes from '../pages/configuracoes/Configuracoes';
 import Auditoria from '../pages/configuracoes/Auditoria';
 import Notificacoes from '../pages/configuracoes/Notificacoes';
@@ -266,6 +267,14 @@ const router = createBrowserRouter([
         element: (
           <RoleGuard resourceKey="financeiro">
             <Financeiro />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'comissoes',
+        element: (
+          <RoleGuard resourceKey="comissoes">
+            <Comissoes />
           </RoleGuard>
         ),
       },

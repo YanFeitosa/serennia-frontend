@@ -1,5 +1,20 @@
 import { request } from '../request';
 
+export interface CommissionRecord {
+  id: string;
+  salonId: string;
+  collaboratorId: string;
+  orderId: string;
+  orderItemId?: string;
+  amount: number;
+  paid: boolean;
+  paymentDate?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  description?: string;
+  createdAt?: string;
+}
+
 export interface PendingCommission {
   collaborator: {
     id: string;
@@ -32,6 +47,22 @@ export interface CommissionPaymentHistory {
   periodEnd: string;
   paidAt: string;
   notes?: string;
+}
+
+export async function getCommissionRecords(params?: {
+  collaboratorId?: string;
+  startDate?: string;
+  endDate?: string;
+  paid?: boolean;
+}): Promise<CommissionRecord[]> {
+  const searchParams = new URLSearchParams();
+  if (params?.collaboratorId) searchParams.set('collaboratorId', params.collaboratorId);
+  if (params?.startDate) searchParams.set('startDate', params.startDate);
+  if (params?.endDate) searchParams.set('endDate', params.endDate);
+  if (params?.paid !== undefined) searchParams.set('paid', params.paid.toString());
+
+  const query = searchParams.toString();
+  return request<CommissionRecord[]>(`/commissions${query ? `?${query}` : ''}`);
 }
 
 export async function getPendingCommissions(params?: {

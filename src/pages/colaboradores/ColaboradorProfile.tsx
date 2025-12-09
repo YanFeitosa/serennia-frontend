@@ -55,6 +55,12 @@ const ColaboradorProfile = () => {
   const canEdit = isAdminLike(user) || user?.tenantRole === 'manager';
   const canViewCommission = isAdminLike(user) || user?.tenantRole === 'manager';
   const canDelete = user?.role ? can(user.role, 'podeDeletarColaborador') : false;
+  const canViewBankingData = user?.role ? can(user.role, 'verDadosBancariosColaborador') : false;
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'Não informado';
+    return new Date(dateStr).toLocaleDateString('pt-BR');
+  };
 
   const handleDelete = async () => {
     if (!collaborator || !canDelete) return;
@@ -198,11 +204,22 @@ const ColaboradorProfile = () => {
           </div>
           {canViewCommission && (
             <div>
-              <p className="font-medium text-text-muted">Comissão padrão</p>
-              <p>{Math.round(collaborator.commissionRate * 100)}%</p>
+              <p className="font-medium text-text-muted">Comissão</p>
+              <p>
+                {Math.round(collaborator.commissionRate * 100)}%
+                {collaborator.commissionMode === 'professional' ? ' (taxa fixa)' : ' (por serviço)'}
+              </p>
             </div>
           )}
           <div>
+            <p className="font-medium text-text-muted">Data de Admissão</p>
+            <p>{formatDate(collaborator.hireDate)}</p>
+          </div>
+          <div>
+            <p className="font-medium text-text-muted">Data de Nascimento</p>
+            <p>{formatDate(collaborator.birthDate)}</p>
+          </div>
+          <div className="sm:col-span-2">
             <p className="font-medium text-text-muted">Categorias de serviços</p>
             {collaborator.serviceCategories && collaborator.serviceCategories.length > 0 ? (
               <div className="flex flex-wrap gap-2 mt-1">
@@ -216,6 +233,75 @@ const ColaboradorProfile = () => {
           </div>
         </div>
       </section>
+
+      {/* Dados Bancários - apenas para quem tem permissão */}
+      {canViewBankingData && (collaborator.pixKey || collaborator.bankName) && (
+        <section className="bg-card rounded-xl shadow-md border border-border p-4 md:p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-text">Dados Bancários</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-text">
+            {collaborator.pixKey && (
+              <>
+                <div>
+                  <p className="font-medium text-text-muted">Tipo de Chave PIX</p>
+                  <p className="capitalize">{collaborator.pixKeyType || 'Não informado'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-text-muted">Chave PIX</p>
+                  <p className="font-mono">{collaborator.pixKey}</p>
+                </div>
+              </>
+            )}
+            {collaborator.bankName && (
+              <>
+                <div>
+                  <p className="font-medium text-text-muted">Banco</p>
+                  <p>{collaborator.bankName}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-text-muted">Tipo de Conta</p>
+                  <p className="capitalize">{collaborator.bankAccountType === 'corrente' ? 'Corrente' : collaborator.bankAccountType === 'poupanca' ? 'Poupança' : 'Não informado'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-text-muted">Agência</p>
+                  <p>{collaborator.bankAgency || 'Não informado'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-text-muted">Conta</p>
+                  <p>{collaborator.bankAccount || 'Não informado'}</p>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Endereço */}
+      {(collaborator.address || collaborator.addressCity) && (
+        <section className="bg-card rounded-xl shadow-md border border-border p-4 md:p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-text">Endereço</h2>
+          <div className="text-sm text-text">
+            {collaborator.address && (
+              <p>
+                {collaborator.address}
+                {collaborator.addressNumber && `, ${collaborator.addressNumber}`}
+                {collaborator.addressComplement && ` - ${collaborator.addressComplement}`}
+              </p>
+            )}
+            {collaborator.addressNeighborhood && (
+              <p>{collaborator.addressNeighborhood}</p>
+            )}
+            {(collaborator.addressCity || collaborator.addressState) && (
+              <p>
+                {collaborator.addressCity}
+                {collaborator.addressState && ` - ${collaborator.addressState}`}
+              </p>
+            )}
+            {collaborator.addressZipCode && (
+              <p>CEP: {collaborator.addressZipCode.replace(/(\d{5})(\d{3})/, '$1-$2')}</p>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 };
