@@ -4,11 +4,12 @@ Sistema de gestão para salões de beleza - Interface do usuário.
 
 ## 🛠️ Tecnologias
 
-- **React 18** com TypeScript
-- **Vite** para build e desenvolvimento
-- **Tailwind CSS** para estilização
-- **React Router v6** para navegação
+- **React 19** com TypeScript
+- **Vite 7** para build e desenvolvimento
+- **Tailwind CSS 4** para estilização
+- **React Router v7** para navegação
 - **React Hook Form + Zod** para validação de formulários
+- **React Query** para gerenciamento de estado do servidor
 - **Recharts** para gráficos
 - **Supabase** para autenticação
 
