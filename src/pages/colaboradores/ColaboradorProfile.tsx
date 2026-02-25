@@ -8,7 +8,7 @@ import type { Collaborator, UserRole } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../contexts/PermissionsContext';
 import { getEffectiveRole } from '../../lib/utils';
-import { getCollaboratorById, deleteCollaborator } from '../../lib/api';
+import { getCollaboratorById, deleteCollaborator, updateCollaborator } from '../../lib/api';
 
 const getRoleLabel = (role: Collaborator['role']) => {
   switch (role) {
@@ -50,6 +50,7 @@ const ColaboradorProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const { user } = useAuth();
   const { can } = usePermissions();
   const effectiveRole = getEffectiveRole(user) as UserRole;
@@ -66,7 +67,7 @@ const ColaboradorProfile = () => {
   const handleDelete = async () => {
     if (!collaborator || !canDelete) return;
     
-    if (!confirm(`Tem certeza que deseja excluir o colaborador "${collaborator.name}"?`)) {
+    if (!confirm(`Tem certeza que deseja excluir o colaborador "${collaborator.name}"? Esta ação também removerá o acesso dele ao sistema.`)) {
       return;
     }
 
@@ -79,6 +80,28 @@ const ColaboradorProfile = () => {
       setError('Falha ao excluir colaborador.');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    if (!collaborator || !canEdit) return;
+    
+    const newStatus = collaborator.status === 'active' ? 'inactive' : 'active';
+    const label = newStatus === 'active' ? 'ativar' : 'desativar';
+    
+    if (!confirm(`Deseja ${label} o colaborador "${collaborator.name}"?`)) {
+      return;
+    }
+
+    try {
+      setIsTogglingStatus(true);
+      const updated = await updateCollaborator(collaborator.id, { status: newStatus });
+      setCollaborator(updated);
+    } catch (err) {
+      console.error('Failed to toggle collaborator status', err);
+      setError(`Falha ao ${label} colaborador.`);
+    } finally {
+      setIsTogglingStatus(false);
     }
   };
 
@@ -155,9 +178,22 @@ const ColaboradorProfile = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-primary">{collaborator.name}</h1>
             <p className="text-text-muted capitalize">{getRoleLabel(collaborator.role)}</p>
             <div className="mt-2 flex items-center justify-center sm:justify-start space-x-2">
-              <Badge variant={collaborator.status === 'active' ? 'success' : 'default'}>
-                {collaborator.status === 'active' ? 'Ativo' : 'Inativo'}
-              </Badge>
+              {canEdit ? (
+                <button
+                  onClick={handleToggleStatus}
+                  disabled={isTogglingStatus}
+                  className="cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-50"
+                  title={`Clique para ${collaborator.status === 'active' ? 'desativar' : 'ativar'}`}
+                >
+                  <Badge variant={collaborator.status === 'active' ? 'success' : 'default'}>
+                    {isTogglingStatus ? 'Alterando...' : collaborator.status === 'active' ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </button>
+              ) : (
+                <Badge variant={collaborator.status === 'active' ? 'success' : 'default'}>
+                  {collaborator.status === 'active' ? 'Ativo' : 'Inativo'}
+                </Badge>
+              )}
             </div>
           </div>
         </div>
