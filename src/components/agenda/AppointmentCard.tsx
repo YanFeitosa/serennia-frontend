@@ -157,7 +157,7 @@ const AppointmentCard = ({ appointment, client, services, onEdit, minHeight, onS
         </div>
         <div className="flex items-center space-x-2">
           <Tag className="w-4 h-4 text-text-muted" />
-          <span className="break-words leading-snug">{services.map(s => s.name).join(', ')}</span>
+          <span className="break-words leading-snug">{services.length > 0 ? services.map(s => s.name).join(', ') : 'Fila de espera'}</span>
         </div>
         <div className="flex items-center space-x-2 text-xs">
           <Clock className="w-4 h-4 text-text-muted" />

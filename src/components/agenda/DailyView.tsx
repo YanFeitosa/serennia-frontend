@@ -9,6 +9,7 @@ import { getAppointments, getClients, getCollaborators, getServices } from '../.
 interface DailyViewProps {
   date: Date;
   onEditAppointment: (appointment: Appointment) => void;
+  externalRefreshToken?: number;
 }
 
 const toDateTimeLocal = (date: Date): string => {
@@ -27,7 +28,7 @@ const getDateKey = (d: Date) => {
 	return `${year}-${month}-${day}`;
 };
 
-const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
+const DailyView = ({ date, onEditAppointment, externalRefreshToken }: DailyViewProps) => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -90,7 +91,7 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
     };
 
     loadData();
-  }, [date, refreshToken]);
+  }, [date, refreshToken, externalRefreshToken]);
 
   const selectedDateKey = getDateKey(date);
   const timeSlots = Array.from({ length: TOTAL_SLOTS }, (_, index) => index);
@@ -228,10 +229,10 @@ const DailyView = ({ date, onEditAppointment }: DailyViewProps) => {
                   {/* Agendamentos existentes */}
                   {appointmentsForCollab.map(appt => {
                     const client = clients.find(c => c.id === appt.clientId);
+                    if (!client) return null;
                     const servicesForAppointment = services.filter((s) =>
                       appt.serviceIds.includes(s.id),
                     );
-                    if (!client || !servicesForAppointment.length) return null;
 
                     const start = new Date(appt.start);
                     const end = new Date(appt.end);

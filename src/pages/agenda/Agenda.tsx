@@ -1,26 +1,32 @@
 // src/pages/Agenda.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Appointment, Client } from '../../types';
+import type { Appointment, Client, Service } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import { MultiSelectPlain } from '../../components/ui/MultiSelectPlain';
 import QueueAssignmentPopup from '../../components/ui/QueueAssignmentPopup';
 import DailyView from '../../components/agenda/DailyView';
 import WeeklyView from '../../components/agenda/WeeklyView';
 import MonthlyView from '../../components/agenda/MonthlyView';
-import { getClients, addToQueue } from '../../lib/api';
+import { getClients, getServices, addToQueue } from '../../lib/api';
 
 const Agenda = () => {
   const navigate = useNavigate();
   const [view, setView] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [agendaRefreshToken, setAgendaRefreshToken] = useState(0);
 
   // Queue states
-  const [showClientSearch, setShowClientSearch] = useState(false);
+  const [showQueueModal, setShowQueueModal] = useState(false);
+  const [queueStep, setQueueStep] = useState<'client' | 'services'>('client');
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [clientResults, setClientResults] = useState<Client[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [allServices, setAllServices] = useState<Service[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [showQueuePopup, setShowQueuePopup] = useState(false);
   const [queueLoading, setQueueLoading] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
@@ -32,6 +38,24 @@ const Agenda = () => {
     appointmentEnd: string;
     position: number;
   } | null>(null);
+
+  // Load services when queue modal opens
+  useEffect(() => {
+    if (showQueueModal && allServices.length === 0) {
+      getServices()
+        .then(services => setAllServices(services.filter(s => s.isActive)))
+        .catch(() => {});
+    }
+  }, [showQueueModal]);
+
+  const resetQueueModal = () => {
+    setShowQueueModal(false);
+    setQueueStep('client');
+    setClientSearchTerm('');
+    setClientResults([]);
+    setSelectedClient(null);
+    setSelectedServiceIds([]);
+  };
 
   const handleSearchClients = async (term: string) => {
     setClientSearchTerm(term);
@@ -58,25 +82,31 @@ const Agenda = () => {
     }
   };
 
-  const handleAddClientToQueue = async (client: Client) => {
-    setShowClientSearch(false);
-    setClientSearchTerm('');
-    setClientResults([]);
+  const handleSelectClient = (client: Client) => {
+    setSelectedClient(client);
+    setQueueStep('services');
+  };
+
+  const handleConfirmQueue = async () => {
+    if (!selectedClient || selectedServiceIds.length === 0) return;
+
+    resetQueueModal();
     setShowQueuePopup(true);
     setQueueLoading(true);
     setQueueError(null);
     setQueueResult(null);
 
     try {
-      const entry = await addToQueue({ clientId: client.id });
+      const entry = await addToQueue({ clientId: selectedClient.id, serviceIds: selectedServiceIds });
       setQueueResult({
-        clientName: client.name,
+        clientName: selectedClient.name,
         collaboratorName: entry.collaborator?.name || 'Profissional',
         collaboratorAvatarUrl: entry.collaborator?.avatarUrl,
         appointmentStart: entry.appointment?.start || entry.arrivedAt,
         appointmentEnd: entry.appointment?.end || entry.arrivedAt,
         position: entry.position,
       });
+      setAgendaRefreshToken(prev => prev + 1);
     } catch (err: any) {
       const message = err?.message || 'Falha ao adicionar à fila';
       try {
@@ -114,6 +144,8 @@ const Agenda = () => {
     setCurrentDate(next);
   };
 
+  const activeServiceOptions = allServices.map(s => ({ value: s.id, label: s.name }));
+
   return (
     <div className="space-y-4">
       {/* Page header with gradient accent */}
@@ -135,7 +167,7 @@ const Agenda = () => {
             <Button size="sm" variant={view === 'daily' ? 'primary' : 'ghost'} onClick={() => setView('daily')}>Diária</Button>
             <Button size="sm" variant={view === 'weekly' ? 'primary' : 'ghost'} onClick={() => setView('weekly')}>Semanal</Button>
             <Button size="sm" variant={view === 'monthly' ? 'primary' : 'ghost'} onClick={() => setView('monthly')}>Mensal</Button>
-            <Button size="sm" variant="ghost" onClick={() => setShowClientSearch(true)} className="whitespace-nowrap border border-primary/30 text-primary hover:bg-primary/10">
+            <Button size="sm" variant="ghost" onClick={() => setShowQueueModal(true)} className="whitespace-nowrap border border-primary/30 text-primary hover:bg-primary/10">
               ⏱ Fila
             </Button>
             <Button size="sm" onClick={() => handleEditAppointment(null)} className="whitespace-nowrap">+ Novo</Button>
@@ -153,14 +185,14 @@ const Agenda = () => {
           </div>
         </div>
       </header>
-      
+
       {/* Decorative gradient line */}
       <div className="h-1 w-full rounded-full gradient-primary-secondary opacity-60" />
 
       {/* Render the selected view */}
       <div>
         {view === 'daily' && (
-          <DailyView date={currentDate} onEditAppointment={handleEditAppointment} />
+          <DailyView date={currentDate} onEditAppointment={handleEditAppointment} externalRefreshToken={agendaRefreshToken} />
         )}
         {view === 'weekly' && (
           <WeeklyView
@@ -182,46 +214,74 @@ const Agenda = () => {
         )}
       </div>
 
-      {/* Client search modal for queue */}
+      {/* Queue modal — multi-step: client search → service selection */}
       <Modal
-        isOpen={showClientSearch}
-        onClose={() => { setShowClientSearch(false); setClientSearchTerm(''); setClientResults([]); }}
-        title="Adicionar à Fila"
+        isOpen={showQueueModal}
+        onClose={resetQueueModal}
+        title={queueStep === 'client' ? 'Adicionar à Fila' : `Serviços — ${selectedClient?.name}`}
       >
-        <div className="space-y-4">
-          <p className="text-sm text-text-muted">
-            Busque o cliente para adicionar à fila de atendimento por ordem de chegada.
-          </p>
-          <Input
-            placeholder="Buscar por nome ou telefone..."
-            value={clientSearchTerm}
-            onChange={(e) => handleSearchClients(e.target.value)}
-            autoFocus
-          />
-          {isSearching && (
-            <p className="text-sm text-text-muted">Buscando...</p>
-          )}
-          {clientResults.length > 0 && (
-            <div className="max-h-60 overflow-y-auto space-y-1">
-              {clientResults.map(client => (
-                <button
-                  key={client.id}
-                  onClick={() => handleAddClientToQueue(client)}
-                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors text-left border border-border"
-                >
-                  <div>
-                    <p className="font-medium text-text text-sm">{client.name}</p>
-                    <p className="text-xs text-text-muted">{client.phone}</p>
-                  </div>
-                  <span className="text-xs text-primary font-medium">Adicionar</span>
-                </button>
-              ))}
+        {queueStep === 'client' ? (
+          <div className="space-y-4">
+            <p className="text-sm text-text-muted">
+              Busque o cliente para adicionar à fila de atendimento por ordem de chegada.
+            </p>
+            <Input
+              placeholder="Buscar por nome ou telefone..."
+              value={clientSearchTerm}
+              onChange={(e) => handleSearchClients(e.target.value)}
+              autoFocus
+            />
+            {isSearching && (
+              <p className="text-sm text-text-muted">Buscando...</p>
+            )}
+            {clientResults.length > 0 && (
+              <div className="max-h-60 overflow-y-auto space-y-1">
+                {clientResults.map(client => (
+                  <button
+                    key={client.id}
+                    onClick={() => handleSelectClient(client)}
+                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors text-left border border-border"
+                  >
+                    <div>
+                      <p className="font-medium text-text text-sm">{client.name}</p>
+                      <p className="text-xs text-text-muted">{client.phone}</p>
+                    </div>
+                    <span className="text-xs text-primary font-medium">Selecionar</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {clientSearchTerm.length >= 2 && clientResults.length === 0 && !isSearching && (
+              <p className="text-sm text-text-muted text-center py-4">Nenhum cliente encontrado</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-text-muted">
+              Selecione os serviços que serão realizados.
+            </p>
+            <MultiSelectPlain
+              options={activeServiceOptions}
+              selected={selectedServiceIds}
+              onChange={setSelectedServiceIds}
+              placeholder="Selecione os serviços..."
+              emptyText="Nenhum serviço encontrado."
+            />
+            {selectedServiceIds.length > 0 && (
+              <p className="text-xs text-text-muted">
+                Duração estimada: {allServices.filter(s => selectedServiceIds.includes(s.id)).reduce((sum, s) => sum + s.duration, 0)} min
+              </p>
+            )}
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="outline" size="sm" onClick={() => { setQueueStep('client'); setSelectedServiceIds([]); }}>
+                Voltar
+              </Button>
+              <Button size="sm" disabled={selectedServiceIds.length === 0} onClick={handleConfirmQueue}>
+                Confirmar
+              </Button>
             </div>
-          )}
-          {clientSearchTerm.length >= 2 && clientResults.length === 0 && !isSearching && (
-            <p className="text-sm text-text-muted text-center py-4">Nenhum cliente encontrado</p>
-          )}
-        </div>
+          </div>
+        )}
       </Modal>
 
       {/* Queue assignment result popup */}

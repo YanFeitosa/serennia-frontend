@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Phone, Calendar, Eye, UserPlus } from 'lucide-react';
-import type { Client } from '../../types';
+import type { Client, Service } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import Modal from '../../components/ui/Modal';
+import { MultiSelectPlain } from '../../components/ui/MultiSelectPlain';
 import QueueAssignmentPopup from '../../components/ui/QueueAssignmentPopup';
-import { getClients, getOrders, addToQueue } from '../../lib/api';
+import { getClients, getOrders, getServices, addToQueue } from '../../lib/api';
 
 const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,14 +31,41 @@ const Clientes = () => {
     position: number;
   } | null>(null);
 
-  const handleAddToQueue = async (client: Client) => {
+  // Service selection for queue
+  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [selectedClientForQueue, setSelectedClientForQueue] = useState<Client | null>(null);
+  const [allServices, setAllServices] = useState<Service[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (showServiceModal && allServices.length === 0) {
+      getServices()
+        .then(services => setAllServices(services.filter(s => s.isActive)))
+        .catch(() => {});
+    }
+  }, [showServiceModal]);
+
+  const handleQueueClick = (client: Client) => {
+    setSelectedClientForQueue(client);
+    setSelectedServiceIds([]);
+    setShowServiceModal(true);
+  };
+
+  const handleConfirmQueue = async () => {
+    if (!selectedClientForQueue || selectedServiceIds.length === 0) return;
+
+    const client = selectedClientForQueue;
+    setShowServiceModal(false);
+    setSelectedClientForQueue(null);
+    setSelectedServiceIds([]);
+
     setShowQueuePopup(true);
     setQueueLoading(true);
     setQueueError(null);
     setQueueResult(null);
 
     try {
-      const entry = await addToQueue({ clientId: client.id });
+      const entry = await addToQueue({ clientId: client.id, serviceIds: selectedServiceIds });
       setQueueResult({
         clientName: client.name,
         collaboratorName: entry.collaborator?.name || 'Profissional',
@@ -193,7 +222,7 @@ const Clientes = () => {
                         <Eye className="w-4 h-4 sm:mr-1" />
                         <span className="hidden sm:inline">Ver</span>
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleAddToQueue(client)} title="Adicionar à fila">
+                      <Button size="sm" variant="ghost" onClick={() => handleQueueClick(client)} title="Adicionar à fila">
                         <UserPlus className="w-4 h-4 sm:mr-1" />
                         <span className="hidden sm:inline">Fila</span>
                       </Button>
@@ -209,6 +238,39 @@ const Clientes = () => {
           </table>
         </div>
       </div>
+
+      {/* Service selection modal for queue */}
+      <Modal
+        isOpen={showServiceModal}
+        onClose={() => { setShowServiceModal(false); setSelectedClientForQueue(null); setSelectedServiceIds([]); }}
+        title={`Serviços — ${selectedClientForQueue?.name}`}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-text-muted">
+            Selecione os serviços que serão realizados.
+          </p>
+          <MultiSelectPlain
+            options={allServices.map(s => ({ value: s.id, label: s.name }))}
+            selected={selectedServiceIds}
+            onChange={setSelectedServiceIds}
+            placeholder="Selecione os serviços..."
+            emptyText="Nenhum serviço encontrado."
+          />
+          {selectedServiceIds.length > 0 && (
+            <p className="text-xs text-text-muted">
+              Duração estimada: {allServices.filter(s => selectedServiceIds.includes(s.id)).reduce((sum, s) => sum + s.duration, 0)} min
+            </p>
+          )}
+          <div className="flex gap-3 justify-end pt-2">
+            <Button variant="outline" size="sm" onClick={() => { setShowServiceModal(false); setSelectedClientForQueue(null); setSelectedServiceIds([]); }}>
+              Cancelar
+            </Button>
+            <Button size="sm" disabled={selectedServiceIds.length === 0} onClick={handleConfirmQueue}>
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <QueueAssignmentPopup
         isOpen={showQueuePopup}

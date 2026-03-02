@@ -39,7 +39,7 @@ export async function getQueueEntries(): Promise<QueueEntry[]> {
   return request<QueueEntry[]>('/queue');
 }
 
-export async function addToQueue(input: { clientId: string; notes?: string }): Promise<QueueEntry> {
+export async function addToQueue(input: { clientId: string; serviceIds: string[]; notes?: string }): Promise<QueueEntry> {
   return request<QueueEntry>('/queue/add', {
     method: 'POST',
     body: JSON.stringify(input),
