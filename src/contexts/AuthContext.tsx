@@ -2,7 +2,28 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
-import { getMe } from '../lib/api';
+import { getMe, type MeResponse } from '../lib/api';
+
+/**
+ * Maps the /auth/me API response to a User object.
+ * Also syncs salon appearance to localStorage.
+ */
+function mapMeResponseToUser(userData: MeResponse): User {
+  // Sync salon name to localStorage for Sidebar
+  if (userData.salonName) {
+    window.localStorage.setItem('serennia-appearance', JSON.stringify({
+      platformName: userData.salonName,
+    }));
+    window.dispatchEvent(new Event('serennia-appearance-changed'));
+  }
+
+  return {
+    ...userData,
+    tenantRole: userData.tenantRole,
+    platformRole: userData.platformRole,
+    role: userData.tenantRole || userData.platformRole || undefined,
+  } as User;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -62,20 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const userData = await getMe();
           if (!isMounted) return;
 
-          // Update appearance if salonName is present
-          if (userData.salonName) {
-            window.localStorage.setItem('serennia-appearance', JSON.stringify({
-              platformName: userData.salonName
-            }));
-            window.dispatchEvent(new Event('serennia-appearance-changed'));
-          }
-
-          setUser({
-            ...userData,
-            tenantRole: userData.tenantRole,
-            platformRole: userData.platformRole,
-            role: userData.tenantRole || userData.platformRole || undefined,
-          } as User);
+          setUser(mapMeResponseToUser(userData));
           setAccessToken(session.access_token);
         } catch (error) {
           // If backend verification fails, silently clear auth state
@@ -135,20 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             const userData = await getMe();
             if (isMounted) {
-              // Update appearance if salonName is present
-              if (userData.salonName) {
-                window.localStorage.setItem('serennia-appearance', JSON.stringify({
-                  platformName: userData.salonName
-                }));
-                window.dispatchEvent(new Event('serennia-appearance-changed'));
-              }
-
-              setUser({
-                ...userData,
-                tenantRole: userData.tenantRole,
-                platformRole: userData.platformRole,
-                role: userData.tenantRole || userData.platformRole || undefined,
-              } as User);
+              setUser(mapMeResponseToUser(userData));
               setAccessToken(session.access_token);
             }
           } catch (error) {
@@ -199,20 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const userData = await getMe();
 
-      // Update appearance if salonName is present
-      if (userData.salonName) {
-        window.localStorage.setItem('serennia-appearance', JSON.stringify({
-          platformName: userData.salonName
-        }));
-        window.dispatchEvent(new Event('serennia-appearance-changed'));
-      }
-
-      const userWithRoles = {
-        ...userData,
-        tenantRole: userData.tenantRole,
-        platformRole: userData.platformRole,
-        role: userData.tenantRole || userData.platformRole || undefined,
-      } as User;
+      const userWithRoles = mapMeResponseToUser(userData);
 
       setUser(userWithRoles);
       setAccessToken(data.session.access_token);
@@ -239,21 +221,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshUser = async () => {
     try {
       const userData = await getMe();
-
-      // Update appearance if salonName is present
-      if (userData.salonName) {
-        window.localStorage.setItem('serennia-appearance', JSON.stringify({
-          platformName: userData.salonName
-        }));
-        window.dispatchEvent(new Event('serennia-appearance-changed'));
-      }
-
-      setUser({
-        ...userData,
-        tenantRole: userData.tenantRole,
-        platformRole: userData.platformRole,
-        role: userData.tenantRole || userData.platformRole || undefined,
-      } as User);
+      setUser(mapMeResponseToUser(userData));
     } catch (error) {
       console.error('Error refreshing user:', error);
     }

@@ -14,7 +14,8 @@ export interface CollaboratorPayload {
 }
 
 export async function getCollaborators(): Promise<Collaborator[]> {
-  return request<Collaborator[]>('/collaborators');
+  const res = await request<{ data: Collaborator[]; pagination: any } | Collaborator[]>('/collaborators');
+  return Array.isArray(res) ? res : res.data;
 }
 
 export async function getCollaboratorById(id: string): Promise<Collaborator> {

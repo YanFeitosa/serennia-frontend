@@ -2,7 +2,8 @@ import type { Service } from '../../types';
 import { request } from '../request';
 
 export async function getServices(): Promise<Service[]> {
-  return request<Service[]>('/services');
+  const res = await request<{ data: Service[]; pagination: any } | Service[]>('/services');
+  return Array.isArray(res) ? res : res.data;
 }
 
 export async function getServiceById(id: string): Promise<Service> {

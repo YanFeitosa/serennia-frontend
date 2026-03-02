@@ -2,7 +2,8 @@ import type { Notification } from '../../types';
 import { request } from '../request';
 
 export async function getNotifications(): Promise<Notification[]> {
-  return request<Notification[]>('/notifications');
+  const res = await request<{ data: Notification[]; pagination: any } | Notification[]>('/notifications');
+  return Array.isArray(res) ? res : res.data;
 }
 
 export async function markNotificationAsRead(id: string): Promise<Notification> {

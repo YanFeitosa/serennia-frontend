@@ -24,18 +24,17 @@ export interface SalonSettings {
   rolePermissions?: Record<string, any> | null;
   theme?: SalonTheme | null;
   stockControlEnabled?: boolean;
-  // WhatsApp Integration
+  // WhatsApp Integration (secret keys are NOT returned by the API)
   whatsappApiUrl?: string | null;
-  whatsappApiKey?: string | null;
   whatsappInstanceId?: string | null;
   whatsappPhone?: string | null;
   whatsappConnected?: boolean;
-  // Payment Integration
+  whatsappConfigured?: boolean;
+  // Payment Integration (secret keys are NOT returned by the API)
   paymentProvider?: 'mercadopago' | 'stripe' | null;
-  mpAccessToken?: string | null;
   mpPublicKey?: string | null;
-  stripeSecretKey?: string | null;
   stripePublishableKey?: string | null;
+  paymentConfigured?: boolean;
 }
 
 export async function getSalonSettings(): Promise<SalonSettings> {

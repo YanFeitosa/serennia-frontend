@@ -19,7 +19,8 @@ export async function getOrders(params: ListOrdersParams = {}): Promise<Order[]>
 
   const qs = search.toString();
   const path = qs ? `/orders?${qs}` : '/orders';
-  return request<Order[]>(path);
+  const res = await request<{ data: Order[]; pagination: any } | Order[]>(path);
+  return Array.isArray(res) ? res : res.data;
 }
 
 export async function getOrderById(id: string): Promise<Order> {
@@ -83,9 +84,10 @@ export async function closeOrder(id: string): Promise<Order> {
   });
 }
 
-export async function payOrder(id: string): Promise<Order> {
+export async function payOrder(id: string, paymentMethod?: 'cash' | 'card' | 'pix' | 'online'): Promise<Order> {
   return request<Order>(`/orders/${id}/pay`, {
     method: 'POST',
+    body: JSON.stringify({ paymentMethod }),
   });
 }
 

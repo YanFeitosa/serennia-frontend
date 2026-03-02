@@ -62,7 +62,8 @@ export async function getCommissionRecords(params?: {
   if (params?.paid !== undefined) searchParams.set('paid', params.paid.toString());
 
   const query = searchParams.toString();
-  return request<CommissionRecord[]>(`/commissions${query ? `?${query}` : ''}`);
+  const res = await request<{ data: CommissionRecord[]; pagination: any } | CommissionRecord[]>(`/commissions${query ? `?${query}` : ''}`);
+  return Array.isArray(res) ? res : res.data;
 }
 
 export async function getPendingCommissions(params?: {

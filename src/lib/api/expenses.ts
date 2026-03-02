@@ -8,7 +8,8 @@ export interface ExpensePayload {
 }
 
 export async function getExpenses(): Promise<Expense[]> {
-  return request<Expense[]>('/expenses');
+  const res = await request<{ data: Expense[]; pagination: any } | Expense[]>('/expenses');
+  return Array.isArray(res) ? res : res.data;
 }
 
 export async function createExpense(input: ExpensePayload): Promise<Expense> {

@@ -2,7 +2,8 @@ import type { Product } from '../../types';
 import { request } from '../request';
 
 export async function getProducts(): Promise<Product[]> {
-  return request<Product[]>('/products');
+  const res = await request<{ data: Product[]; pagination: any } | Product[]>('/products');
+  return Array.isArray(res) ? res : res.data;
 }
 
 export async function getProductById(id: string): Promise<Product> {

@@ -4,12 +4,26 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { changePassword } from '../../lib/api';
+import { changePassword, updateProfile } from '../../lib/api';
 import { getUserFriendlyError, ERROR_MESSAGES } from '../../lib/errorMessages';
 
 const UserProfile = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+
+  // All hooks must be declared before any early returns
+  const [name, setName] = useState(user?.name ?? '');
+  const [email] = useState(user?.email ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState(false);
 
   if (!user) {
     return (
@@ -20,21 +34,33 @@ const UserProfile = () => {
     );
   }
 
-  const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
-  const [phone, setPhone] = useState(user.phone ?? '');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setProfileError(null);
+    setProfileSuccess(false);
 
-    // TODO: Implement profile update via backend API
-    // For now, only password change is supported
+    // Save profile fields (name, phone) if changed
+    const nameChanged = name.trim() !== user.name;
+    const phoneChanged = phone.trim() !== (user.phone ?? '');
+
+    if (nameChanged || phoneChanged) {
+      try {
+        setIsSavingProfile(true);
+        await updateProfile({
+          ...(nameChanged ? { name: name.trim() } : {}),
+          ...(phoneChanged ? { phone: phone.trim() } : {}),
+        });
+        setProfileSuccess(true);
+        // Refresh user data in context
+        if (refreshUser) await refreshUser();
+        setTimeout(() => setProfileSuccess(false), 3000);
+      } catch (err: any) {
+        setProfileError(getUserFriendlyError(err, 'Erro ao atualizar perfil'));
+        return;
+      } finally {
+        setIsSavingProfile(false);
+      }
+    }
 
     // Handle password change if provided
     if (newPassword.trim()) {
@@ -98,8 +124,10 @@ const UserProfile = () => {
           <Input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            disabled
+            className="bg-sidebar text-text-muted cursor-not-allowed"
           />
+          <p className="text-xs text-text-muted mt-1">O email não pode ser alterado.</p>
         </div>
 
         <div>
@@ -115,6 +143,13 @@ const UserProfile = () => {
           <label className="block text-sm font-medium text-text mb-1">Função</label>
           <Input value={user.role} disabled className="bg-sidebar text-text-muted cursor-not-allowed" />
         </div>
+
+        {profileError && (
+          <p className="text-xs text-red-600">{profileError}</p>
+        )}
+        {profileSuccess && (
+          <p className="text-xs text-green-600">Perfil atualizado com sucesso!</p>
+        )}
 
         <div className="pt-2 border-t border-border mt-2 space-y-2">
           <h3 className="text-sm font-medium text-text mb-2">Alterar senha</h3>
@@ -157,8 +192,8 @@ const UserProfile = () => {
           <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="w-full sm:w-auto">
             Cancelar
           </Button>
-          <Button type="submit" disabled={isChangingPassword} className="w-full sm:w-auto">
-            {isChangingPassword ? 'Salvando...' : 'Salvar alterações'}
+          <Button type="submit" disabled={isChangingPassword || isSavingProfile} className="w-full sm:w-auto">
+            {isChangingPassword || isSavingProfile ? 'Salvando...' : 'Salvar alterações'}
           </Button>
         </div>
       </form>

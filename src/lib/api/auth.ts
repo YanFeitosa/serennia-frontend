@@ -51,6 +51,25 @@ export async function changePassword(input: ChangePasswordPayload): Promise<Chan
   });
 }
 
+export interface UpdateProfilePayload {
+  name?: string;
+  phone?: string;
+}
+
+export interface UpdateProfileResponse {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+}
+
+export async function updateProfile(input: UpdateProfilePayload): Promise<UpdateProfileResponse> {
+  return request<UpdateProfileResponse>('/auth/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
 export interface ForgotPasswordPayload {
   email: string;
 }

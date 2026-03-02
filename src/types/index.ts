@@ -169,6 +169,7 @@ export interface Order {
   clientId: string;
   items: OrderItem[];
   status: 'open' | 'closed' | 'paid';
+  paymentMethod?: PaymentMethod;
   finalValue: number;
   createdAt: string;
   closedAt?: string;

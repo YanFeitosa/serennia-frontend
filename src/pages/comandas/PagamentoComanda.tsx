@@ -141,7 +141,7 @@ const PagamentoComanda = () => {
         updated = await closeOrder(updated.id);
       }
       if (updated.status === 'closed') {
-        updated = await payOrder(updated.id);
+        updated = await payOrder(updated.id, method);
       }
       setOrder(updated);
       // Se a comanda foi paga, tenta atualizar o agendamento relacionado para 'completed'

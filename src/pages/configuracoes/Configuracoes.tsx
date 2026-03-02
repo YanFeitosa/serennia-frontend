@@ -1367,6 +1367,7 @@ const IntegrationsTab = () => {
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [isTestingWhatsApp, setIsTestingWhatsApp] = useState(false);
   const [showWhatsAppKey, setShowWhatsAppKey] = useState(false);
+  const [whatsappAlreadyConfigured, setWhatsappAlreadyConfigured] = useState(false);
 
   // Payment state
   const [paymentProvider, setPaymentProvider] = useState<'mercadopago' | 'stripe' | null>(null);
@@ -1376,6 +1377,7 @@ const IntegrationsTab = () => {
   const [stripePublishableKey, setStripePublishableKey] = useState('');
   const [isTestingPayment, setIsTestingPayment] = useState(false);
   const [showPaymentKeys, setShowPaymentKeys] = useState(false);
+  const [paymentAlreadyConfigured, setPaymentAlreadyConfigured] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -1384,16 +1386,18 @@ const IntegrationsTab = () => {
         const data = await getSalonSettings();
         // WhatsApp
         setWhatsappApiUrl(data.whatsappApiUrl || '');
-        setWhatsappApiKey(data.whatsappApiKey || '');
+        setWhatsappApiKey(''); // Secret key not returned by API for security
         setWhatsappInstanceId(data.whatsappInstanceId || '');
         setWhatsappPhone(data.whatsappPhone || '');
         setWhatsappConnected(data.whatsappConnected || false);
+        setWhatsappAlreadyConfigured(data.whatsappConfigured || false);
         // Payment
         setPaymentProvider(data.paymentProvider || null);
-        setMpAccessToken(data.mpAccessToken || '');
+        setMpAccessToken(''); // Secret key not returned by API for security
         setMpPublicKey(data.mpPublicKey || '');
-        setStripeSecretKey(data.stripeSecretKey || '');
+        setStripeSecretKey(''); // Secret key not returned by API for security
         setStripePublishableKey(data.stripePublishableKey || '');
+        setPaymentAlreadyConfigured(data.paymentConfigured || false);
       } catch (err: any) {
         console.error('Error loading settings', err);
         setError(getUserFriendlyError(err, ERROR_MESSAGES.LOAD_SETTINGS_FAILED));
@@ -1408,12 +1412,18 @@ const IntegrationsTab = () => {
     try {
       setIsSaving(true);
       setError(null);
-      await updateSalonSettings({
+      const payload: Record<string, any> = {
         whatsappApiUrl: whatsappApiUrl || null,
-        whatsappApiKey: whatsappApiKey || null,
         whatsappInstanceId: whatsappInstanceId || null,
         whatsappPhone: whatsappPhone || null,
-      });
+      };
+      // Only send API key if user typed a new value (avoids overwriting with null)
+      if (whatsappApiKey) {
+        payload.whatsappApiKey = whatsappApiKey;
+      }
+      await updateSalonSettings(payload);
+      if (whatsappApiKey) setWhatsappAlreadyConfigured(true);
+      setWhatsappApiKey(''); // Clear local state after save
       setSuccessMessage('Configurações do WhatsApp salvas!');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
@@ -1447,13 +1457,18 @@ const IntegrationsTab = () => {
     try {
       setIsSaving(true);
       setError(null);
-      await updateSalonSettings({
+      const payload: Record<string, any> = {
         paymentProvider,
-        mpAccessToken: mpAccessToken || null,
         mpPublicKey: mpPublicKey || null,
-        stripeSecretKey: stripeSecretKey || null,
         stripePublishableKey: stripePublishableKey || null,
-      });
+      };
+      // Only send secret keys if user typed a new value (avoids overwriting with null)
+      if (mpAccessToken) payload.mpAccessToken = mpAccessToken;
+      if (stripeSecretKey) payload.stripeSecretKey = stripeSecretKey;
+      await updateSalonSettings(payload);
+      if (mpAccessToken || stripeSecretKey) setPaymentAlreadyConfigured(true);
+      setMpAccessToken(''); // Clear local state after save
+      setStripeSecretKey(''); // Clear local state after save
       setSuccessMessage('Configurações de pagamento salvas!');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
@@ -1580,7 +1595,7 @@ const IntegrationsTab = () => {
                 type={showWhatsAppKey ? 'text' : 'password'}
                 value={whatsappApiKey}
                 onChange={(e) => setWhatsappApiKey(e.target.value)}
-                placeholder="Sua API Key"
+                placeholder={whatsappAlreadyConfigured ? '••••••••  (chave já configurada, digite para alterar)' : 'Sua API Key'}
               />
               <button
                 type="button"
@@ -1608,7 +1623,7 @@ const IntegrationsTab = () => {
           <Button
             variant="outline"
             onClick={handleTestWhatsApp}
-            disabled={isTestingWhatsApp || !whatsappApiUrl || !whatsappApiKey || !whatsappInstanceId}
+            disabled={isTestingWhatsApp || !whatsappApiUrl || (!whatsappApiKey && !whatsappAlreadyConfigured) || !whatsappInstanceId}
           >
             {isTestingWhatsApp ? (
               <>
@@ -1684,7 +1699,7 @@ const IntegrationsTab = () => {
                   type={showPaymentKeys ? 'text' : 'password'}
                   value={mpAccessToken}
                   onChange={(e) => setMpAccessToken(e.target.value)}
-                  placeholder="APP_USR-..."
+                  placeholder={paymentAlreadyConfigured ? '••••••••  (chave já configurada, digite para alterar)' : 'APP_USR-...'}
                 />
                 <button
                   type="button"
@@ -1716,7 +1731,7 @@ const IntegrationsTab = () => {
                   type={showPaymentKeys ? 'text' : 'password'}
                   value={stripeSecretKey}
                   onChange={(e) => setStripeSecretKey(e.target.value)}
-                  placeholder="sk_live_..."
+                  placeholder={paymentAlreadyConfigured ? '••••••••  (chave já configurada, digite para alterar)' : 'sk_live_...'}
                 />
                 <button
                   type="button"

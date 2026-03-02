@@ -120,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   // Map user role to UserRole type for permissions
   // Super admin and tenant admin should have admin-level access
   const getRoleForPermissions = (): 'admin' | 'manager' | 'receptionist' | 'professional' | 'accountant' => {
-    if (!user) return 'admin';
+    if (!user) return 'professional'; // Least privilege for unauthenticated state
 
     // If user has platformRole (super_admin or tenant_admin), treat as admin
     if (user.platformRole === 'super_admin' || user.platformRole === 'tenant_admin') {
@@ -143,8 +143,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       }
     }
 
-    // Default to admin for safety
-    return 'admin';
+    // Default to least privilege
+    return 'professional';
   };
 
   const role = getRoleForPermissions();
