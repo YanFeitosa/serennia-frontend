@@ -17,6 +17,7 @@ export * from './api/expenses';
 export * from './api/payments';
 export * from './api/commissions';
 export * from './api/salons';
+export * from './api/queue';
 
 // Reexport da função request e da constante de base para quem precisar de chamadas mais customizadas
 export { request, API_BASE_URL } from './request';

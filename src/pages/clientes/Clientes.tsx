@@ -1,11 +1,12 @@
 // src/pages/Clientes.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Phone, Calendar, Eye } from 'lucide-react';
+import { Plus, Phone, Calendar, Eye, UserPlus } from 'lucide-react';
 import type { Client } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { getClients, getOrders } from '../../lib/api';
+import QueueAssignmentPopup from '../../components/ui/QueueAssignmentPopup';
+import { getClients, getOrders, addToQueue } from '../../lib/api';
 
 const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,6 +15,49 @@ const Clientes = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
+
+  // Queue state
+  const [showQueuePopup, setShowQueuePopup] = useState(false);
+  const [queueLoading, setQueueLoading] = useState(false);
+  const [queueError, setQueueError] = useState<string | null>(null);
+  const [queueResult, setQueueResult] = useState<{
+    clientName: string;
+    collaboratorName: string;
+    collaboratorAvatarUrl?: string;
+    appointmentStart: string;
+    appointmentEnd: string;
+    position: number;
+  } | null>(null);
+
+  const handleAddToQueue = async (client: Client) => {
+    setShowQueuePopup(true);
+    setQueueLoading(true);
+    setQueueError(null);
+    setQueueResult(null);
+
+    try {
+      const entry = await addToQueue({ clientId: client.id });
+      setQueueResult({
+        clientName: client.name,
+        collaboratorName: entry.collaborator?.name || 'Profissional',
+        collaboratorAvatarUrl: entry.collaborator?.avatarUrl,
+        appointmentStart: entry.appointment?.start || entry.arrivedAt,
+        appointmentEnd: entry.appointment?.end || entry.arrivedAt,
+        position: entry.position,
+      });
+    } catch (err: any) {
+      const message = err?.message || 'Falha ao adicionar à fila';
+      // Try to extract server error message
+      try {
+        const parsed = JSON.parse(message);
+        setQueueError(parsed.error || message);
+      } catch {
+        setQueueError(message);
+      }
+    } finally {
+      setQueueLoading(false);
+    }
+  };
 
   const getVisitCount = (clientId: string) =>
     orders.filter((order: any) => order.clientId === clientId).length;
@@ -81,7 +125,7 @@ const Clientes = () => {
         <div className="relative max-w-md">
           <input
             type="text"
-            placeholder="Buscar por nome..."
+            placeholder="Buscar por nome ou telefone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-border bg-background text-text rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -110,7 +154,17 @@ const Clientes = () => {
             </thead>
             <tbody className="divide-y divide-border">
               {clients
-              .filter(client => client.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .filter(client => {
+                const term = searchTerm.toLowerCase().trim();
+                if (!term) return true;
+                const nameMatch = client.name.toLowerCase().includes(term);
+                // For phone search: strip non-digits from both the search term and the phone,
+                // then check if the phone number ENDS WITH the searched digits
+                const searchDigits = term.replace(/\D/g, '');
+                const phoneDigits = (client.phone || '').replace(/\D/g, '');
+                const phoneMatch = searchDigits.length > 0 && phoneDigits.endsWith(searchDigits);
+                return nameMatch || phoneMatch;
+              })
               .map(client => (
                 <tr key={client.id} className="hover:bg-sidebar transition-colors">
                   <td className="px-4 md:px-6 py-3 md:py-4">
@@ -139,6 +193,10 @@ const Clientes = () => {
                         <Eye className="w-4 h-4 sm:mr-1" />
                         <span className="hidden sm:inline">Ver</span>
                       </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleAddToQueue(client)} title="Adicionar à fila">
+                        <UserPlus className="w-4 h-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Fila</span>
+                      </Button>
                       <Button size="sm" onClick={() => navigate(`/app/agenda/novo?clientId=${client.id}`)}>
                         <span className="hidden sm:inline">Agendar</span>
                         <span className="sm:hidden">+</span>
@@ -151,6 +209,14 @@ const Clientes = () => {
           </table>
         </div>
       </div>
+
+      <QueueAssignmentPopup
+        isOpen={showQueuePopup}
+        onClose={() => setShowQueuePopup(false)}
+        result={queueResult}
+        isLoading={queueLoading}
+        error={queueError}
+      />
     </div>
   );
 };

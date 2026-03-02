@@ -65,12 +65,13 @@ const collaboratorSchema = z.object({
   // Dados básicos
   name: z.string().min(1, 'O nome é obrigatório'),
   role: z.string().min(1, 'O cargo é obrigatório'),
-  cpf: z.string().min(1, 'O CPF é obrigatório').refine((val) => {
+  cpf: z.string().optional().or(z.literal('')).refine((val) => {
+    if (!val || val.trim() === '') return true; // CPF is optional
     const cleaned = val.replace(/\D/g, '');
     return cleaned.length === 11 && validateCPF(cleaned);
   }, 'CPF inválido'),
   phone: z.string().optional().or(z.literal('')),
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  email: z.string().min(1, 'O email é obrigatório').email('Email inválido'),
   avatarUrl: z.string().url('URL inválida').optional().or(z.literal('')),
   serviceCategories: z.array(z.string()),
   commission: z
@@ -81,7 +82,7 @@ const collaboratorSchema = z.object({
   commissionMode: z.enum(['', 'service', 'professional']).optional().nullable(),
   // Datas
   hireDate: z.string().optional().or(z.literal('')),
-  birthDate: z.string().optional().or(z.literal('')),
+  birthDate: z.string().min(1, 'A data de nascimento é obrigatória'),
   // Dados bancários
   pixKey: z.string().optional().or(z.literal('')),
   pixKeyType: z.enum(['cpf', 'cnpj', 'email', 'phone', 'random']).optional(),
@@ -97,12 +98,6 @@ const collaboratorSchema = z.object({
   addressCity: z.string().optional().or(z.literal('')),
   addressState: z.string().optional().or(z.literal('')),
   addressZipCode: z.string().optional().or(z.literal('')),
-}).refine((data) => {
-  // Pelo menos telefone ou email deve ser fornecido
-  return (data.phone && data.phone.trim().length > 0) || (data.email && data.email.trim().length > 0);
-}, {
-  message: 'Telefone ou email deve ser fornecido',
-  path: ['phone'],
 });
 
 type CollaboratorSchema = z.infer<typeof collaboratorSchema>;
@@ -440,7 +435,7 @@ const ColaboradorForm = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="cpf" className="block text-sm font-medium text-text">CPF *</label>
+                  <label htmlFor="cpf" className="block text-sm font-medium text-text">CPF</label>
                   <Input 
                     id="cpf" 
                     {...register('cpf')}
@@ -450,7 +445,7 @@ const ColaboradorForm = () => {
                       setValue('cpf', formatted);
                     }}
                   />
-                  <p className="mt-1 text-xs text-text-muted">Senha inicial: primeiro nome + 4 últimos dígitos do CPF</p>
+                  <p className="mt-1 text-xs text-text-muted">Opcional. Se preenchido, será usado na senha inicial</p>
                   {errors.cpf && <p className="mt-1 text-sm text-red-600">{errors.cpf.message}</p>}
                 </div>
                 <div>
@@ -500,7 +495,7 @@ const ColaboradorForm = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="birthDate" className="block text-sm font-medium text-text mb-1">Data de Nascimento</label>
+                  <label htmlFor="birthDate" className="block text-sm font-medium text-text mb-1">Data de Nascimento *</label>
                   <DatePickerPlain
                     id="birthDate"
                     date={birthDate}
@@ -511,6 +506,7 @@ const ColaboradorForm = () => {
                     }}
                     placeholder="Selecione a data"
                   />
+                  {errors.birthDate && <p className="mt-1 text-sm text-red-600">{errors.birthDate.message}</p>}
                 </div>
               </div>
             </div>
