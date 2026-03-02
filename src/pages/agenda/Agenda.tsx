@@ -5,7 +5,6 @@ import type { Appointment, Client, Service } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
-import { MultiSelectPlain } from '../../components/ui/MultiSelectPlain';
 import QueueAssignmentPopup from '../../components/ui/QueueAssignmentPopup';
 import DailyView from '../../components/agenda/DailyView';
 import WeeklyView from '../../components/agenda/WeeklyView';
@@ -27,6 +26,7 @@ const Agenda = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [serviceSearchTerm, setServiceSearchTerm] = useState('');
   const [showQueuePopup, setShowQueuePopup] = useState(false);
   const [queueLoading, setQueueLoading] = useState(false);
   const [queueError, setQueueError] = useState<string | null>(null);
@@ -55,6 +55,7 @@ const Agenda = () => {
     setClientResults([]);
     setSelectedClient(null);
     setSelectedServiceIds([]);
+    setServiceSearchTerm('');
   };
 
   const handleSearchClients = async (term: string) => {
@@ -144,7 +145,19 @@ const Agenda = () => {
     setCurrentDate(next);
   };
 
-  const activeServiceOptions = allServices.map(s => ({ value: s.id, label: s.name }));
+  const toggleService = (id: string) => {
+    setSelectedServiceIds(prev =>
+      prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id],
+    );
+  };
+
+  const filteredServices = allServices.filter(s =>
+    s.name.toLowerCase().includes(serviceSearchTerm.toLowerCase().trim()),
+  );
+
+  const totalDuration = allServices
+    .filter(s => selectedServiceIds.includes(s.id))
+    .reduce((sum, s) => sum + s.duration, 0);
 
   return (
     <div className="space-y-4">
@@ -260,20 +273,54 @@ const Agenda = () => {
             <p className="text-sm text-text-muted">
               Selecione os serviços que serão realizados.
             </p>
-            <MultiSelectPlain
-              options={activeServiceOptions}
-              selected={selectedServiceIds}
-              onChange={setSelectedServiceIds}
-              placeholder="Selecione os serviços..."
-              emptyText="Nenhum serviço encontrado."
+            <Input
+              placeholder="Buscar serviço..."
+              value={serviceSearchTerm}
+              onChange={(e) => setServiceSearchTerm(e.target.value)}
+              autoFocus
             />
+            <div className="max-h-60 overflow-y-auto space-y-1">
+              {filteredServices.length === 0 ? (
+                <p className="text-sm text-text-muted text-center py-4">Nenhum serviço encontrado.</p>
+              ) : (
+                filteredServices.map(service => {
+                  const isSelected = selectedServiceIds.includes(service.id);
+                  return (
+                    <button
+                      key={service.id}
+                      type="button"
+                      onClick={() => toggleService(service.id)}
+                      className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left border ${
+                        isSelected
+                          ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                          : 'border-border hover:bg-primary/5'
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-text text-sm truncate">{service.name}</p>
+                        <p className="text-xs text-text-muted">{service.duration} min</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ml-3 transition-colors ${
+                        isSelected ? 'bg-primary border-primary' : 'border-border'
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 12l4 4L19 6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
             {selectedServiceIds.length > 0 && (
               <p className="text-xs text-text-muted">
-                Duração estimada: {allServices.filter(s => selectedServiceIds.includes(s.id)).reduce((sum, s) => sum + s.duration, 0)} min
+                {selectedServiceIds.length} {selectedServiceIds.length === 1 ? 'serviço selecionado' : 'serviços selecionados'} — Duração estimada: {totalDuration} min
               </p>
             )}
             <div className="flex gap-3 justify-end pt-2">
-              <Button variant="outline" size="sm" onClick={() => { setQueueStep('client'); setSelectedServiceIds([]); }}>
+              <Button variant="outline" size="sm" onClick={() => { setQueueStep('client'); setSelectedServiceIds([]); setServiceSearchTerm(''); }}>
                 Voltar
               </Button>
               <Button size="sm" disabled={selectedServiceIds.length === 0} onClick={handleConfirmQueue}>

@@ -6,7 +6,6 @@ import type { Client, Service } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
-import { MultiSelectPlain } from '../../components/ui/MultiSelectPlain';
 import QueueAssignmentPopup from '../../components/ui/QueueAssignmentPopup';
 import { getClients, getOrders, getServices, addToQueue } from '../../lib/api';
 
@@ -36,6 +35,7 @@ const Clientes = () => {
   const [selectedClientForQueue, setSelectedClientForQueue] = useState<Client | null>(null);
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [serviceSearchTerm, setServiceSearchTerm] = useState('');
 
   useEffect(() => {
     if (showServiceModal && allServices.length === 0) {
@@ -48,6 +48,7 @@ const Clientes = () => {
   const handleQueueClick = (client: Client) => {
     setSelectedClientForQueue(client);
     setSelectedServiceIds([]);
+    setServiceSearchTerm('');
     setShowServiceModal(true);
   };
 
@@ -242,27 +243,63 @@ const Clientes = () => {
       {/* Service selection modal for queue */}
       <Modal
         isOpen={showServiceModal}
-        onClose={() => { setShowServiceModal(false); setSelectedClientForQueue(null); setSelectedServiceIds([]); }}
+        onClose={() => { setShowServiceModal(false); setSelectedClientForQueue(null); setSelectedServiceIds([]); setServiceSearchTerm(''); }}
         title={`Serviços — ${selectedClientForQueue?.name}`}
       >
         <div className="space-y-4">
           <p className="text-sm text-text-muted">
             Selecione os serviços que serão realizados.
           </p>
-          <MultiSelectPlain
-            options={allServices.map(s => ({ value: s.id, label: s.name }))}
-            selected={selectedServiceIds}
-            onChange={setSelectedServiceIds}
-            placeholder="Selecione os serviços..."
-            emptyText="Nenhum serviço encontrado."
+          <input
+            type="text"
+            placeholder="Buscar serviço..."
+            value={serviceSearchTerm}
+            onChange={(e) => setServiceSearchTerm(e.target.value)}
+            autoFocus
+            className="w-full px-3 py-2 border border-border bg-background text-text rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
+          <div className="max-h-60 overflow-y-auto space-y-1">
+            {allServices.filter(s => s.name.toLowerCase().includes(serviceSearchTerm.toLowerCase().trim())).length === 0 ? (
+              <p className="text-sm text-text-muted text-center py-4">Nenhum serviço encontrado.</p>
+            ) : (
+              allServices.filter(s => s.name.toLowerCase().includes(serviceSearchTerm.toLowerCase().trim())).map(service => {
+                const isSelected = selectedServiceIds.includes(service.id);
+                return (
+                  <button
+                    key={service.id}
+                    type="button"
+                    onClick={() => setSelectedServiceIds(prev => prev.includes(service.id) ? prev.filter(v => v !== service.id) : [...prev, service.id])}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left border ${
+                      isSelected
+                        ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                        : 'border-border hover:bg-primary/5'
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-text text-sm truncate">{service.name}</p>
+                      <p className="text-xs text-text-muted">{service.duration} min</p>
+                    </div>
+                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ml-3 transition-colors ${
+                      isSelected ? 'bg-primary border-primary' : 'border-border'
+                    }`}>
+                      {isSelected && (
+                        <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none">
+                          <path d="M5 12l4 4L19 6" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
           {selectedServiceIds.length > 0 && (
             <p className="text-xs text-text-muted">
-              Duração estimada: {allServices.filter(s => selectedServiceIds.includes(s.id)).reduce((sum, s) => sum + s.duration, 0)} min
+              {selectedServiceIds.length} {selectedServiceIds.length === 1 ? 'serviço selecionado' : 'serviços selecionados'} — Duração estimada: {allServices.filter(s => selectedServiceIds.includes(s.id)).reduce((sum, s) => sum + s.duration, 0)} min
             </p>
           )}
           <div className="flex gap-3 justify-end pt-2">
-            <Button variant="outline" size="sm" onClick={() => { setShowServiceModal(false); setSelectedClientForQueue(null); setSelectedServiceIds([]); }}>
+            <Button variant="outline" size="sm" onClick={() => { setShowServiceModal(false); setSelectedClientForQueue(null); setSelectedServiceIds([]); setServiceSearchTerm(''); }}>
               Cancelar
             </Button>
             <Button size="sm" disabled={selectedServiceIds.length === 0} onClick={handleConfirmQueue}>
