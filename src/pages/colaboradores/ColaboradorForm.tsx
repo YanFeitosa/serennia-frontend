@@ -302,7 +302,7 @@ const ColaboradorForm = () => {
       const commonData = {
         name: data.name,
         role: data.role as any,
-        cpf: data.cpf.replace(/\D/g, ''),
+        cpf: data.cpf ? data.cpf.replace(/\D/g, '') : undefined,
         phone: cleanString(data.phone?.replace(/\D/g, '')),
         email: cleanString(data.email),
         avatarUrl: cleanString(data.avatarUrl),
